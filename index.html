@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#8a5a20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="萬劍山手札">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<script>if ("serviceWorker" in navigator && location.protocol !== "file:") window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<title>萬劍山弟子修煉手札</title>
+<style>
+/* 藥王谷 · 自用版 —— 仿手機 UI */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; }
+body {
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#2b2420; display:flex; justify-content:center;
+  color:#3a2f28; user-select:none;
+}
+#app {
+  width:100%; max-width:480px; height:100%;
+  background:linear-gradient(180deg,#f7f1e6 0%,#f2ead9 100%);
+  display:flex; flex-direction:column; position:relative; overflow:hidden;
+  box-shadow:0 0 40px rgba(0,0,0,.5);
+}
+/* ── 頂部狀態欄 ── */
+#statusbar { padding:8px 12px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
+#statusbar .row1 { display:flex; align-items:center; gap:10px; }
+.avatar { width:46px; height:46px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
+  display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.pinfo { flex:1; min-width:0; }
+.pname { font-size:15px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
+.realm { font-size:12px; color:#ffe3c0; }
+.statline { display:flex; gap:10px; font-size:11px; margin-top:3px; opacity:.95; flex-wrap:wrap; }
+.datebar { font-size:12px; margin-top:6px; display:flex; justify-content:space-between; opacity:.9; }
+.spiritbar { height:8px; background:rgba(0,0,0,.25); border-radius:4px; margin-top:4px; overflow:hidden; }
+.spiritbar>div { height:100%; background:linear-gradient(90deg,#ffd98a,#ff9d5c); border-radius:4px; transition:width .3s; }
+/* ── 主內容區 ── */
+#main { flex:1; overflow-y:auto; padding:12px; }
+#main::-webkit-scrollbar { width:4px; } #main::-webkit-scrollbar-thumb { background:#c9b8a0; border-radius:2px; }
+.page-title { font-size:17px; font-weight:700; color:#6b4a35; margin-bottom:10px; letter-spacing:2px; }
+.card { background:#fffdf7; border:1px solid #e5d8c2; border-radius:12px; padding:12px; margin-bottom:10px;
+  box-shadow:0 1px 4px rgba(120,90,60,.08); }
+.card h3 { font-size:14px; color:#7a5540; margin-bottom:8px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+/* ── 按鈕 ── */
+button {
+  font-family:inherit; border:none; border-radius:8px; padding:8px 14px; font-size:13px;
+  background:#8c5a44; color:#fdf6ec; cursor:pointer; transition:transform .06s, opacity .2s;
+}
+button:active { transform:scale(.96); }
+button:disabled { opacity:.4; cursor:default; }
+button.ghost { background:#efe4d0; color:#6b4a35; border:1px solid #d8c6a8; }
+button.warn { background:#b0524a; }
+button.gold { background:#b8863a; }
+button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
+.btnrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+/* ── 列表項 ── */
+.list-item { display:flex; justify-content:space-between; align-items:center; padding:9px 10px;
+  border-bottom:1px dashed #e0d3bc; font-size:13px; }
+.list-item:last-child { border-bottom:none; }
+.list-item .desc { font-size:11px; color:#9a8a75; margin-top:2px; }
+.tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#efe4d0; color:#7a654e; margin-left:4px; }
+/* ── 消息 log ── */
+#log { position:fixed; left:50%; transform:translateX(-50%); bottom:78px; max-width:440px; width:92%;
+  max-height:180px; overflow-y:auto; z-index:50; pointer-events:none; }
+.logline { background:rgba(40,30,22,.88); color:#f5ead6; font-size:12px; padding:6px 12px;
+  border-radius:8px; margin-bottom:4px; animation:fadein .25s; line-height:1.5; }
+@keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
+/* ── 彈窗 ── */
+#modal-mask { position:absolute; inset:0; background:rgba(30,20,14,.55); z-index:90;
+  display:none; align-items:flex-end; }
+#modal-mask.show { display:flex; }
+#modal { background:#fbf5e9; width:100%; max-height:75%; border-radius:16px 16px 0 0;
+  padding:16px 16px 30px; overflow-y:auto; animation:slideup .22s; }
+@keyframes slideup { from{transform:translateY(40px); opacity:.4;} to{transform:none; opacity:1;} }
+#modal h2 { font-size:16px; color:#6b4a35; margin-bottom:10px; }
+.modal-close { float:right; font-size:18px; color:#9a8a75; background:none; padding:0 4px; }
+/* ── 底部選單 ── */
+#tabbar { display:flex; background:#3d322a; flex-shrink:0; padding-bottom:env(safe-area-inset-bottom); }
+.tab { flex:1; padding:8px 0 6px; text-align:center; color:#bfae96; font-size:11px; cursor:pointer; }
+.tab .ico { font-size:20px; display:block; margin-bottom:1px; }
+.tab.active { color:#ffd98a; background:#4a3d32; }
+/* ── 進度/資源行 ── */
+.res { display:inline-flex; align-items:center; gap:3px; }
+.kv { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+.bar { height:6px; background:#e8dcc6; border-radius:3px; overflow:hidden; margin:2px 0 6px; }
+.bar>div { height:100%; border-radius:3px; background:#c98a5a; }
+.lovebar>div { background:#d96a6a; } .favorbar>div { background:#7aa5c9; }
+.ele { font-size:10px; color:#9a8a75; }
+.ele b { margin-right:6px; }
+.e-jin{color:#c9a227}.e-mu{color:#5a9e4f}.e-shui{color:#4f7fc9}.e-huo{color:#d05a3a}.e-tu{color:#a5764f}
+/* 開場 */
+#intro { position:absolute; inset:0; background:linear-gradient(160deg,#f7f1e6,#e9dcc4); z-index:200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; text-align:center; }
+#intro h1 { font-size:26px; letter-spacing:6px; color:#6b4a35; margin-bottom:8px; }
+#intro p { font-size:13px; color:#8a7660; margin-bottom:24px; line-height:1.8; }
+#intro input { font-size:15px; padding:10px 14px; border:1px solid #cbb894; border-radius:8px; width:220px; margin-bottom:16px; text-align:center; background:#fffdf7; outline:none; }
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="statusbar">
+    <div class="row1">
+      <div class="avatar" id="avatar">🗡</div>
+      <div class="pinfo">
+        <div class="pname" id="pname">…</div>
+        <div class="statline" id="statline"></div>
+      </div>
+    </div>
+    <div class="datebar" id="datebar"></div>
+    <div class="spiritbar"><div id="spiritfill" style="width:0%"></div></div>
+  </div>
+  <div id="main"></div>
+  <div id="log"></div>
+  <div id="tabbar">
+    <div class="tab active" data-t="xiulian"><span class="ico">⛩</span>修煉</div>
+    <div class="tab" data-t="zhujian"><span class="ico">⚒</span>鑄劍</div>
+    <div class="tab" data-t="chuxing"><span class="ico">🏔</span>出行</div>
+    <div class="tab" data-t="guanxi"><span class="ico">🌸</span>江湖</div>
+    <div class="tab" data-t="me"><span class="ico">📜</span>我</div>
+  </div>
+  <div id="modal-mask">
+    <div id="modal">
+      <button class="modal-close" id="modal-close-btn">✕</button>
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+</div>
+<script>
+/* ═══════════ 《萬劍山弟子修煉手札》數據定義 ═══════════ */
+const ELES = ["金","木","水","火","土"];
+const REALMS = [
+  {name:"練氣", layers:9, base:50, life:130},
+  {name:"築基", layers:9, base:800, life:220},
+  {name:"金丹", stages:["前期","後期","大圓滿"], base:9000, life:400},
+  {name:"元嬰", stages:["前期","後期","大圓滿"], base:60000, life:650},
+  {name:"出竅", stages:["前期","後期","大圓滿"], base:300000, life:1000},
+  {name:"分神", stages:["前期","後期","大圓滿"], base:1.5e6, life:1500},
+  {name:"合體", stages:["前期","後期","大圓滿"], base:7e6, life:2200},
+  {name:"大乘", stages:["前期","後期","大圓滿"], base:3e7, life:3000},
+];
+function spiritNeed(ri, sub) {
+  const r = REALMS[ri];
+  if (r.layers) return Math.round(r.base * Math.pow(1.55, sub));
+  return Math.round(r.base * [1, 2.2, 3.5][sub]);
+}
+function realmText(ri, sub) {
+  const r = REALMS[ri];
+  return r.layers ? `${r.name}${sub+1}層` : `${r.name}${r.stages[sub]}`;
+}
+const LIFESPAN = ri => Math.round(REALMS[Math.max(0,ri)].life * (0.9 + Math.random()*0.3));
+
+/* ── 劍材：[名, 圖, 層, 階, 主屬性, 主值] ──
+   圖: 0落霞礦脈(金鐵) 1青岡靈林(草木) 2荒獸嶺(獸材) 3天外流洲(天材) */
+const MAT_SEEDS = [
+ ["赤鐵砂",0,0,1,"金",5],["雲母石",0,0,1,"土",5],["流銀砂",0,0,1,"金",6],["火岩屑",0,0,1,"火",5],["銅精",0,0,2,"金",8],
+ ["寒晶鐵",0,1,2,"水",9],["紫金砂",0,1,2,"金",10],["玄磁石",0,1,3,"金",11],["地心岩",0,1,3,"土",12],["雷擊木炭",0,1,3,"火",11],
+ ["隕星鐵",0,2,4,"金",16],["太白精金",0,2,5,"金",20],["幽冥寒鐵",0,2,5,"水",19],["大地髓",0,2,5,"土",18],
+ ["青岡木",1,0,1,"木",6],["藤心",1,0,1,"木",5],["雨花藤",1,0,2,"木",8],["朝陽木髓",1,0,2,"火",7],["翠竹心",1,0,1,"木",5],
+ ["沉水木",1,1,2,"水",9],["紫檀魂",1,1,3,"木",12],["雷紋木",1,1,3,"木",11],["凝血枝",1,1,3,"火",10],
+ ["萬年空心柳",1,2,4,"木",16],["青帝木心",1,2,5,"木",21],["扶桑神木",1,2,5,"火",20],["建木殘枝",1,2,5,"木",19],
+ ["狼牙",2,0,1,"金",5],["蠻牛皮",2,0,1,"土",6],["鐵羽鷹骨",2,0,2,"金",8],["火蜥尾",2,0,2,"火",8],
+ ["玄龜甲",2,1,2,"水",10],["赤蟒筋",2,1,3,"火",11],["犀角",2,1,3,"土",11],["鷹王翎",2,1,3,"金",12],
+ ["蛟筋",2,2,4,"水",16],["妖王骨",2,2,5,"土",19],["龍鱗",2,2,5,"金",22],["鳳翎",2,2,5,"火",21],["玄武甲片",2,2,5,"水",20],
+ ["星隕砂",3,0,4,"金",16],["月華露",3,0,4,"水",15],["日炎晶",3,0,4,"火",16],["風靈絮",3,0,4,"木",15],
+ ["天外隕核",3,1,5,"金",20],["九幽泉",3,1,5,"水",20],["離火珠",3,1,5,"火",20],["戊土胎",3,1,5,"土",19],["青蓮子",3,1,5,"木",19],
+ ["混沌石",3,2,5,"土",23],["太初劍意碎片",3,2,5,"金",24],["造化玉髓",3,2,5,"木",23],["周天星屑",3,2,5,"水",22],["焚天炎髓",3,2,5,"火",22],
+];
+const HERBS = {}; // 沿用背包鍵名 herds→mats（統一叫 herbs 減少改動）
+MAT_SEEDS.forEach((s,i) => {
+  const [name,map,layer,grade,ele,val] = s;
+  const ev = {}; ELES.forEach(e => ev[e] = 0);
+  ev[ele] = val;
+  const sub1 = ELES[(ELES.indexOf(ele)+1)%5], sub2 = ELES[(ELES.indexOf(ele)+4)%5];
+  ev[sub1] = Math.max(1, Math.round(val*0.15)); ev[sub2] = Math.max(1, Math.round(val*0.1));
+  HERBS[name] = { id:i, name, map, layer, grade, ele, ev, value: Math.round(val*grade*35) };
+});
+const MAP_NAMES = ["落霞礦脈","青岡靈林","荒獸嶺","天外流洲"];
+const LAYER_NAMES = ["外緣","內部","核心"];
+const MAP_REQ = [0, 2, 4, 5]; // 進入所需大境界
+
+/* ── 妖獸：[名, 圖, 層, force, 掉落]（掉落材料均已在材料表中）── */
+const BEASTS = [
+ ["鐵背狼",2,0,8,"狼牙"],["蠻牛獸",2,0,9,"蠻牛皮"],["鐵羽鷹",2,0,12,"鷹王翎"],
+ ["玄龜",2,1,38,"玄龜甲"],["赤蟒",2,1,40,"赤蟒筋"],["獨角犀",2,1,42,"犀角"],
+ ["蛟龍",2,2,130,"蛟筋"],["妖王",2,2,150,"妖王骨"],["火鳳",2,2,160,"鳳翎"],
+ ["石甲蟲",0,0,10,"雲母石"],["炎蜥",0,0,12,"火岩屑"],["礦髓獸",0,1,40,"紫金砂"],
+ ["藤妖",1,0,11,"藤心"],["木魈",1,1,42,"紫檀魂"],["青鸞",1,2,140,"扶桑神木"],
+ ["星獸",3,0,150,"星隕砂"],["炎靈",3,1,260,"離火珠"],["混沌獸",3,1,270,"混沌石"],
+];
+
+/* ── 劍譜：need 達標數→品質 ── */
+// type: 佩劍(自用武力) / 售賣(高價值) / 禮物(門派專屬)
+const RECIPES = {
+  青鋒劍:{type:"佩劍", need:{金:10,木:8}, succ:0.85, value:400, desc:"入門制式劍，武力+微"},
+  玄鐵重劍:{type:"佩劍", need:{金:14,土:14}, succ:0.75, value:900, desc:"大巧不工，武力+中"},
+  秋水軟劍:{type:"佩劍", need:{金:10,水:14}, succ:0.75, value:900, desc:"輕靈飄逸，武力+中"},
+  赤炎烈劍:{type:"佩劍", need:{金:12,火:14}, succ:0.72, value:1000, desc:"劍出焚野，武力+中上"},
+  青帝木劍:{type:"佩劍", need:{木:16,水:10}, succ:0.72, value:1000, desc:"生機盎然，武力+中上"},
+  混元一氣劍:{type:"佩劍", need:{金:16,木:14,水:14,火:14,土:14}, succ:0.6, value:3000, desc:"五行歸一，武力+上"},
+  龍紋古劍:{type:"佩劍", need:{金:18,水:14,土:12}, succ:0.6, value:2500, desc:"蛟筋為絡，武力+上"},
+  鳳鳴劍:{type:"佩劍", need:{金:16,火:18}, succ:0.58, value:2600, desc:"劍吟如鳳啼，武力+上"},
+  太初劍:{type:"佩劍", need:{金:22,土:18,水:16,火:16}, succ:0.45, value:8000, desc:"太初有道，劍開鴻蒙"},
+  精鋍獵刀:{type:"售賣", need:{金:10,火:8}, succ:0.85, value:600, desc:"凡間獵戶摯愛，好賣"},
+  護身短匕:{type:"售賣", need:{金:12,水:8}, succ:0.82, value:700, desc:"凡間富商最愛，好賣"},
+  鎮宅木劍:{type:"售賣", need:{木:12,土:8}, succ:0.85, value:500, desc:"凡間家家戶戶都要"},
+  "名劍「聽雨」":{type:"禮物", gift:"萬劍山", need:{金:16,水:16}, succ:0.65, value:2000, desc:"萬劍山劍修的浪漫"},
+  養神木梳:{type:"禮物", gift:"藥王谷", need:{木:14,水:12}, succ:0.75, value:900, desc:"藥王谷最愛"},
+  星軌羅盤:{type:"禮物", gift:"星機閣", need:{金:14,水:14,土:8}, succ:0.7, value:1200, desc:"星機閣最愛"},
+  玉笛:{type:"禮物", gift:"妙音門", need:{木:14,水:14}, succ:0.75, value:1000, desc:"妙音門最愛"},
+  鴛鴦香囊:{type:"禮物", gift:"合歡宗", need:{木:12,火:12,水:10}, succ:0.75, value:1000, desc:"合歡宗最愛"},
+  檀木佛珠:{type:"禮物", gift:"大自在殿", need:{木:14,土:12,水:10}, succ:0.72, value:1000, desc:"大自在殿最愛"},
+};
+// 劍品階：需求達標維度數 → 下品1檔/中品2檔/上品3檔/極品4檔（乘入武力與價值）
+const SWORD_GRADES = ["下品","中品","上品","極品"];
+
+/* ── 丹藥（外部獲得：藥王谷買/送，自己不會煉）── */
+const PILLS = {
+  聚靈散:{price:500, effect:"spirit", v:600, desc:"靈氣+600"},
+  突破丹:{price:1200, effect:"break", v:5, desc:"突破率+5%"},
+  洗髓丹:{price:2000, effect:"npcspeed", desc:"NPC服用加速修煉"},
+  解毒丹:{price:800, effect:"cure", desc:"解除毒/丹毒"},
+  消業丹:{price:3000, effect:"death-30", desc:"渡劫死亡率-30%"},
+};
+const POISON_PILLS = { // 藥王谷深度社交解鎖後可購
+  金毒丹:{price:1500, kind:"急性", desc:"立即毒發，易被發現"},
+  火毒丹:{price:1500, kind:"急性", desc:"立即毒發，易被發現"},
+  水毒丹:{price:2500, kind:"慢性", desc:"潛伏發作，難以察覺"},
+  土毒丹:{price:2500, kind:"慢性", desc:"潛伏最久，難以察覺"},
+  情毒丹:{price:5000, kind:"特殊", desc:"愛情值劇烈波動"},
+};
+
+/* ═══════════ v2：隨機世界 ═══════════ */
+/* ── 姓名池 ── */
+const SURNAMES = "顧沈謝秦蕭姜柳陸白蘇裴溫花慕雲楚洛江池聶卓衛霍藍簡岑紀桑殷祝穆施段燕聞闕蔚衡洪盛藺宋".split("");
+const GIVEN_M = ["長歌","孤舟","寒山","星辭","無音","滿樓","玄真","晏清","霽衡","雲深","照野","聽楓","望舒","懷瑾","沉舟","青崖","踏雪","無涯","若愚","知遠","承影","驚鴻","拂雪","凌霄","長風","千帆","明軒","折竹","歸遠","清晏","北望","鶴鳴","觀瀾","硯秋","既白","逾明"];
+const GIVEN_F = ["雲裳","小酒","白薇","合香","以寧","鳴箏","媚娘","疏影","拂霜","阿蘿","青黛","未晞","采薇","落梅","聽雪","語嫣","紅綃","綰綾","檀心","疏月","半夏","紫蘇","忍冬","連翹","杜若","夢澤","鶯時","未央","驚蟄","照影","挽星","問箏"];
+
+/* ── 世界配置：每派 掌門/長老/弟子 ── */
+const WORLD_ROSTER = [
+  {sect:"萬劍山",  elders:3, elderRi:[3,5], discs:11, discRi:[0,3], mRatio:0.65, note:"劍修之鄉"},
+  {sect:"藥王谷",  elders:2, elderRi:[3,4], discs:7,  discRi:[0,2], mRatio:0.4,  note:"丹修聖地"},
+  {sect:"星機閣",  elders:2, elderRi:[3,4], discs:6,  discRi:[0,2], mRatio:0.5,  note:"推演天機"},
+  {sect:"妙音門",  elders:2, elderRi:[3,4], discs:6,  discRi:[0,2], mRatio:0.2,  note:"音修，多女修"},
+  {sect:"合歡宗",  elders:2, elderRi:[3,4], discs:6,  discRi:[0,2], mRatio:0.5,  note:"雙修之宗"},
+  {sect:"大自在殿",elders:2, elderRi:[3,4], discs:6,  discRi:[0,2], mRatio:0.85, note:"佛門，愛情不顯"},
+];
+const SECT = ["萬劍山","藥王谷","星機閣","妙音門","合歡宗","大自在殿"];
+const SECT_UNLOCK = { // 好感閾值 → 門派功能
+  "藥王谷": {favor:60, fn:"毒方", desc:"好感60解鎖：可購毒丹"},
+  "星機閣": {favor:60, fn:"避雷符", desc:"好感60解鎖：吉日突破+10%、避雷符禮"},
+  "妙音門": {favor:60, fn:"安神曲", desc:"好感60解鎖：練劍靈氣+20%"},
+  "合歡宗": {favor:60, fn:"雙修", desc:"好感60解鎖：雙修靈氣翻倍"},
+  "大自在殿": {favor:99, fn:"擋刀", desc:"滿愛情：道侶/摯愛替你擋致命一擊"},
+};
+
+/* ── 秘境（週期沿用原作年表，獎勵劍修化）── */
+const DUNGEONS = [
+ {id:"jianzhong", name:"萬劍冢", cycle:0, start:0, req:[0,7], layers:9, desc:"常駐。歷代劍修埋劍之地，拾劍/劍意"},
+ {id:"yunyin", name:"雲隱秘境", cycle:4, start:4, req:[1,4], layers:9, drop:{item:"神鑄劍爐", chance:0.35}, desc:"每4年。九層或得神鑄劍爐(鍛造成功率+20%)"},
+ {id:"yishou", name:"異獸谷", cycle:4, start:2, req:[0,7], layers:6, drop:{item:"劍靈蛋", chance:0.25}, desc:"每4年。可獲劍靈蛋(本命劍用)"},
+ {id:"huanshai", name:"幻蜃海", cycle:12, start:12, req:[2,4], layers:9, drop:{item:"鮫人淚", chance:0.5}, firstReward:"rc_名劍「聽雨」", event:"共度一生", desc:"每12年，金丹~出竅"},
+ {id:"wusuo", name:"霧鎖迷島", cycle:20, start:20, req:[3,5], layers:9, firstReward:"rc_龍紋古劍", event:"情毒", desc:"每20年，元嬰~分神"},
+ {id:"sansheng", name:"三生石台", cycle:25, start:23, req:[5,7], layers:5, event:"刻字", desc:"每25年。與滿愛情者刻名，來世重逢"},
+ {id:"xuanming", name:"玄冥古窟", cycle:33, start:33, req:[4,6], layers:9, firstReward:"rc_太初劍", desc:"每33年，出竅~合體"},
+ {id:"yuehua", name:"月華仙谷", cycle:100, start:100, req:[6,7], layers:9, own:true, desc:"2000萬貢獻可提前兌換，全材料自由"},
+];
+
+/* ── 文案池 ── */
+const LINES = {
+  forgeOk:["爐火純青，劍成龍吟","淬火一瞬，劍光如虹","千錘百煉，終成一劍"],
+  forgeFail:["火候差之毫厘，劍身出現裂紋","鍛錘偏了半寸，這劍廢了","材料相斥，爐中炸開一團火光"],
+  sparWin:["你一劍挑落對方兵刃，勝了","三十招後，對方力竭認輸","你的劍停在對方咽喉三寸處"],
+  sparLose:["對方劍勢如虹，你沒能擋住","三十招後你被一劍挑落","你輸了，但不算難看"],
+  assassinateOk:["夜色無聲，無人知曉你來過","他至死都沒看清那一劍"],
+  assassinateSeen:["窗外一道劍光——你被發現了！"],
+};
+
+</script>
+<script>
+/* ═══ v3 性格庫：27種，台詞分友情/愛情三階段 ═══ */
+/* chat/flirt 各3階段：<30 陌生期 / 30-69 熟絡期 / ≥70 心腹(情深)期 */
+const PERS = {
+"高傲":{giftMul:0.7,chatFav:1,flirtReq:80,loveGain:2,decay:1,desc:"下巴抬得很高，心卻不一定",
+ greet:["「哦，是你。」他眼皮都懶得抬。","「今日也這麼閒？」"],
+ chat:[["「別擋著我曬太陽。」","「跟你說話浪費口水。」"],
+       ["「你倒是不煩人……勉強。」","「劍還行。人一般。」"],
+       ["「全世界我只等你一個人打招呼，你知道嗎。」","「別走了，坐下。這是命令。」"]],
+ gift:["「哼……正好缺這個。」（嘴角壓不住）","「算你有心。放下吧。」"],
+ giftBad:["「拿走。我不收來路不明的東西。」"],
+ flirt:[["「調戲我？你膽子不小。」","「離我遠一點。」"],
+       ["……你、你說什麼胡話。（耳朵紅了）","「再講一次，我就裝作沒聽見。」"],
+       ["「除了你，別人看我一眼我都嫌髒。」","「輸給你了。連心都輸給你了。」"]],
+ flirtNo:["「你不配。……還不配。」"],
+ intimate:["「閉嘴，過來。」","「記住，是我先低頭的。只有這一次。」"]},
+"傲嬌":{giftMul:0.8,chatFav:2,flirtReq:70,loveGain:4,decay:1,desc:"嘴上嫌棄，身體老實",
+ greet:["「哼，才不是在等你。」","「……又來了。真拿你沒辦法。」"],
+ chat:[["「別自作多情，我只是剛好路過。」","「跟你講話？我寧願擦劍。」"],
+       ["「今、今天的你……也就那樣吧。」（偷瞄）","「這個給你。不是我買的，是撿的。」"],
+       ["「你要是敢跟別人這樣說笑，我就……我就……哼。」","「笨蛋。我最喜歡的笨蛋。」"]],
+ gift:["「誰、誰要你的東西！（收下）唔……謝了。」","「正好缺這個，別誤會，是順便。」"],
+ giftBad:["「什麼破爛。拿回去！」"],
+ flirt:[["「你、你說什麼呢！變態！」","「臉湊這麼近幹嘛！」"],
+       ["「……笨蛋。」（小聲）「……再說一遍也可以。」","「我又沒說不行……」"],
+       ["「這種話……只許對我講。聽到沒有。」","「過來。這次換我主動。」"]],
+ flirtNo:["「哼，誰要跟你……一邊去！」"],
+ intimate:["「只此一次……不對，以身相許就算了……唔。」","「手、手要好好牽著啊笨蛋。」"]},
+"溫柔":{giftMul:1.2,chatFav:3,flirtReq:60,loveGain:3,decay:0,desc:"春風一樣的人",
+ greet:["「你來了。累不累？」","「等你很久了，走吧，我燉了湯。」"],
+ chat:[["「慢慢來，修行急不得。」","「受傷了要說，別硬撐。」"],
+       ["「有你在，今日的劍都順手些。」","「你的事，我都記得。」"],
+       ["「我這輩子最正確的事，就是對你好。」","「別怕，天塌下來我頂著。」"]],
+ gift:["「留給你自己……好吧，我收下，很喜歡。」","「你總是這麼細心。」"],
+ giftBad:["「沒關係，我知道你盡力了。」"],
+ flirt:[["「（微笑注視）你在說什麼傻話。」","「玩笑話，我就當沒聽見囉。」"],
+       ["「……我心跳有點亂。你負責。」","「再這樣，我會當真的。」"],
+       ["「餘生請多指教。」","「你的傷，你的心，都交給我。」"]],
+ flirtNo:["「對不起……我還沒準備好。」"],
+ intimate:["「今晚，別走了。」","「我會很溫柔的。」"]},
+"風流":{giftMul:1,chatFav:2,flirtReq:50,loveGain:4,decay:2,desc:"處處留情，也處處無情",
+ greet:["「喲，這不是我的小劍修嗎。」","「來得正好，陪我喝一杯？」"],
+ chat:[["「山下的故事想聽嗎？很長，也很香豔。」","「你臉紅什麼，我還沒開始講呢。」"],
+       ["「說來奇怪，別人我都膩了，你還行。」","「這杯敬你。只敬你。」"],
+       ["「江湖三千飲，我獨想飲你這一盞。」","「收心這種事，我居然對你做了。」"]],
+ gift:["「巧了，正想討個信物。」","「那你可就是我的人了——開玩笑的。……也許。」"],
+ giftBad:["「品味堪憂。送錯人了吧？」"],
+ flirt:[["「火上澆油？可以，我奉陪。」","「你主動的，可別哭。」"],
+       ["「耳根紅了？我看看——嗯，燙手。」","「再靠近點，我不咬人。……輕輕咬。」"],
+       ["「萬花叢中過，片葉不沾身——現在沾了，認栽。」","「我這條命，浪夠了，給你養老。」"]],
+ flirtNo:["「今天沒心情。改日，改日一定。」"],
+ intimate:["「今夜月色太浪費。」","「我閱人無數，卻在你這裡技窮。」"]},
+"綠茶":{giftMul:1.2,chatFav:2,flirtReq:60,loveGain:3,decay:1,desc:"話軟刀甜，句句拿捏",
+ greet:["「哎？你終於來啦，人家等好久了。」","「別人都欺負我，只有你不會，對吧？」"],
+ chat:[["「我才不說别人壞話……但是那個人真的過分。」","「你今日怎麼沒理我，我傷心了一下午。」"],
+       ["「師兄又誇你了？……人家有點吃味呢。」","「你說，我跟那個誰，誰更好？老實說。」"],
+       ["「全門派都以為我好欺負，只有你護著我。」","「我們的祕密，你可要爛在肚子裡。」"]],
+ gift:["「呀，這麼貴重的……人家怎麼好意思。（已收好）」","「你對我最好了，真的。」"],
+ giftBad:["「……沒事，我就是隨口說想要而已。」（眼眶紅了）"],
+ flirt:[["「討厭～但是可以繼續說。」","「你這樣，我會睡不着覺的。」"],
+       ["「要是別人這樣撩我，早挨打了。你嘛……嗯。」","「那你去跟她好啊，反正我无所谓——你還不快哄我。」"],
+       ["「我演了那麼多人，只有在你面前不用演。」","「喜歡你這種話，我說得出，也做得到。」"]],
+ flirtNo:["「現在還不行哦～再培養培養感情嘛。」"],
+ intimate:["「門關好了……現在，只剩我們了。」","「叫我名字，別停。」"]},
+"單純":{giftMul:1.5,chatFav:3,flirtReq:55,loveGain:3,decay:0,desc:"一張白紙，全信你",
+ greet:["「哇，是你！今日練劍了嗎？」","「我正想找你！你看你看，我養的靈雀！」"],
+ chat:[["「雙修是兩個人一起打坐的意思嗎？」","「長老說的話我都聽不懂，你能教我嗎？」"],
+       ["「把好吃的分你一半！最好的朋友！」","「你上次說的那本書，我讀了三遍！」"],
+       ["「你要一直都在哦，拉鉤！」","「長大以後，我也想成為你這樣的人。」"]],
+ gift:["「給我的？！真的？！（捧在手心）」","「我要把它供起來……不對，要用起來！」"],
+ giftBad:["「嗚……沒關係，禮物壞了心意還在！」"],
+ flirt:[["「你的臉好近……心跳為什麼這麼快？」","「這是什麼遊戲？我沒玩過……」"],
+       ["「師姐說喜歡一個人就是想一直看著他。原來是這種感覺。」","「睡不著的時候，想的是你誒。」"],
+       ["「我懂了！我喜歡你！最先告訴你！」","「以後我的道侶就是你，說定了！」"]],
+ flirtNo:["「唔……師父說這樣不行。先不要。」"],
+ intimate:["「原來長大是這種感覺……」","「只跟你，因為是你。」"]},
+"潑辣":{giftMul:0.9,chatFav:2,flirtReq:65,loveGain:3,decay:1,desc:"火爆脾氣，熱心腸",
+ greet:["「來得正好！幫我搬這個！」","「站住！昨日是不是躲著我？」"],
+ chat:[["「少貧嘴，幹活！」","「你再瞅一眼試試？」"],
+       ["「罵你是看得起你，懂不懂。」","「受欺負了報我名字！我罩你！」"],
+       ["「這輩子認定的朋友沒幾個，你算一個。」","「誰動你，我撕了誰。」"]],
+ gift:["「喲，還挺孝敬姑奶奶。（笑）」","「算你有良心！記你一功！」"],
+ giftBad:["「就拿這種破玩意打發我？！」"],
+ flirt:[["「調戲老娘？活膩了！」","「信不信我現在就揍你！」"],
+       ["「……哼，算你敢說。過來。」","「再貧嘴，揍你。……輕輕的。」"],
+       ["「老娘的男人的名分，你要不要？說話！」","「惹了我，就得負責到底。」"]],
+ flirtNo:["「一邊去！沒看姑奶奶忙著嗎！」"],
+ intimate:["「磨蹭什麼，過來！」","「伺候好了，有賞。」"]}
+};
+Object.assign(PERS, {
+"寡言":{giftMul:0.8,chatFav:1,flirtReq:75,loveGain:2,decay:0,desc:"一年說不了十句話",
+ greet:["「……嗯。」","（點頭示意）"],
+ chat:[["「……」","「劍，不錯。」"],
+       ["「來了。」","「坐。」"],
+       ["「等你。」","「別走。」"]],
+ gift:["「……謝。」","（珍重地收進懷裡）"],
+ giftBad:["（推回來，搖頭）"],
+ flirt:[["「……」","（後退半步）"],
+       ["（耳尖通紅，別過頭）","「……隨你。」"],
+       ["「只有你。」","（把你手放進他掌心，握緊）"]],
+ flirtNo:["「……還不行。」"],
+ intimate:["「……別怕。」","（一夜無話，晨起十指仍扣）"]},
+"無情":{giftMul:0.6,chatFav:1,flirtReq:90,loveGain:1,decay:0,loveCap:99,rare:6,desc:"此心已斬，情關不開",
+ greet:["「俗緣，斬。」","「又是你。」"],
+ chat:[["「與我無關。」","「讓開。」"],
+       ["「……你倒是執著。」","「說完就走。」"],
+       ["「你若死了，我會知道。僅此而已。」","「我斬得斷萬物，斬不斷你，麻煩。」"]],
+ gift:["「無用之物。」（但記住了）","「……放下吧。」"],
+ giftBad:["「拿走。最後一次警告。」"],
+ flirt:[["「找死。」","「情之一字，我見一次斬一次。」"],
+       ["「……你在玩火。」","「再多言，劍不認人。」"],
+       ["「我以為斬乾淨了。原來漏了你。」","「此生僅此一人。莫再試探。」"]],
+ flirtNo:["「念在你蠢，饒你這次。」"],
+ intimate:["「……就這一次，下不為例。」","「閉眼。今夜我不是我。」"]},
+"病嬌":{giftMul:1.2,chatFav:2,flirtReq:50,loveGain:5,decay:0,rare:4,desc:"笑容甜糯，眼底藏著刀",
+ greet:["「你來啦……我數過了，你今日還沒來看我。」","「再晚一步，我就要去找你了喔。」"],
+ chat:[["「別跟別人說話，跟我說。」","「你身上有別人的氣味……我頭好暈。」"],
+       ["「今日劍坪那個人一直看你。我記下他了。」","「你遲到了一刻鐘。我等了很久，很久。」"],
+       ["「全世界都可以背叛你——只有我不會。只有我。」","「你要是消失，我就去把你找回來。天涯海角，骨頭也認得。」"]],
+ gift:["「給我的？……真的只給我一個人？」","「我會收得很好，誰碰誰死。」"],
+ giftBad:["「……不喜歡。（捏碎）再買一份，好嗎？」"],
+ flirt:[["「調戲我？……可以再試一次，我不介意。」","「心跳好吵。是你的，還是我的？」"],
+       ["「再多說一句，我就當真了喔。當真的後果，你想清楚。」","「你只能對我這樣。記住了？」"],
+       ["「你是我的。這句我說過很多次，你怎麼才記住。」","「逃也沒用的。不過——你捨得逃嗎？」"]],
+ flirtNo:["「……還不是時候。快點到時候吧。」"],
+ intimate:["「痛和甜是一起來的。我教你。」","「繩子只是怕你離開。你乖，就不用。」"]},
+"腹黑":{giftMul:1,chatFav:2,flirtReq:65,loveGain:3,decay:1,desc:"笑面算盤，句句有鉤",
+ greet:["「稀客。我可是『恰好』在等你。」","「來談筆生意？還是來談心？」"],
+ chat:[["「你想要的，我剛好知道。代價嘛……」","「免費的消息最貴，聽過嗎？」"],
+       ["「告訴你個祕密——別人也用這個價問過你。」","「幫你這次。人情，先記著。」"],
+       ["「我算計天下人，唯獨想對你誠實一次。」","「你的軟肋是我？……那可真是，好大一個把柄。」"]],
+ gift:["「哦？有所求？說吧，我聽著。」（收下）","「懂規矩。我喜歡懂規矩的人。」"],
+ giftBad:["「這是試探，還是羞辱？（笑）膽子不小。」"],
+ flirt:[["「撩我？先想想輸得起什麼。」","「有意思。繼續，我在評估。」"],
+       ["「這步棋，我接了。後面的局，你陪我走。」","「你知不知道你在跟虎謀皮。（湊近）皮給你。」"],
+       ["「江山我都要，何況是你。」","「我輸了。輸給你，居然有點開心。」"]],
+ flirtNo:["「價碼不夠。回去練練再來。」"],
+ intimate:["「今夜之後，你就是我最大的變數。」","「聰明人做糊塗事——最銷魂。」"]},
+"妖媚":{giftMul:1.1,chatFav:3,flirtReq:45,loveGain:5,decay:2,desc:"眼波一轉，魂就沒了",
+ greet:["「呀～小傢伙，主動送上門？」","「你眼裡有東西在燒哦。」"],
+ chat:[["「陪姐姐坐坐嘛，一個人喝酒好冷。」","「你臉紅的樣子，比酒還醉人。」"],
+       ["「別人都想從我這討好處，你想要什麼？」","「再看我一眼，就要收錢了哦。」"],
+       ["「閱盡千帆，唯獨你的船，我想登一輩子。」","「魅術對你沒用——因為不需要，對吧？」"]],
+ gift:["「懂事。（指尖挑起你下巴）有賞。」","「禮物我收下了，人……也一起收？」"],
+ giftBad:["「啧，敷衍。人家傷心了哦。（並沒有）"],
+ flirt:[["「哦？膽子肥了。喜歡。」","「這句話，換我說給你聽更合適。」"],
+       ["「過來。這裡，再近一點。乖。」","「你抖什麼？我還沒開始呢。」"],
+       ["「我的媚骨，從今往後只媚你一人。」","「這雙眼看過多少人，現在只裝得下你。」"]],
+ flirtNo:["「今天興致不在這。改日～本座說話算話。」"],
+ intimate:["「門，我鎖了。」","「叫出來也沒關係，這裡只我們兩個。」"]},
+"癡纏":{giftMul:1.3,chatFav:3,flirtReq:40,loveGain:6,decay:1,rare:4,desc:"認定了就不撒手",
+ greet:["「你去哪了？我找遍了三座峰！」","「今天陪我。就今天。還有明天。」"],
+ chat:[["「我打聽過你的課表，別生氣嘛。」","「這條路我等了一個時辰，腳都麻了。」"],
+       ["「你是不是躲我？……不許躲。」","「我給你帶了早飯、午飯，還有明天的。」"],
+       ["「道侶契我都刻好了，就差你按手印。」","「你要是不喜歡我，就直說——不許直說！」"]],
+ gift:["「你送的！（原地轉圈）我要昭告全門派！」","「供起來！不捨得用！」"],
+ giftBad:["「嗚……你是不是討厭我了。我做錯什麼了我改！」"],
+ flirt:[["「你先說的啊！不許反悔！婚期定什麼時候？！」","「心跳好快——這是病，你得負責！」"],
+       ["「我連我們孩子的名字都想好了！」","「再撩我，我現在就去求長老主婚！」"],
+       ["「生生世世那種誓言，敢不敢說？我敢！」","「你的名字和我的，刻在一起才對。」"]],
+ flirtNo:["「……那、那朋友也行！先當朋友！」"],
+ intimate:["「說好了啊，這輩子就是你！」","「我等這一天等了好久好久……」"]},
+"瘋批":{giftMul:0.9,chatFav:2,flirtReq:60,loveGain:4,decay:0,rare:4,desc:"瘋起來六親不認",
+ greet:["「哈哈哈哈，你來了！今日玩什麼？」","「我剛拆了演武場的靶子。你賠嗎？」"],
+ chat:[["「規則是給蠢貨定的。你我不是。」","「別用那種眼神看我……會激起我的破壞欲。」"],
+       ["「全門派都怕我。你怎麼不怕？……有點意思。」","「陪我瘋一場？就一場。流血那種。」"],
+       ["「你是我混亂人生裡唯一的秩序。奇怪。」","「為了你，我可以假裝正常。累死了，但值。」"]],
+ gift:["「禮物？！拆拆拆——！（碎）哎呀。心意收到了！」","「哼，收買我？……成功了。」"],
+ giftBad:["「垃圾。（燒了）下次送好點的——我心情值錢。」"],
+ flirt:[["「撩我？你知道我在乎的人都是什麼下場嗎？哈哈，開玩笑。也許。」","「危險哦。我這種人，沾了就甩不掉。」"],
+       ["「你敢不敢跟一個瘋子談感情？敢不敢？」","「我倆要麼燒成灰在一起，要麼別開始。」"],
+       ["「連你的瘋我都喜歡。救命，沒救了。」","「世界燒掉也行，你別燒。」"]],
+ flirtNo:["「現在不行。我現在想打人。改天。」"],
+ intimate:["「抓緊我。掉下去一起死。」","「清醒的時候不敢說——我愛你愛得想毀了你。」"]}
+});
+Object.assign(PERS, {
+"醋罈":{giftMul:1,chatFav:2,flirtReq:55,loveGain:4,decay:0,desc:"眼裡揉不得半粒沙",
+ greet:["「你昨日去哪了？說清楚。」","「離那個誰遠一點。對，就那個。」"],
+ chat:[["「你跟別人走得很近嘛。（盯）」","「我不管，你先跟我解釋。」"],
+       ["「你笑什麼？……想到誰了？說！」","「抱一下。就一下。證明你心裡有我。」"],
+       ["「我知道我管得寬……可我控制不住。」","「你眼裡只能有我。這要求過分嗎？過分也罷。」"]],
+ gift:["「別人送的你也收過嗎？……算了，這個我收。」","「（滿意）暫且原諒你昨天的事。」"],
+ giftBad:["「這是別人幫你挑的吧？！招！」"],
+ flirt:[["「你跟我以外的……算了，說正事。」","「想清楚再開口。我當真。」"],
+       ["「多看別人一眼，我都要瘋。怎麼辦。」","「你是我一個人的。喊出來。」"],
+       ["「嫉妒是苦的，你是甜的。扯平了。」","「纏你一輩子，許了嗎？」"]],
+ flirtNo:["「……心情不好。誰惹我了？你惹我了。」"],
+ intimate:["「今晚哪也不許去。」","「做夢也要夢到我。」"]},
+"忠犬":{giftMul:1.3,chatFav:3,flirtReq:45,loveGain:4,decay:0,desc:"認了主，命就是你的",
+ greet:["「你來了！（立刻起身）需要什麼？」","「我一直在這裡。一直在。」"],
+ chat:[["「有事吩咐就好，別客氣。」","「你的劍我昨晚保養過了。」"],
+       ["「受傷了？誰打的？帶我去。」","「你笑一下，我一天都值了。」"],
+       ["「我的命是你撿回來的。你隨便用。」","「你去哪，我去哪。這不是商量。」"]],
+ gift:["「給、給我的？（捧著手抖）」","「我會用一輩子回報。」"],
+ giftBad:["「是我沒用……我去掙。等我。」"],
+ flirt:[["「我、我可以嗎？（不敢置信）」","「別耍我……耍我也認。」"],
+       ["「心臟要炸了。但是別停。」","「我配嗎？……我再努力些就配了。」"],
+       ["「此生此世，不離不棄。我發誓。」","「你往後退一步，我往前十步。」"]],
+ flirtNo:["「我不配……再給我點時間變強。」"],
+ intimate:["「今夜換我護著你。」","「輕重……我聽你的。」"]},
+"聖母":{giftMul:1.1,chatFav:3,flirtReq:70,loveGain:2,decay:1,desc:"對誰都好，好得讓人牙癢",
+ greet:["「今日也平安，便是福氣。」","「路上見你，心就安了。道友好。」"],
+ chat:[["「眾生皆苦，多擔待些。」","「那孩子也有他的難處。」"],
+       ["「你偶爾也該為自己活。」","「我幫你是應當的，別放在心上。」"],
+       ["「我普度眾人，唯獨偏心了你。」","「若你墮魔，我度你；若無人度你，我陪你墮。」"]],
+ gift:["「上天有好生之德，你也有。（鄭重收下）」","「這太貴重了……我拿去救濟山下災民可好？」"],
+ giftBad:["「無妨，心意到了。」"],
+ flirt:[["「罪過罪過……你莫要試探我道心。」","「此等言語，說出去要遭報應的。」"],
+       ["「（誦經的聲音亂了一拍）……這、這念不下去了。」","「我修行五十年，敗給你一句話。」"],
+       ["「下山罷。為你，陪我看人間煙火罷。」","「天道渡眾生，你渡我。」"]],
+ flirtNo:["「不可不可。萬萬不可。（耳根紅透）」"],
+ intimate:["「壞了道心，只此一夜……不，一生。」","「神前懺悔千年，換你一夜，值。」"]},
+"蕩浪":{giftMul:1.1,chatFav:3,flirtReq:35,loveGain:6,decay:3,desc:"合歡宗裡最合歡的人",
+ greet:["「喲，身子骨最近練得不錯嘛。」","「來來來，姐姐教你點正經功夫～不正經的那種。」"],
+ chat:[["「春宵一刻值千金，練什麼劍。」","「你這身子，不修雙修功可惜了。」"],
+       ["「上月那個小道士……咳，說你了說你了。」","「陪我喝交杯——就當敬天。」"],
+       ["「閱人無數，床上床下，就服你。」","「什麼浪不浪的，對你是真心。摸摸看。」"]],
+ gift:["「懂事～今晚記你一功。」","「東西一般，人來了就行。」"],
+ giftBad:["「啧，沒誠意。罰你重買。」"],
+ flirt:[["「來啦？等這句半天了。」","「口說無憑，手放這兒。」"],
+       ["「火候到了，就差你點。」","「今晚不走？我燒水。」"],
+       ["「浪子回頭金不換——我換了，你負責。」","「跟別人是玩，跟你是過日子。分得清。」"]],
+ flirtNo:["「今日乏了。明日！明日一定。」"],
+ intimate:["「門窗都關好了～」","「功夫不用，如隔靴搔癢。來。」"]},
+"藥罐":{giftMul:1.3,chatFav:2,flirtReq:65,loveGain:2,decay:1,desc:"一身藥香，三分是人七分是丹",
+ greet:["「噓——藥爐正到火候。」","「你氣色不好。來，把把脈。」"],
+ chat:[["「這顆丹，你猜我煉廢了幾爐？」","「別碰那個！有毒。……大概。」"],
+       ["「你的傷我記著呢，換藥了嗎？」","「這爐成了分你一半。」"],
+       ["「我這條命是藥吊著的，心是你暖的。」","「長生不老藥我不煉了——有你，嫌命短才煉。」"]],
+ gift:["「好料！入藥綽綽有餘！（瞬間收走）」","「藥材？不，我全都要。」"],
+ giftBad:["「此物與我藥性相沖。拿走拿走。」"],
+ flirt:[["「心悸？心跳快？來，吃顆定心丸。」","「你這是……算了，醫者不自醫。」"],
+       ["「我配得出天下藥，配不出喜歡你的解藥。」","「以你入藥，藥引是我的心。」"],
+       ["「嚐嚐。嘴對嘴那種餵藥，最有效。」","「我的毒，只有你是解藥。」"]],
+ flirtNo:["「先把這碗藥喝了。別的以後再說。」"],
+ intimate:["「藥香混著你的味道，絕了。」","「小心肝，字面意思。」"]},
+"財迷":{giftMul:1.5,chatFav:2,flirtReq:70,loveGain:2,decay:1,desc:"靈石開路，童叟無欺",
+ greet:["「（撥算盤）進賬幾何？」","「來了？先說好，今日茶水費漲了。」"],
+ chat:[["「想打聽消息？先付訂金。」","「談錢不傷感情——我們有感情嗎？」"],
+       ["「給你打了八折，看在老主顧份上。」","「這單生意，算你入夥。」"],
+       ["「賬本第一頁寫的是你，比本錢還靠前。」","「千金散盡還復來，你走了就沒了。」"]],
+ gift:["「（眼睛發光）成色不錯！（飛快入袖）」","「有眼光！這年頭少了！」"],
+ giftBad:["「（掂了掂）……就這？打發叫花子呢。」"],
+ flirt:[["「撩我不收費，你是第一個。」","「感情事小，先對個賬。」"],
+       ["「你欠我的情，利滾利，還得清嗎？」","「拿你抵債，我血賺。」"],
+       ["「萬貫家財不如你一句晚安。」","「賣了鋪子跟你走，你敢要嗎？」"]],
+ flirtNo:["「還不夠。感情這東西，得加錢。」"],
+ intimate:["【VIP客戶專屬服務】","「錢是你的，你是我的。完美閉環。」"]},
+"酒鬼":{giftMul:1,chatFav:3,flirtReq:55,loveGain:3,decay:1,desc:"壺不離手，醉裡乾坤大",
+ greet:["「（酒嗝）來……來一杯？」","「醉裡挑燈看劍，你說妙不妙？」"],
+ chat:[["「酒是糧食精，越喝越年輕。」","「跟我喝？先乾為敬——你随意。」"],
+       ["「上次喝斷片，是你送我回來的吧。謝了。」","「這罈女兒紅，埋了十八年，挖出來跟你分。」"],
+       ["「千杯難遇一知己，你是那知己。」","「戒酒容易，戒你難。那不戒了。」"]],
+ gift:["「好酒！！（拍腿）你懂我！」","「酒？酒！就是酒！」"],
+ giftBad:["「（嗅了嗅）……這是給人喝的？」"],
+ flirt:[["「喝了嗎就敢說這話？醒著呢？那……那更了不得。」","「酒壯慫人膽，我膽不用壯。」"],
+       ["「醉眼看花花更美，你看你——绝了。」","「趁我沒醉，快多說幾句。」"],
+       ["「這輩子喝過最好的，不是酒，是你。」","「酒入愁腸，你入我心。」"]],
+ flirtNo:["「酒還沒醒……不對，還沒醉。怪事。」"],
+ intimate:["「交杯酒，走一個。」","「醉生夢死，擇一城終老，遇一人白首——就你了。」"]}
+});
+Object.assign(PERS, {
+"武癡":{giftMul:1,chatFav:1,flirtReq:60,loveGain:3,decay:0,desc:"眼裡只有劍，勉強有你",
+ greet:["「擋路。……哦，是你。打一場？」","「來！正好印證新悟的劍意！」"],
+ chat:[["「少囉嗦，出劍。」","「說話費的氣，夠刺三百劍。」"],
+       ["「你這招不錯。再來。」","「今日破例，陪你坐坐。劍也歇歇。」"],
+       ["「一生之敵難尋，一生之友更難。你是後者。」","「劍在，你在。都在就好。」"]],
+ gift:["「兵器？（眼睛一亮）借我看——好劍！」","「嗯。刀劍類的，下次也送這個。」"],
+ giftBad:["「無用。不如一把鐵劍。」"],
+ flirt:[["「調情？不如過招。」","「有這閒工夫，多練三百劍。」"],
+       ["「心跳亂了……影響出劍速度。你負責。」","「打完這場，有話跟你說。」"],
+       ["「我的道，往後有你一半。」","「護你，比贏重要。」"]],
+ flirtNo:["「比試再輸一次再說。……贏了也不行。」"],
+ intimate:["「以劍為聘，以心為盟。」","「過完這輩子，下輩子再打一場。」"]},
+"戲精":{giftMul:1,chatFav:2,flirtReq:55,loveGain:3,decay:1,desc:"人生如戲，全靠演技",
+ greet:["「（甩袖）本座等你有半炷香了！」","「鑼鼓點呢？我的出場怎麼能沒鑼鼓！」"],
+ chat:[["「你知道嗎，我上一世是條龍。」（認真）","「此事說來話長——長話短說就是：我厲害。」"],
+       ["「昨日跌落懸崖，我抓住了一根藤——戲肉來了——藤斷了！」","「別走！正講到高潮！」"],
+       ["「全世界都是觀眾，只有你是主角。」","「這輩子演過最好的角色，是愛你的人。」"]],
+ gift:["「（單膝跪地，捧心）此恩此情，沒齒難忘！（偷偷）真給啊？」","「幕啟——謝贵人賞！」"],
+ giftBad:["「（僵住）……導演，這段能剪嗎？」"],
+ flirt:[["「哦～？（繞你走一圈）這齣戲本座接了。」","「台詞不錯。就是感情還欠火候。」"],
+       ["「你望我的眼神，比任何劇本都好。」","「即興發揮——我喜歡。別停。」"],
+       ["「不演了。這段，只對你真心。」","「散場吧。留下來的，只有你和我。」"]],
+ flirtNo:["「本座今日情緒沒到位。改日，包你滿意。」"],
+ intimate:["「今夜，好戲開鑼。」","「叫出來，權當喝彩。」"]},
+"陰鬱":{giftMul:0.9,chatFav:1,flirtReq:70,loveGain:3,decay:0,desc:"雨夜裡讀詩的那個人",
+ greet:["「……你來了。光也來了。」","「（從書頁間抬眼）嗯。」"],
+ chat:[["「熱鬧是他們的，我什麼也沒有。」","「別靠近。我的運氣會傳染。」"],
+       ["「只有你不問我為何總在陰影裡。」","「這首詩……寫的是你。別問了。」"],
+       ["「你是深淵上方，唯一肯垂下來的繩。」","「若我墜落，請只記得我笑過的樣子。」"]],
+ gift:["「（怔住）……為何是我？」","「我會在每一個壞日子裡，想起它。」"],
+ giftBad:["「（沉默地推回）……我配不上。」"],
+ flirt:[["「（退入陰影）……你會後悔的。」","「這種話，留給活得起勁的人。」"],
+       ["「你的靠近，讓黑暗有了縫隙。」","「危險。我竟然……捨不得躲。」"],
+       ["「原來被愛是這種感覺——像雪落進滾燙的掌心。」","「別離開。求你。這輩子第一次求人。」"]],
+ flirtNo:["「……不值得。你值得更好。」"],
+ intimate:["「把我從夜裡帶走吧。」","「痛也可以。證明我還活著。」"]},
+"樂天":{giftMul:1.1,chatFav:3,flirtReq:55,loveGain:3,decay:0,desc:"天塌了當被蓋",
+ greet:["「嘿嘿，今日運氣爆棚——遇見你了！」","「走走走，後山桃子熟了！」"],
+ chat:[["「摔一跤？那是大地想抱你！」","「沒錢了？正好，減肥！」"],
+       ["「你煩惱的樣子也好玩。別打我！」","「有你在，吃糠都是香的！」"],
+       ["「我的運氣，一半是天生的，一半是遇見你。」","「別人求仙問道，我只求天天見你。」"]],
+ gift:["「哇！！（蹦起來）我有這個了！我有這個了！」","「今天是我的節日！」"],
+ giftBad:["「（撓頭）這啥呀……哈哈，謝啦！心意！」"],
+ flirt:[["「哎哟喂！（捂心口）被閃到了！」","「你臉這麼紅，發燒了？我看看！」"],
+       ["「嘿嘿嘿……你說啥？再說一遍唄～」","「跑了跑了——心跑你那去了，幫我撿！」"],
+       ["「娶我可要管飯的！想好了？」","「下輩子也這麼甜，行不行？」"]],
+ flirtNo:["「哈哈哈……哈？（撓頭）先吃飯先吃飯！」"],
+ intimate:["【興奮到原地轉圈】","「做夢都得笑醒那種！」"]},
+"話癆":{giftMul:1,chatFav:4,flirtReq:60,loveGain:2,decay:1,desc:"一開口就是一堂課",
+ greet:["「你來了你來了！坐！我跟你說——」","「正好正好！我攢了一肚子話！」"],
+ chat:[["「這要從三百年前說起——別走啊！」","「哎哎，我還沒說到重點！」"],
+       ["「（終於說完）……你居然聽完了？此生知己，就是你了吧」","「跟你聊天不費勁！再來一段？」"],
+       ["「滿江湖的人躲我，就你捨得聽。」","「往後的話，只說給你一個人聽。」"]],
+ gift:["「這個啊！我知道！來源講你聽——三炷香後——咦，人呢？」","「（一邊講解來歷一邊珍惜收起）」"],
+ giftBad:["「這個不好，我跟你說，它有個典故——」"],
+ flirt:[["「哎？？說這個？？等我打個腹稿！」","「你先別動，我組織下語言！」"],
+       ["「我嘴笨……不對，我嘴這麼利索，怎麼就說不出那三個字。」","「今晚說的夢話，別當真。……當真也行。」"],
+       ["「愛你這件事，講三天三夜講不完。長話短說：愛你。」","「下輩子我當個啞巴，專心聽你說。」"]],
+ flirtNo:["「額……話到嘴邊，忘了。明天想起來再說！」"],
+ intimate:["【安靜得不可思議的一夜】","「噓——這次換我聽你說。」"]},
+"古板":{giftMul:0.8,chatFav:1,flirtReq:80,loveGain:2,decay:0,desc:"規矩比命重",
+ greet:["「（正冠）有事啟稟，無事退朝。」","「晨課了。遲到者，抄劍譜十遍。」"],
+ chat:[["「修儀容，正心意，方可論劍。」","「門規第三十七條，不可喧嘩。」"],
+       ["「你的功課，我看過了。尚可。」","「破例同你一叙。莫聲張。」"],
+       ["「門規三千條，不及你一個『安』字。」","「老夫這輩子最不守規矩的事，就是偏愛你。」"]],
+ gift:["「（雙手接過）合乎禮數。退下……去吧。」","「登記入冊。（私下摩挲很久）」"],
+ giftBad:["「於禮不合！拿回去！」"],
+ flirt:[["「成何體統！！」","「……自重。（袖中手抖）」"],
+       ["「此風不可長……下不為例。」","「規矩是死的……你怎麼是活的。」"],
+       ["「執子之手，與子成說。古禮，最重。」","「此生認定，絕無二話。這就是我的規矩。」"]],
+ flirtNo:["「糊塗！回去抄門規！」"],
+ intimate:["【吹燈。規矩之內，恩愛之中】","「天亮前，禮數周全。」"]}
+});
+const PERS_KEYS = Object.keys(PERS);
+/* 門派性格傾向：roll 時 45% 走門派池 */
+const SECT_PERS = {
+ "萬劍山":["傲嬌","武癡","忠犬","高傲","話癆","古板"],
+ "藥王谷":["溫柔","藥罐","聖母","陰鬱","財迷","單純"],
+ "星機閣":["腹黑","財迷","戲精","潑辣","古板","高傲"],
+ "妙音門":["妖媚","戲精","溫柔","樂天","綠茶","醋罈"],
+ "合歡宗":["風流","蕩浪","妖媚","綠茶","癡纏","瘋批"],
+ "大自在殿":["寡言","無情","古板","陰鬱","聖母","溫柔"],
+};
+function rollPers(sect) {
+  if (Math.random()<0.06) return "無情";
+  const pool = (sect && SECT_PERS[sect] && Math.random()<0.7) ? SECT_PERS[sect]
+    : PERS_KEYS.filter(k=>!PERS[k].rare);
+  return pool[rnd(pool.length)];
+}
+
+/* ═══ v4.2 細膩互動：誇讚／逗弄／安慰（每人一句，性格化） ═══ */
+const PRAISE = {
+"高傲":"「嗯，你的眼光倒是比劍法強。」","傲嬌":"「哼、哼什麼！……再說一遍。」",
+"溫柔":"「謝謝你。被你看見，是好事。」","風流":"「誇我不如誇你自己的眼光，都動人。」",
+"綠茶":"「哎呀，人家哪有你說的那麼好～」","單純":"「真的嗎？！我要開心一整天了！」",
+"潑辣":"「誇我？眼神不錯嘛，也饒你三分。」","寡言":"「……哦。」（耳根有點紅）",
+"無情":"「誇讚是網。我不入網。」","病嬌":"「你只能誇我一個。對吧？對吧？」",
+"腹黑":"「過獎。……你想要什麼，直說吧？」","妖媚":"「嘴這麼甜？說吧，饞我什麼～」",
+"癡纏":"「記住了，你親口說的，不許收回。」","瘋批":"「哈哈！再誇！再誇大聲點！」",
+"醋罈":"「……你也這樣誇過別人嗎？」","忠犬":"「能幫上你，我就沒白活。」",
+"聖母":"「你嘴甜，心也善，會有好報的。」","蕩浪":"「光誇不練，可就是你的不對了～」",
+"藥罐":"「咳……藥罐子也有人誇，稀奇。」","財迷":"「誇我不如投資我，穩賺。」",
+"酒鬼":"「好話配好酒！來，走一杯！」","武癡":"「誇什麼，下場打一場最實在。」",
+"戲精":"「（撩髮）繼續，本座愛聽。」","陰鬱":"「……你是第一個這麼說的。」",
+"樂天":"「哈哈哈！借你吉言！」","話癆":"「這說來話長了！我跟你講，我小時候——」",
+"古板":"「巧言令色。……不過，多謝。」"};
+const TEASE = {
+"高傲":"「放肆。……（卻沒真的走開）」","傲嬌":"「你、你煩不煩啊！（臉紅）」",
+"溫柔":"「好啦，鬧夠了沒有？」","風流":"「逗我？這膽子，我喜歡。」",
+"綠茶":"「討厭～就知道欺負人家～」","單純":"「咦？咦？？這是什麼意思呀？」",
+"潑辣":"「皮癢了是不是！……哈哈哈，有種！」","寡言":"「……（深深看你一眼）」",
+"無情":"「無聊。」（拂袖而去半步）","病嬌":"「逗我玩？好啊，那換我逗你了哦。」",
+"腹黑":"「呵……膽子不小，記下了。」","妖媚":"「小壞蛋，敢撩我？」",
+"癡纏":"「逗完就想跑？門都沒有。」","瘋批":"「嘿嘿，你再逗一個試試？」",
+"醋罈":"「是不是跟別人也這樣鬧？說！」","忠犬":"「（尾巴都要搖起來了）你開心就好。」",
+"聖母":"「罷了罷了，孩子心性。」","蕩浪":"「喲，會撩了？那可別停。」",
+"藥罐":"「別鬧，藥要灑了！」","財迷":"「逗我可以，按次收費。」",
+"酒鬼":"「酒裡摻了你的貧嘴，更上頭！」","武癡":"「（當你要過招，先擺了架勢）來！」",
+"戲精":"「（配合地倒下）啊——你怎麼忍心～」","陰鬱":"「……為什麼連你也不放過我。」",
+"樂天":"「哈哈哈，還有你逗不動我的那天？」","話癆":"「逗我？那我可要回敬三個時辰的話了！」",
+"古板":"「成何體統！」"};
+const COMFORT = {
+"高傲":"「……哼。有你在，勉強算個安慰。」","傲嬌":"「誰、誰要你安慰……（往你身邊挪了挪）」",
+"溫柔":"「辛苦你了。靠一會兒吧，我陪你。」","風流":"「難得見你這樣。來，說與我聽。」",
+"綠茶":"「他們怎麼能這樣對你……心疼死我了。」","單純":"「別難過啦！我給你看我的寶貝！」",
+"潑辣":"「誰欺負你了？報名字，姐收拾他！」","寡言":"「（默默遞過一壺酒）」",
+"無情":"「苦樂皆是修行。……節哀。」","病嬌":"「讓你不開心的人，名字告訴我。」",
+"腹黑":"「難過就對了，記住這滋味，變強去。」","妖媚":"「乖，到這兒來，什麼都別想。」",
+"癡纏":"「別推開我。這種時候，更要讓我守著。」","瘋批":"「想哭就哭，想瘋就瘋，我陪你瘋。」",
+"醋罈":"「是不是外面有人給你氣受了？！」","忠犬":"「我在。一直都在。」",
+"聖母":"「睡吧，醒來又是新的一天。」","蕩浪":"「這種夜，最適合放縱一場。」",
+"藥罐":"「（把脈）鬱結於心……我開副安神方。」","財迷":"「錢能解憂，我借你，不收利。」",
+"酒鬼":"「一言難盡就一飲了之。乾。」","武癡":"「打一場，打出汗就什麼都忘了。」",
+"戲精":"「（抱住你）哭吧哭吧，本座罩你。」","陰鬱":"「……你也有這樣的時候。我知道那滋味。」",
+"樂天":"「多大點事！走走走，看雲去！」","話癆":"「別憋著！從頭說，我聽到天亮！」",
+"古板":"「坐直。氣順了，心就順了。」"};
+
+</script>
+<script>
+/* ═══════════ 引擎 ═══════════ */
+let G = null;          // 遊戲狀態
+const rnd = n => Math.floor(Math.random()*n);
+const d20 = () => 1 + rnd(20);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const fmt = n => n >= 1e8 ? (n/1e8).toFixed(1)+"億" : n >= 1e4 ? (n/1e4).toFixed(1)+"萬" : Math.round(n);
+
+/* ── 新局 ── */
+function newGame(name) {
+  G = {
+    ver: 2,
+    player: { name, gender:"F", age:16, day:1, spirit:0, energy:10, energyMax:10, practiceCnt:0, lessonYM:-1,
+      stones:500, contrib:0, ri:0, sub:0, deaths:0, alive:true,
+      mats:{}, swords:[], equip:null, recipes:["青鋒劍","精鋼獵刀","鎮宅木劍"],
+      mastery:{}, forgeLv:1, swordSense:0, // 劍意熟練
+      pills:{}, poisons:{}, teacher:null, spouse:null, reputation:0,
+      autoSave:true, poisonUnlocked:false, ding:false, yuehuaOwned:false,
+      lifeSeed: 130, surviveRisk:0 },
+    npcs: genWorld(),
+    dayLog:[], monthTask:genTask(), affair:{}, sansheng:[],
+    worldLog:[],
+    flags:{ sanshengDone:[], dgFirstClear:[], meetLog:{} },
+  };
+  // 開局認識兩位同屆師兄妹
+  const same = G.npcs.filter(n=>n.sect==="萬劍山"&&n.rank==="弟子"&&n.age<=25);
+  same.slice(0,2).forEach(n=>{ n.met=true; n.favor=30; });
+  msg(`你被萬劍山收入門牆，成為外門弟子。劍道漫漫，今日始。`);
+  msg(`同屆的${same.slice(0,2).map(n=>n.name).join("與")}領你認了山門。`);
+}
+function genTask() { // 每月宗門任務
+  const pool = [
+    {name:"巡視山門", energy:1, reward:()=>({stones:200, contrib:50}), desc:"驅逐野獸"},
+    {name:"斬妖懸賞", energy:2, reward:()=>({stones:500, contrib:150}), desc:"山下有妖獸作亂", needForce:10},
+    {name:"採辦劍材", energy:2, reward:()=>({stones:300, contrib:100}), desc:"為鑄劍房收集材料", needMat:true},
+    {name:"論劍值日", energy:1, reward:()=>({stones:150, contrib:80}), desc:"維持論劍台秩序"},
+  ];
+  return pool[rnd(pool.length)];
+}
+
+/* ═══════════ 世界生成 ═══════════ */
+let NPC_UID = 0;
+function genName(gender){
+  const pool = gender==="M"?GIVEN_M:GIVEN_F;
+  return SURNAMES[rnd(SURNAMES.length)] + pool[rnd(pool.length)];
+}
+function mkNpc(sect, rank, ri, gender, ageHint) {
+  const n = {
+    id: NPC_UID++, name: genName(gender), sect, rank, gender, ri,
+    sub: REALMS[ri].layers ? rnd(9) : rnd(3),
+    age: ageHint !== undefined ? ageHint : (rank==="弟子" ? 16+rnd(30) : rank==="長老" ? 90+rnd(300) : 280+rnd(400)),
+    pers: rollPers(), special: "",
+    met:false, favor:0, love:0, alive:true, deadBy:"",
+    spouseId:null, spouse:"", rel:{master:null, friends:[], parents:[], children:[]},
+    loc: sect, poison:null, danToxin:0, proposed:false,
+  };
+  n.lifespan = LIFESPAN(ri);
+  if (n.age > n.lifespan*0.85) n.age = Math.floor(n.lifespan*(0.4+Math.random()*0.3));
+  if (rank==="稚童") n.age = ageHint||1+rnd(6);
+  return n;
+}
+function genWorld() {
+  NPC_UID = 0;
+  const npcs = [];
+  WORLD_ROSTER.forEach(w => {
+    const master = mkNpc(w.sect,"掌門", 5+rnd(2), Math.random()<w.mRatio?"M":"F");
+    master.special = w.sect==="大自在殿"?"方丈":"一派掌門";
+    if (w.sect==="大自在殿" && Math.random()<0.5) master.pers = "無情";
+    npcs.push(master);
+    const elders = [];
+    for (let i=0;i<w.elders;i++){ const e=mkNpc(w.sect,"長老", w.elderRi[0]+rnd(w.elderRi[1]-w.elderRi[0]+1), Math.random()<w.mRatio?"M":"F"); elders.push(e); npcs.push(e); }
+    const discs = [];
+    for (let i=0;i<w.discs;i++){ const d=mkNpc(w.sect,"弟子", w.discRi[0]+rnd(w.discRi[1]-w.discRi[0]+1), Math.random()<w.mRatio?"M":"F"); discs.push(d); npcs.push(d); }
+    discs.forEach(d=>{ d.rel.master = (Math.random()<0.25? master : elders[rnd(elders.length)]).id; });
+    elders.forEach(e=>{ if(Math.random()<0.5) e.rel.master = master.id; });
+    [...discs,...elders].forEach(x=>{
+      const cnt = 1+rnd(2);
+      for(let k=0;k<cnt;k++){ const c=(Math.random()<0.2? elders[rnd(elders.length)] : discs[rnd(discs.length)]);
+        if(c!==x && !x.rel.friends.includes(c.id)) x.rel.friends.push(c.id); }
+    });
+  });
+  // 跨派好友（互通款曲）
+  for(let k=0;k<10;k++){ const a=npcs[rnd(npcs.length)], b=npcs[rnd(npcs.length)];
+    if(a!==b && a.sect!==b.sect && !a.rel.friends.includes(b.id)){ a.rel.friends.push(b.id); b.rel.friends.push(a.id); } }
+  // 既有道侶
+  for(let k=0;k<6+rnd(4);k++){
+    const a=npcs[rnd(npcs.length)];
+    if(a.spouseId!==null || (a.rank==="弟子"&&a.age<28)) continue;
+    const cands=npcs.filter(b=>b!==a && b.spouseId===null && b.gender!==a.gender && b.rank!=="稚童" && !(b.rank==="弟子"&&b.age<28));
+    if(cands.length){ const b=cands[rnd(cands.length)]; a.spouseId=b.id; b.spouseId=a.id; }
+  }
+  return npcs;
+}
+function n2t(n){ return `${n.sect}${n.rank==="掌門"?"掌門":n.rank==="稚童"?"小童":""}${n.name}`; }
+function wlog(t, important) {
+  if (!G.worldLog) G.worldLog=[];
+  G.worldLog.unshift({d:G.player.day, t});
+  if (G.worldLog.length>80) G.worldLog.pop();
+  if (important) msg("【江湖】"+t);
+}
+
+/* ═══════════ 世界運轉 ═══════════ */
+function tickWorldDaily() { // NPC 位置流動：少出門、快回家，保證門派裡多數有人的
+  G.npcs.forEach(n=>{ if(!n.alive) return;
+    if (n.loc!==n.sect) { if (Math.random()<0.18) n.loc=n.sect; }
+    else if (Math.random()<0.025)
+      n.loc = Math.random()<0.5 ? ["坊市","秘境"][rnd(2)] : SECT[rnd(SECT.length)];
+  });
+}
+function worldTickMonthly() {
+  const alive = G.npcs.filter(n=>n.alive);
+  // 好感淡忘
+  alive.forEach(n=>{ if(n.met && n.love<70 && G.player.spouse!==n.id && G.player.spouse!==undefined){
+    const dec = Math.round(PERS[n.pers].decay);
+    if(dec) n.favor = clamp(n.favor-dec, -200, 120);
+  }});
+  // NPC 社會事件
+  const evts = 1+rnd(3);
+  for(let k=0;k<evts;k++) worldEvent(alive);
+  // 有人向你求婚
+  if (G.player.spouse===null || G.player.spouse===undefined)
+    alive.forEach(n=>{ if(n.met && !n.proposed && n.love>=90 && n.age>=18 && Math.random()<0.15){
+      n.proposed=true;
+      msg(`${n.name}紅著耳根遞來一封信——是求婚之意！可到【關係】頁回應。`);
+      wlog(`聽說${n.name}向你提親了，好事者都在看戲。`, false);
+    }});
+}
+function worldEvent(alive) {
+  const pick = () => alive[rnd(alive.length)];
+  const r = Math.random();
+  if (r<0.2) { // 閉關突破
+    const n=pick();
+    if(n.ri<7 && n.age<n.lifespan*0.7 && Math.random()<0.2){ n.ri++; n.sub=0;
+      wlog(`${n2t(n)}閉關而出，一舉突破至【${realmText(n.ri,n.sub)}】。`, n.met); }
+  } else if (r<0.38) { // 結為道侶
+    const a=pick();
+    if(!a.spouseId && a.age>=25 && a.rank!=="稚童" && Math.random()<0.5){
+      const cands=alive.filter(b=>b.spouseId===null&&b!==a&&b.gender!==a.gender&&b.age>=25);
+      if(cands.length){ const b=cands[rnd(cands.length)]; a.spouseId=b.id; b.spouseId=a.id;
+        wlog(`${n2t(a)}與${n2t(b)}結為道侶，各派道賀。`, a.met||b.met); } }
+  } else if (r<0.48) { // 道侶破裂（偶發情殺）
+    const paired=alive.filter(x=>x.spouseId!==null);
+    if(paired.length && Math.random()<0.4){
+      const a=paired[rnd(paired.length)], b=npcById(a.spouseId);
+      if(b && b.alive){
+        a.spouseId=null; b.spouseId=null;
+        wlog(`${n2t(a)}與${n2t(b)}道心相悖，一拍兩散，江湖唏噓。`, a.met||b.met);
+        if(Math.random()<0.25){
+          const loser = npcForce(a)>npcForce(b)?b:a, winner = loser===a?b:a;
+          loser.alive=false; loser.deadBy="情殺"; winner.spouseId=null;
+          wlog(`${loser.name}糾纏不休，被${winner.name}一劍斃命。各派震動。`, loser.met||winner.met); } } }
+  } else if (r<0.6) { // 誕子（外貌基因：隨機遺傳，v3再做捏臉）
+    const paired=alive.filter(x=>x.spouseId!==null&&x.gender==="F"&&x.rank!=="稚童");
+    if(paired.length && G.npcs.length<130 && Math.random()<0.4){
+      const m=paired[rnd(paired.length)], f=npcById(m.spouseId);
+      if(f && f.alive){
+        const g=Math.random()<0.5?"M":"F";
+        const child=mkNpc(f.sect,"稚童",0,g,1+rnd(4));
+        child.rel.parents=[f.id,m.id]; m.rel.children.push(child.id); f.rel.children.push(child.id);
+        G.npcs.push(child);
+        wlog(`${m.name}誕下一${g==="M"?"子":"女"}，取名${child.name}，說書人說眉眼像極了${f.name}。`, m.met||f.met); } }
+  } else if (r<0.7) { // 新弟子入門
+    const w=WORLD_ROSTER[rnd(WORLD_ROSTER.length)];
+    const cnt = G.npcs.filter(x=>x.alive&&x.sect===w.sect&&x.rank!=="掌門"&&x.rank!=="長老").length;
+    if(cnt<12 && Math.random()<0.5){
+      const d=mkNpc(w.sect,"弟子",0,Math.random()<w.mRatio?"M":"F",16);
+      const seniors=G.npcs.filter(x=>x.alive&&x.sect===w.sect&&(x.rank==="長老"||x.rank==="掌門"));
+      if(seniors.length) d.rel.master = seniors[rnd(seniors.length)].id;
+      G.npcs.push(d);
+      wlog(`${d.name}通過入門試煉，拜入${w.sect}。`, false); }
+  } else if (r<0.8) { // 壽終
+    const old=alive.filter(x=>x.age>x.lifespan*0.8);
+    if(old.length && Math.random()<0.5){ const n=old[rnd(old.length)];
+      npcDie(n,"壽終");
+      wlog(`${n2t(n)}壽元耗盡，含笑坐化，享年${n.age}。`, n.met); }
+  } else if (r<0.86) { // 渡劫失敗
+    const hi=alive.filter(x=>x.ri>=6);
+    if(hi.length && Math.random()<0.2){ const n=hi[rnd(hi.length)];
+      npcDie(n,"渡劫");
+      wlog(`${n2t(n)}衝擊更高境界失敗，身死道消，舉世震動。`, n.met); }
+  }
+}
+function npcDie(n, cause) { // NPC 死亡公共處理（自然死亡無人遷怒）
+  n.alive=false; n.deadBy=cause;
+  if(n.spouseId!==null){ const s=npcById(n.spouseId); if(s) s.spouseId=null; }
+  if(G.player.spouse===n.id) G.player.spouse=null;
+}
+function onNpcKilled(n, cause) // 被玩家所殺：親友反目
+{
+  npcDie(n, cause);
+  const hit=(id,v)=>{ const x=npcById(id); if(x&&x.alive&&x.met) x.favor=clamp(x.favor-v,-200,120); };
+  if(n.spouseId!==null) hit(n.spouseId,80);
+  n.rel.friends.forEach(id=>hit(id,50));
+  if(n.rel.master!==null) hit(n.rel.master,60);
+  n.rel.parents.forEach(id=>hit(id,80));
+  n.rel.children.forEach(id=>hit(id,60));
+  G.npcs.filter(o=>o.sect===n.sect&&o.alive&&o.met&&o.id!==n.id).forEach(o=>o.favor=clamp(o.favor-10,-200,120));
+  wlog(`${n2t(n)}死了（${cause}）。其親友悲憤不已。`, true);
+}
+
+/* ═══════════ 拜訪與結識 ═══════════ */
+function hallHere(sect) { return G.npcs.filter(n=>n.alive && n.loc===sect); }
+/* 台詞性別適配：男 NPC 自稱自動換（老娘→老子 等），女原樣 */
+/* 台詞引號：行內已帶「」則不再外包 */
+function q(s){ return s.startsWith("「") ? s : "「"+s+"」"; }
+function gdial(n, s){
+  if (n.gender!=="M") return s;
+  return s.replace(/老娘/g,"老子").replace(/姑奶奶/g,"大爺").replace(/姐姐/g,"哥哥")
+          .replace(/小女子/g,"小生").replace(/女兒家/g,"男兒家");
+}
+function greetLine(n){ const P=PERS[n.pers]; return gdial(n, P.greet[rnd(P.greet.length)]); }
+/* 廣場偶遇：-1精力+過天，隨機結識在場陌生人或與舊識閒聊 */
+function visitPlaza(sect) {
+  const p=G.player;
+  if (p.energy<1) return msg("精力不足。");
+  p.energy--;
+  const here = hallHere(sect).filter(n=>n.rank!=="稚童");
+  const unmet = here.filter(n=>!n.met);
+  if (unmet.length && Math.random()<0.75) {
+    const n = unmet[rnd(unmet.length)];
+    const P = PERS[n.pers];
+    meetNpc(n.id);
+    const st = st3(n.favor);
+    const pool = P.chat[st];
+    msg(`廣場上，${n.name}主動開了口：${q(gdial(n,pool[rnd(pool.length)]))}`);
+  } else if (here.length && Math.random()<0.6) {
+    const met = here.filter(n=>n.met);
+    if (met.length) {
+      const n = met[rnd(met.length)], P = PERS[n.pers];
+      n.favor = clamp(n.favor+P.chatFav, -200, 120);
+      const st = st3(n.favor), pool = P.chat[st];
+      msg(`廣場偶遇${n.name}，聊了幾句（友情+${P.chatFav}）：${q(gdial(n,pool[rnd(pool.length)]))}`);
+    } else msg(`${sect}的廣場人來人往，今日沒遇上投緣的。`);
+  } else msg(`${sect}的廣場今日靜悄悄，只有掃地的雜役。`);
+  nextDay();
+}
+function meetNpc(id) {
+  const n=G.npcs[id]; if(!n.met){ n.met=true;
+    msg(`你結識了${n2t(n)}（${realmText(n.ri,n.sub)}·${n.pers}）。${n.name}：「${greetLine(n)}」`); }
+}
+function introduce(id) {
+  const n=npcById(id);
+  if (n.favor<60) return msg(`交情不夠（需友情60），${n.name}還不會引薦你。`);
+  const circle=[n.rel.master,...n.rel.friends,...n.rel.parents,n.spouseId,...n.rel.children].filter(x=>x!==null&&x!==undefined);
+  const unmet=circle.map(x=>npcById(x)).filter(x=>x&&x.alive&&!x.met);
+  if(!unmet.length) return msg(`${n.name}的師門親友，你已都識得了。`);
+  const t=unmet[rnd(unmet.length)];
+  t.met=true; t.favor=Math.max(t.favor,15);
+  const rel = t.id===n.rel.master?"師尊": n.rel.friends.includes(t.id)?"摯友": n.rel.parents.includes(t.id)?"父母": t.id===n.spouseId?"道侶":"孩子";
+  msg(`${n.name}為你引薦了他的${rel}——${n2t(t)}（${realmText(t.ri,t.sub)}·${t.pers}）。`);
+}
+function answerProposal(id, yes) {
+  const n=npcById(id); if(!n||!n.proposed) return;
+  n.proposed=false;
+  if(yes){ if(G.player.spouse!==null && G.player.spouse!==undefined) return msg("你已有道侶。");
+    G.player.spouse=n.id; n.spouse=G.player.name; n.love=100;
+    msg(`${n.name}：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);
+    wlog(`你與${n2t(n)}結為道侶。`, true);
+  } else { n.love=clamp(n.love-30,0,100); n.favor=clamp(n.favor-20,-200,120);
+    msg(`你婉拒了${n.name}。他眼底的光暗了暗。`); }
+  uiRefresh();
+}
+
+/* ── 派生屬性 ── */
+function playerForce() {
+  const p = G.player;
+  return Math.round( (p.ri*40 + p.sub*8 + 5) * (1 + p.swordSense*0.003) + (p.equip ? p.equip.power : 0) + p.forgeLv*2 );
+}
+function npcForce(n) { return Math.round((n.ri*40 + n.sub*8 + 5) * (1 + (n.pers==="寡言"||n.pers==="無情"?0.15:0))); }
+function spiritCap() { return spiritNeed(G.player.ri, G.player.sub); }
+
+/* ── 時間 ── */
+const DAY_MS = 0; // 回合制，無需真實時間
+function dayNum(){ return G.player.day; }
+function year(){ return Math.floor((G.player.day-1)/360) + 1; }
+function month(){ return Math.floor(((G.player.day-1)%360)/30) + 1; }
+function dayOfMonth(){ return ((G.player.day-1)%30) + 1; }
+function nextDay(n=1) {
+  for (let k=0;k<n;k++) {
+    G.player.day++; G.player.age = 16 + Math.floor((G.player.day-1)/360);
+    G.player.energy = clamp(G.player.energy+1, 0, G.player.energyMax);
+    G.player.practiceCnt = 0;
+    tickPoison(); tickNpcYear(); tickWorldDaily(); tickGuest();
+    if (dayOfMonth()===1) { onMonth(); worldTickMonthly(); }
+    if (year()%5===0 && month()===5) onSummit();
+    if (dayOfMonth()===1 && ((G.player.day-1)%360)===0) onYear();
+    if (!G.player.alive) return;
+  }
+  uiRefresh();
+}
+function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月】宗門發布新任務：${G.monthTask.name}`); }
+function onYear() { /* NPC 成長在 tickNpcYear 內按年處理 */ }
+function onSummit() {
+  msg("五年一度的正道大會召開，各派弟子雲集論劍。");
+  const unmet = G.npcs.filter(n=>!n.met && n.alive && n.rank!=="稚童");
+  for (let i=0;i<2 && unmet.length;i++) {
+    const m = unmet.splice(rnd(unmet.length),1)[0];
+    m.met=true; m.favor=10;
+    msg(`你在會上結識了${n2t(m)}（${realmText(m.ri,m.sub)}·${m.pers}）。他說：「${greetLine(m)}」`);
+  }
+}
+
+/* ═══ 訪客：認識的 NPC 會主動來訪，情誼深厚者賴住 3-6 天 ═══ */
+function guestBubble(n){
+  const P = PERS[n.pers];
+  if (n.favor>=70 && n.love>=60) {
+    const pool = Math.random()<0.5 ? P.intimate : P.chat[2];
+    return gdial(n, pool[rnd(pool.length)]);
+  }
+  const pool = P.chat[st3(n.favor)];
+  return gdial(n, pool[rnd(pool.length)]);
+}
+function tickGuest(){
+  const p = G.player;
+  if (p.guest) {
+    const g = p.guest, n = npcById(g.id);
+    if (!n || !n.alive || p.day > g.until) {
+      if (n && n.alive) { const P=PERS[n.pers];
+        msg(`${n.name}收拾行裝，戀戀不捨地告辭了：${q(gdial(n,P.greet[rnd(P.greet.length)]))}`); }
+      p.guest = null; return;
+    }
+    g.chatted = false; g.bubble = guestBubble(n); // 每日換一句閒話
+    return;
+  }
+  const cands = G.npcs.filter(n=>n.alive&&n.met&&(n.favor>=50||n.love>=40));
+  if (!cands.length) return;
+  const heat = cands.reduce((s,n)=>s+Math.max(0,n.favor-50)+Math.max(0,n.love-40), 0);
+  if (Math.random() >= 0.05 + heat/6000) return;
+  const n = cands[rnd(cands.length)];
+  const stayBoth = n.favor>=70 && n.love>=60;
+  const days = stayBoth ? 3+rnd(4) : 1;
+  const P = PERS[n.pers];
+  p.guest = { id:n.id, until:p.day+days, chatted:false, bubble:guestBubble(n) };
+  msg(`${n.name}上門來訪${stayBoth?"，看樣子打算賴著小住幾日":"，坐坐便走"}：${q(gdial(n,P.greet[rnd(P.greet.length)]))}`);
+}
+function guestChat(){
+  const p=G.player, g=p.guest; if(!g) return;
+  const n = npcById(g.id), P = PERS[n.pers];
+  if (g.chatted) return msg(`${n.name}今日已同你說了許多話，這會兒安靜地陪著你打坐。`);
+  g.chatted = true;
+  n.favor = clamp(n.favor+P.chatFav, -200, 120);
+  const pool = P.chat[st3(n.favor)];
+  const line = gdial(n,pool[rnd(pool.length)]);
+  g.bubble = line;
+  msg(`${n.name}：${q(line)}（友情+${P.chatFav}）`);
+}
+function guestFlirt(){
+  const p=G.player, g=p.guest; if(!g) return;
+  const n = npcById(g.id), P = PERS[n.pers];
+  if (n.favor < P.flirtReq) return msg(`${n.name}：${q(gdial(n,P.flirtNo[rnd(P.flirtNo.length)]))}`);
+  const cap = P.loveCap||100, st = st3(n.love);
+  const lg = Math.max(0, Math.min(P.loveGain+rnd(3), cap-n.love));
+  n.love = clamp(n.love+lg, 0, cap);
+  const line = gdial(n,P.flirt[st][rnd(P.flirt[st].length)]);
+  g.bubble = line;
+  msg(`${n.name}：${q(line)}（愛情+${lg}）`);
+}
+function guestLeave(){
+  const p=G.player, g=p.guest; if(!g) return;
+  const n = npcById(g.id);
+  msg(`${n.name}被你勸走了，臨走前一步三回頭。`);
+  p.guest = null;
+}
+
+/* ═══ 宗門遊歷：自動推進天數，直到撞上事件點 ═══ */
+function sectTour(){
+  const p = G.player, start = p.day;
+  if (p.guest) return msg(`${npcById(p.guest.id).name}還在你院裡賴著，先陪人家吧。`);
+  for (let i=0; i<120; i++){
+    const mark = G.dayLog.length;
+    nextDay(1);
+    if (!p.alive) return;
+    const logs = G.dayLog.slice(mark).map(l=>l.t);
+    /* 事件點：月令任務、來訪、結識、求婚、正道大會、江湖大事 */
+    if (logs.some(t=>t.startsWith("【") || /來訪|結識|求婚|論劍|舊識|告白/.test(t))) {
+      msg(`——遊歷途中撞上事端，暫且駐足。（本次遊歷${p.day-start}天）`); return;
+    }
+    /* 際遇：機遇 / 好運 / 倒霉，12%/日 */
+    if (Math.random() < 0.12) {
+      const r = Math.random();
+      if (r < 0.35) { const g = 200+rnd(800); p.spirit += g;
+        msg(`遊歷至山間瀑布，於水聲中若有所悟，靈氣+${g}。（本次遊歷${p.day-start}天）`); return; }
+      else if (r < 0.55) { const st = 100+rnd(400); p.stones = (p.stones||0)+st;
+        msg(`路遇商隊被妖獸困住，出手相助，得謝禮靈石${st}。（好運）（本次遊歷${p.day-start}天）`); return; }
+      else if (r < 0.78) {
+        const pool = G.npcs.filter(n=>n.alive && !n.met && n.loc===n.sect && n.rank!=="稚童" && n.sect!==undefined);
+        if (pool.length) { const n = pool[rnd(pool.length)]; meetNpc(n.id);
+          const P = PERS[n.pers];
+          msg(`遊歷至${n.sect}，一位${n.gender==="M"?"男修":"女修"}見你行事沉穩，主動見禮——竟是${n.name}：${q(gdial(n,P.greet[rnd(P.greet.length)]))}（一見如故）（本次遊歷${p.day-start}天）`); return; }
+      }
+      else { const loss = Math.round(p.spirit*0.08); p.spirit -= loss; p.energy = Math.max(0, p.energy-2);
+        msg(`山道上撞見劫道的散修，一場惡戰趕跑了對方，自己也掛了彩（靈氣-${loss}）。（倒霉）（本次遊歷${p.day-start}天）`); return; }
+    }
+  }
+  msg(`走了${p.day-start}天，江湖平靜得無聊，你回了山。（一無所獲）`);
+}
+
+/* ── 修煉 ── */
+function practice() {
+  const p = G.player;
+  if (p.practiceCnt >= 5) return msg(`今日已練劍${p.practiceCnt}次，手臂痠麻練不動了（每日5次）。`);
+  if (p.energy < 1) return msg("精力不足，做點別的事或休息吧（次日恢復1點）。");
+  p.energy--; p.practiceCnt++;
+  const gain = Math.round((20 + p.ri*30 + rnd(10)) * (sectUnlocked("妙音門")?1.2:1));
+  p.spirit += gain; p.swordSense += 1;
+  msg(`你在練劍場揮劍如雨，靈氣+${gain}。（今日第${p.practiceCnt}/5次）`);
+  uiRefresh();
+}
+function takeLesson() {
+  const p = G.player;
+  const ym = year()*12 + (month()-1);
+  if (p.lessonYM === ym) return msg("本月大課已上過（每月一次，開課即入下月）。");
+  p.lessonYM = ym;
+  const cap = spiritCap();
+  const g = Math.round(cap*0.3) + 40 + rnd(30);
+  p.spirit = Math.min(cap, p.spirit + g);
+  let extra = "";
+  if (Math.random()<0.5 && p.recipes.length) { const r=p.recipes[rnd(p.recipes.length)];
+    p.mastery[r]=(p.mastery[r]||0)+2; extra=`長老演示《${r}》鍛法，熟練+2。`; }
+  msg(`你閉關聽講整月，靈氣+${g}。${extra}`);
+  let guard = 0;
+  const targetYM = ym+1;
+  while (year()*12 + (month()-1) < targetYM && guard++ < 40 && G.player.alive) nextDay();
+  msg("——大課結束，一個月過去了。");
+}
+function tryBreak() {
+  const p = G.player;
+  const r = REALMS[p.ri];
+  const maxSub = r.layers ? 8 : 2;
+  if (p.sub >= maxSub && p.ri >= REALMS.length-1) return msg("你已至大乘大圓滿，此界無法再進一步。");
+  if (p.spirit < spiritCap()) return msg(`靈氣不足（${fmt(p.spirit)}/${fmt(spiritCap())}），繼續積累吧。`);
+  let rate = 0.72 - p.ri*0.06 + p.sub*0.02;
+  if (p.pills["突破丹"]>0) { rate += 0.05; p.pills["突破丹"]--; }
+  if (sectUnlocked("星機閣")) rate += 0.10;
+  if (p.surviveRisk>0 && p.pills["消業丹"]>0) { p.surviveRisk -= 0.3; p.pills["消業丹"]--; }
+  rate = clamp(rate, 0.15, 0.95);
+  msg(`氣海鼓盪——本次突破成功率約 ${Math.round(rate*100)}%……`);
+  if (Math.random() < rate) {
+    p.spirit = 0;
+    p.sub++;
+    if (p.sub > maxSub) { p.ri++; p.sub=0; }
+    p.deaths = 0;
+    msg(`天靈地靈一齊震動——你突破了！現為【${realmText(p.ri,p.sub)}】。`);
+  } else {
+    const deathRate = clamp(0.05 + p.ri*0.05, 0, 0.6);
+    if (Math.random() < deathRate) { gameOver("突破失敗，靈氣逆衝，你坐下化為飛灰。"); return; }
+    p.spirit = Math.round(spiritCap() * 0.2);
+    if (!r.layers && p.sub===2) { p.ri++; p.sub=0; msg("突破失敗，但你於絕境中觸摸大圓滿之意，跌入大圓滿（基礎更厚）。"); }
+    else msg(`突破失敗，靈氣潰散，僅存兩成。所幸性命無礙（境界越高，失敗與走火風險越大）。`);
+  }
+  if (G.player.autoSave) saveGame(0);
+  uiRefresh();
+}
+function gameOver(text) { G.player.alive = false; msg("† " + text); }
+
+/* ── 採集與戰鬥 ── */
+function gather(map, layer) {
+  const p = G.player;
+  if (p.ri < MAP_REQ[map]) return msg(`此地需【${REALMS[MAP_REQ[map]].name}】修為方可進入。`);
+  if (layer>0 && p.ri < MAP_REQ[map]+1) return msg(`深層需要更高修為（${REALMS[MAP_REQ[map]+1].name}）。`);
+  if (p.energy < 1) return msg("精力不足。");
+  p.energy--;
+  const beasts = BEASTS.filter(b=>b[1]===map && b[2]===layer);
+  if (beasts.length && Math.random() < 0.45) return fightBeast(beasts[rnd(beasts.length)], map);
+  const mats = Object.values(HERBS).filter(h=>h.map===map && h.layer===layer);
+  const n = 1 + rnd(3), got = [];
+  for (let i=0;i<n;i++) { const m = mats[rnd(mats.length)]; p.mats[m.name]=(p.mats[m.name]||0)+1; got.push(m.name); }
+  nextDay();
+  msg(`你在${MAP_NAMES[map]}·${LAYER_NAMES[layer]}採得：${got.join("、")}。`);
+}
+function fightBeast(b, map) {
+  const p = G.player, f = playerForce();
+  const score = f / b[3];
+  const win = Math.random() < clamp(score*0.8, 0.05, 0.97);
+  if (win) {
+    const drop = b[4]; p.mats[drop]=(p.mats[drop]||0)+ (1+rnd(2));
+    p.spirit += 30 + p.ri*20;
+    nextDay();
+    msg(`你遭遇${b[0]}，幾劍斬落。取其${drop}，靈氣小漲。`);
+  } else {
+    p.spirit = Math.max(0, p.spirit - 50);
+    nextDay();
+    msg(`你遭遇${b[0]}，不敵，狼狽退走（靈氣-50）。`);
+  }
+}
+
+/* ── 鑄劍 ── */
+function forge(recipeName, picks) { // picks: [材料名,...] 已由 UI 選好
+  const p = G.player, rc = RECIPES[recipeName];
+  const sum = {}; ELES.forEach(e=>sum[e]=0);
+  picks.forEach(n => { const h=HERBS[n]; ELES.forEach(e=>sum[e]+=h.ev[e]); });
+  let hit = 0; ELES.forEach(e => { if (sum[e] >= (rc.need[e]||Infinity)) hit++; });
+  const needCnt = Object.keys(rc.need).length;
+  const grade = hit >= needCnt+1 ? 3 : hit >= needCnt ? 2 : hit >= Math.ceil(needCnt/2) ? 1 : 0;
+  let succ = rc.succ + p.forgeLv*0.01 + (p.ding?0.2:0) + p.mastery[recipeName]*0.005;
+  succ = clamp(succ, 0.1, 0.98);
+  p.mastery[recipeName] = (p.mastery[recipeName]||0)+1;
+  if (p.mastery[recipeName] % 5 === 0) { p.forgeLv++; msg(`鍛造熟練提升至 Lv.${p.forgeLv}。`); }
+  const days = clamp(3 + Math.floor(picks.length/2) - Math.floor(p.forgeLv/3), 1, 10);
+  nextDay(days);
+  if (Math.random() < succ) {
+    const power = Math.round((10 + p.ri*15) * [1,1.6,2.4,3.5][grade]);
+    const value = Math.round(rc.value * [1,2,4,8][grade]);
+    const sword = { name:recipeName, grade, power, value, id:Date.now() };
+    p.swords.push(sword);
+    if (rc.type==="佩劍" && (!p.equip || power > p.equip.power)) { p.equip = sword; msg(`好劍！你將其佩於腰間（武力+${power}）。`); }
+    msg(`${LINES.forgeOk[rnd(3)]}——${SWORD_GRADES[grade]}「${recipeName}」出爐！`);
+  } else {
+    msg(LINES.forgeFail[rnd(3)]);
+    p.spirit += 40; // 失敗也漲靈氣（原作精神）
+  }
+  if (G.player.autoSave) saveGame(0);
+  uiRefresh();
+}
+
+/* ── 經濟 ── */
+function sellMat(name, cnt) {
+  const p=G.player; if (!(p.mats[name]>=cnt)) return;
+  p.mats[name]-=cnt; if(!p.mats[name]) delete p.mats[name];
+  p.stones += HERBS[name].value*cnt;
+  msg(`售出${name}×${cnt}，得靈石${fmt(HERBS[name].value*cnt)}。`); uiRefresh();
+}
+function sellSword(id) {
+  const p=G.player; const i=p.swords.findIndex(s=>s.id===id); if(i<0) return;
+  const s=p.swords[i]; if (p.equip && p.equip.id===id) return msg("佩劍不可售。");
+  p.swords.splice(i,1); p.stones+=s.value;
+  msg(`售出「${s.name}」，得靈石${fmt(s.value)}。`); uiRefresh();
+}
+function contribMat(name, cnt) {
+  const p=G.player; if(!(p.mats[name]>=cnt)) return;
+  p.mats[name]-=cnt; if(!p.mats[name]) delete p.mats[name];
+  const c = Math.round(HERBS[name].value*cnt*0.5);
+  p.contrib += c; msg(`上繳${name}×${cnt}，貢獻+${fmt(c)}。`); uiRefresh();
+}
+function contribSword(id) {
+  const p=G.player; const i=p.swords.findIndex(s=>s.id===id); if(i<0) return;
+  const s=p.swords[i]; if (p.equip&&p.equip.id===id) return msg("佩劍不可上繳。");
+  p.swords.splice(i,1); const c=Math.round(s.value*0.6); p.contrib+=c;
+  msg(`上繳「${s.name}」，貢獻+${fmt(c)}。`); uiRefresh();
+}
+function buyPill(name, cnt=1) {
+  const p=G.player; const price = PILLS[name]?PILLS[name].price:POISON_PILLS[name].price;
+  if (POISON_PILLS[name] && !p.poisonUnlocked) return msg("藥王谷的朋友才懂這些……（需藥王谷好感60解鎖）");
+  if (p.stones < price*cnt) return msg("靈石不足。");
+  p.stones -= price*cnt;
+  const bag = PILLS[name] ? p.pills : p.poisons;
+  bag[name]=(bag[name]||0)+cnt;
+  msg(`購得${name}×${cnt}。`); uiRefresh();
+}
+function usePill(name) {
+  const p=G.player;
+  if (PILLS[name]) {
+    if (!p.pills[name]) return;
+    if (name==="聚靈散") { p.spirit += PILLS[name].v; msg(`服下聚靈散，靈氣+${fmt(PILLS[name].v)}。`); p.pills[name]--; if(!p.pills[name]) delete p.pills[name]; }
+    else if (name==="洗髓丹") { msg(`洗髓丹是禮物：在NPC詳情→送禮送出，30%機率加速其修煉。`); }
+    else if (name==="解毒丹") { msg(`解毒丹在自己中毒/丹毒發作時自動生效，平日服用無意義。`); }
+    else if (name==="突破丹") { msg(`突破丹會在【嘗試突破】時自動消耗一枚，突破率+5%。`); }
+    else if (name==="消業丹") { msg(`消業丹會在渡劫/高風險突破時自動消耗，死亡率-30%。`); }
+  }
+  uiRefresh();
+}
+
+/* ── 社交 ── */
+function npcById(id){ return G.npcs[id]; }
+function sectFavor(sect) { // 門派好感 = 該派已結識 NPC 平均
+  const list = G.npcs.filter(n=>n.sect===sect && n.met && n.alive);
+  return list.length ? Math.round(list.reduce((a,n)=>a+n.favor,0)/list.length) : 0;
+}
+function sectUnlocked(sect) {
+  const u = SECT_UNLOCK[sect]; if (!u) return false;
+  if (sect==="大自在殿") return G.npcs.some(n=>n.sect===sect && n.love>=99);
+  return sectFavor(sect) >= u.favor;
+}
+function gift(id, itemName) {
+  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  let fav = 4;
+  const rc = RECIPES[itemName]; if (rc && rc.type==="禮物" && rc.gift===n.sect) fav = 16;
+  else if (rc) fav = 8; // 送劍
+  if (itemName==="避雷符"||itemName==="護心符") fav = 12;
+  if (PILLS[itemName]) { fav = 6; p.pills[itemName]--; if(!p.pills[itemName]) delete p.pills[itemName]; }
+  else if (POISON_PILLS[itemName]) { return; }
+  else { const i=p.swords.findIndex(s=>s.name===itemName); if(i>=0){ p.swords.splice(i,1); if(p.equip&&p.equip.name===itemName&&!p.swords.some(s=>s.id===p.equip.id)) p.equip=null; } }
+  if (n.favor < 0 && Math.random() < 0.8) { msg(`${n.name}：${q(gdial(n,P.giftBad[rnd(P.giftBad.length)]))}`); return; }
+  const gain = Math.max(1, Math.round(fav*P.giftMul));
+  n.favor = clamp(n.favor + gain, -200, 120);
+  if (itemName==="洗髓丹") { // 特殊：加速修煉
+    if (Math.random()<0.3 && n.ri<7) { n.sub++; if(n.sub>2){n.ri++;n.sub=0;}
+      wlog(`${n2t(n)}服下你贈的洗髓丹後閉關，一舉突破至${realmText(n.ri,n.sub)}。`, true); } }
+  msg(`${n.name}：${q(gdial(n,P.gift[rnd(P.gift.length)]))}（好感+${gain}）`);
+  checkSectUnlock(n.sect);
+  nextDay(); uiRefresh();
+}
+function st3(v){ return v<30?0 : v<70?1 : 2; } // 友情/愛情三階段：陌生/熟絡/心腹(情深)
+function interact(id, act) {
+  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  if (!n.alive) return msg("人已不在了。");
+  if (p.energy<1) return msg("精力不足。");
+  if (n.rank==="稚童" && (act==="調情"||act==="雙修")) return msg("對方還是個孩子。");
+  p.energy--;
+  switch(act) {
+    case "交好": {
+      const st = st3(n.favor);
+      n.favor = clamp(n.favor+P.chatFav, -200, 120);
+      G.npcs.filter(o=>o.alive&&o.met&&o.sect===n.sect&&o.id!==n.id).forEach(o=>o.favor=clamp(o.favor+1,-200,120));
+      const pool = P.chat[st];
+      msg(`${n.name}：${q(gdial(n,pool[rnd(pool.length)]))}（友情+${P.chatFav}，${n.sect}同門+1）`);
+      break; }
+    case "調情": {
+      if (n.favor < P.flirtReq) { msg(`${n.name}：${q(gdial(n,P.flirtNo[rnd(P.flirtNo.length)]))}（需友情${P.flirtReq}）`); break; }
+      const cap = P.loveCap||100;
+      const st = st3(n.love);
+      const lg = Math.max(0, Math.min(P.loveGain+rnd(3), cap-n.love));
+      n.love = clamp(n.love+lg, 0, cap);
+      const fpool = P.flirt[st];
+      msg(`${n.name}：${q(gdial(n,fpool[rnd(fpool.length)]))}（愛情+${lg}${n.love>=cap?` · 情到此境，止步${cap}`:''}）`);
+      break; }
+    case "誇讚": {
+      const pf = P.chatFav>=3 ? 1 : 2; // 話多的不在乎，寡言的記心裡
+      n.favor = clamp(n.favor+pf, -200, 120);
+      msg(`${n.name}：${q(gdial(n,PRAISE[n.pers]))}（友情+${pf}）`);
+      break; }
+    case "逗弄": {
+      if (p.energy<1) { msg("精力不足，沒力氣鬧了。"); break; }
+      p.energy--;
+      const likesIt = ["戲精","瘋批","蕩浪","風流","潑辣","樂天","話癆","綠茶","妖媚","癡纏"].includes(n.pers);
+      const hatesIt = ["無情","古板","陰鬱","高傲","寡言","聖母"].includes(n.pers);
+      if (hatesIt) { n.favor = clamp(n.favor-2, -200, 120);
+        msg(`${n.name}：${q(gdial(n,TEASE[n.pers]))}（友情-2，他們不吃這套）`); }
+      else if (likesIt) { n.favor = clamp(n.favor+1, -200, 120);
+        const cap = P.loveCap||100, tl = Math.min(2, cap-n.love);
+        n.love = clamp(n.love+tl, 0, cap);
+        msg(`${n.name}：${q(gdial(n,TEASE[n.pers]))}（友情+1${tl>0?`，愛情+${tl}`:""}）`); }
+      else msg(`${n.name}：${q(gdial(n,TEASE[n.pers]))}`);
+      break; }
+    case "安慰": {
+      if (p.energy<1) { msg("精力不足，先顧好自己吧。"); break; }
+      p.energy--;
+      let cf = 2, cl = n.love>=40 ? 1 : 0;
+      if (["陰鬱","病嬌","癡纏"].includes(n.pers)) { cf = 3; cl = 2; } // 這幾位最需要
+      n.favor = clamp(n.favor+cf, -200, 120);
+      const cap = P.loveCap||100; cl = Math.min(cl, cap-n.love);
+      n.love = clamp(n.love+cl, 0, cap);
+      msg(`${n.name}：${q(gdial(n,COMFORT[n.pers]))}（友情+${cf}${cl>0?`，愛情+${cl}`:""}）`);
+      break; }
+    case "切磋": return sparNpc(n, false);
+    case "雙修": {
+      const openMind = P.flirtReq<=50; // 風流/妖媚/蕩浪/癡纏之流不甚設防
+      const ok = n.love>=70 || (openMind && n.love>=40 && n.favor>=60);
+      if (!ok) { msg(`${n.name}還未與你到那一步（需愛情70${openMind?"，或此類性情者 愛情40+友情60":""}；現愛情${n.love}·友情${n.favor}）。`); break; }
+      if (G.player.spouse!==n.id) msg(`（你們並非道侶，但兩情相悅，又何必在乎名分。）`);
+      if (sectUnlocked("合歡宗")) { p.spirit += 800; msg(`一夜雙修，靈氣+800。`); }
+      else { p.spirit += 400; }
+      msg(`${n.name}：${q(gdial(n,P.intimate[rnd(P.intimate.length)]))}`);
+      n.love = clamp(n.love+5,0,P.loveCap||100); n.favor = clamp(n.favor+3,-200,120);
+      if (G.player.spouse===null && n.love>=85 && Math.random()<0.3) propose(n);
+      break; }
+    case "下毒": return uiPickPoison(n);
+    case "暗殺": return assassinate(n);
+  }
+  nextDay(); uiRefresh();
+}
+function sparNpc(n, toDeath) {
+  const f = playerForce(), nf = npcForce(n);
+  const win = Math.random() < clamp(f/(f+nf), 0.05, 0.95);
+  const p = G.player;
+  p.spirit += win ? 120 : 40; p.swordSense += 2;
+  if (win) { msg(`你與${n.name}在論劍台切磋——${LINES.sparWin[rnd(3)]}。劍意+2，友情+2。`);
+    n.favor = clamp(n.favor+2,-200,120); p.reputation += toDeath?-10:3; }
+  else { msg(`你與${n.name}在論劍台切磋——${LINES.sparLose[rnd(3)]}。劍意+2。`);
+    n.favor = clamp(n.favor+1,-200,120); }
+  if (toDeath) {
+    if (win) { onNpcKilled(n,"決鬥"); p.reputation-=10;
+      msg(`死鬥！${n.name}飲恨劍下。聲望-10，其親友對你敵視。`); }
+    else if (Math.random()<0.3) { gameOver(`死鬥敗北，你倒在${n.name}劍下。`); return; }
+  }
+  nextDay(); uiRefresh();
+}
+function propose(n) {
+  const p=G.player;
+  p.spouse = n.id; n.spouse = p.name;
+  msg(`${n.name}單膝跪地：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);
+  wlog(`你與${n2t(n)}結為道侶。`, true);
+}
+function divorce(n) {
+  const p=G.player;
+  if (realmWeight(p.ri,p.sub) < realmWeight(n.ri,n.sub)) return msg("境界不敵，提不出分手。");
+  p.spouse=null; n.spouse=""; n.love=clamp(n.love-50,0,100); n.favor=clamp(n.favor-30,-200,120);
+  msg(`你與${n.name}解除道侶關係。對方很長一段時間不會原諒你。`);
+  wlog(`你與${n2t(n)}和離的消息傳遍了江湖。`, true);
+  uiRefresh();
+}
+
+/* ── 毒 & 暗殺 ── */
+function tickPoison() { // NPC 每日毒 tick（慢性）
+  G.npcs.forEach(n => { if (!n.alive || !n.poison) return;
+    n.poison.days--;
+    if (n.poison.days<=0) {
+      const cured = Math.random() < (n.ri - G.player.ri + 2)*0.15;
+      if (cured) { n.poison=null; }
+      else if (Math.random() < 0.25) { npcDie(n,"中毒");
+        msg(`【傳聞】${n2t(n)}暴斃，死狀蹊蹺，無人知曉原因。`); }
+    } });
+}
+function tickNpcYear() { // 跨年：NPC 老化/成長/壽終
+  if (dayOfMonth()!==1 || ((G.player.day-1)%360)!==0) return;
+  G.npcs.forEach(n => { if(!n.alive) return;
+    n.age++;
+    if (n.rank==="稚童" && n.age>=16) { n.rank="弟子";
+      wlog(`${n.name}通過考核，正式成為${n.sect}弟子。`, n.met); }
+    if (Math.random()<0.25 && n.ri<7 && n.rank!=="稚童") { n.sub++; if(n.sub>2){n.ri++;n.sub=0;} }
+    if (n.age > n.lifespan) { npcDie(n,"壽終");
+      msg(`【訃聞】${n2t(n)}坐化了，享年${n.age}歲。`);
+      wlog(`${n2t(n)}壽終坐化，享年${n.age}。`, n.met); } });
+}
+function givePoison(n, pillName) {
+  const p=G.player; if(!p.poisons[pillName]) return msg("沒有這味毒丹。");
+  const isAcute = POISON_PILLS[pillName].kind==="急性";
+  const detected = Math.random() < clamp(0.5 - (p.ri-n.ri)*0.1, 0.1, 0.8);
+  if (isAcute) {
+    if (detected) { n.favor-=50; msg(`你遞藥的手被抓住——${n.name}看穿了！好感-50。`); }
+    else if (Math.random()<0.5) { npcDie(n,"中毒");
+      msg(`${n.name}服藥後毒發，回天乏術。無人懷疑到你。`);
+      wlog(`${n2t(n)}暴斃，死狀蹊蹺，無人知曉原因。`, n.met); }
+    else { n.favor-=10; msg(`${n.name}服後吐血，及時護住心脈，只當是丹毒發作。`); }
+  } else {
+    if (detected) { n.favor-=30; msg(`${n.name}嗅出不對，皺眉放下——好感-30。`); }
+    else { n.poison={type:pillName, days:30+rnd(60)}; msg(`毒丹入體，${n.name}毫無察覺。慢性毒開始潛伏……`); }
+  }
+  p.poisons[pillName]--; if(!p.poisons[pillName]) delete p.poisons[pillName];
+  nextDay(); uiRefresh();
+}
+function assassinate(n) {
+  const p=G.player, f=playerForce(), nf=npcForce(n);
+  const rate = clamp((f-nf)/(f+nf)*1.6 + 0.3, 0.05, 0.9);
+  const unseen = clamp(0.9 - n.ri*0.08, 0.2, 0.9);
+  if (Math.random() < rate) {
+    onNpcKilled(n,"暗殺");
+    if (Math.random() < unseen) {
+      msg(`夜探${n.sect}，${LINES.assassinateOk[rnd(2)]}——${n.name}死了，無人懷疑到你。`);
+    } else {
+      p.reputation -= 40;
+      msg(`${LINES.assassinateSeen[rnd(1)]}你仍一劍得手，但${n.name}死前認出了你！聲望-40，其門派敵視。`);
+      G.npcs.filter(o=>o.sect===n.sect&&o.alive&&o.met).forEach(o=>o.favor=clamp(o.favor-40,-200,120));
+    }
+  } else {
+    p.reputation -= 15;
+    const hurt = Math.random()<0.35;
+    msg(`你潛入${n.name}洞府，被護體劍氣逼退——${hurt?"你受了傷，勉強逃脫（靈氣-300）":"僥倖全身而退"}。事情瞞不住，聲望-15。`);
+    if (hurt) p.spirit=Math.max(0,p.spirit-300);
+    n.favor -= 40;
+  }
+  nextDay(); uiRefresh();
+}
+function checkSectUnlock(sect) {
+  if (sect==="藥王谷" && !G.player.poisonUnlocked && sectUnlocked("藥王谷")) {
+    G.player.poisonUnlocked = true;
+    const t = G.npcs.filter(n=>n.sect==="藥王谷"&&n.alive).sort((a,b)=>b.favor-a.favor)[0];
+    msg(`${t?t.name:"藥王谷的朋友"}傳你一紙毒方：「善用亦可救人。」藥王谷毒丹可購了。`);
+  }
+}
+
+/* ── 秘境 ── */
+function dgOpen(d) {
+  if (d.own && G.player.yuehuaOwned) return true;
+  if (d.cycle===0) return true;
+  const y = year();
+  return d.cycle>0 && y>=d.start && (y-d.start)%d.cycle===0;
+}
+function exploreDungeon(d) {
+  const p=G.player;
+  if (!dgOpen(d)) return msg(`${d.name}尚未開啟（${d.desc}）。`);
+  if (p.ri < d.req[0] || p.ri > d.req[1]) return msg(`修為不符（需${REALMS[d.req[0]].name}~${REALMS[d.req[1]].name}）。`);
+  if (p.energy < 2) return msg("精力不足（需2點）。");
+  p.energy -= 2;
+  const deep = Math.min(d.layers, 3 + Math.floor(p.ri*1.2));
+  let story = [`你踏入${d.name}，一路斬妖推進至第${deep}層。`];
+  // 材料掉落
+  const pool = Object.values(HERBS).filter(h => h.grade >= Math.min(5, 1+Math.floor(deep/2)));
+  for (let i=0;i<2+rnd(3);i++) { const m=pool[rnd(pool.length)]; p.mats[m.name]=(p.mats[m.name]||0)+1; story.push(`拾得${m.name}。`); }
+  // 底層特殊
+  if (deep >= d.layers-1 && d.drop) {
+    if (Math.random() < d.drop.chance) {
+      if (d.drop.item==="神鑄劍爐") { p.ding=true; }
+      else if (d.drop.item==="劍靈蛋") { p.swords.push({name:"劍靈蛋",grade:0,power:0,value:0,id:Date.now()}); }
+      else { p.pills["鮫人淚"]=(p.pills["鮫人淚"]||0)+1; }
+      story.push(`【底層寶物】你獲得了${d.drop.item}！`);
+    } else story.push("底層一無所獲，或許下次再來（可SL）。");
+  }
+  if (deep >= d.layers-1 && d.firstReward && !G.flags.dgFirstClear.includes(d.id)) {
+    G.flags.dgFirstClear.push(d.id);
+    const rcName = d.firstReward.replace("rc_","");
+    if (!p.recipes.includes(rcName)) p.recipes.push(rcName);
+    story.push(`【首通】你悟得劍譜：《${rcName}》！`);
+  }
+  if (d.event==="共度一生" && deep>=d.layers-1) {
+    const cand = G.npcs.filter(n=>n.alive&&n.love>=70);
+    if (cand.length) { const n=cand[rnd(cand.length)]; n.love=clamp(n.love+15,0,100);
+      story.push(`幻光如夢，你與${n.name}在秘境中共度一生幻境。愛情+15。`); }
+  }
+  if (d.id==="sansheng") {
+    const n = G.npcs.find(o=>o.alive&&o.love>=99&&!PERS[o.pers].loveCap);
+    if (n && !G.flags.sanshengDone.includes(n.id)) { G.flags.sanshengDone.push(n.id);
+      story.push(`你將與${n.name}的名字刻上三生石。縱使輪迴，來世重逢。`); }
+    else story.push(n ? "名字已刻。" : "三生石前空無一人——你需要一份滿值的愛情（99，無情道除外）。");
+  }
+  if (d.own) story.push("月華仙谷的材料任你取用。");
+  p.spirit += 200 + p.ri*150; p.swordSense += 3;
+  nextDay();
+  msg(story.join("")); uiRefresh();
+}
+function buyYuehua() {
+  const p=G.player;
+  if (p.yuehuaOwned) return msg("月華仙谷已歸你所有。");
+  if (p.contrib < 20000000) return msg(`貢獻不足（${fmt(p.contrib)}/2000萬）。`);
+  p.contrib -= 20000000; p.yuehuaOwned = true;
+  msg("你以兩千萬貢獻換得月華仙谷！從此材料自由。"); uiRefresh();
+}
+
+/* ── 任務 ── */
+function doTask() {
+  const t = G.monthTask, p=G.player;
+  if (p.energy < t.energy) return msg("精力不足。");
+  if (t.needForce && playerForce() < t.needForce) return msg("武力不足，去練練再來。");
+  p.energy -= t.energy;
+  const r = t.reward(); p.stones += r.stones; p.contrib += r.contrib;
+  nextDay(); msg(`完成【${t.name}】：靈石+${r.stones}，貢獻+${r.contrib}。`); uiRefresh();
+}
+
+/* ── 存檔 ── */
+function saveGame(slot, silent) {
+  localStorage.setItem("wjs_"+slot, JSON.stringify({g:G, t:Date.now()}));
+  if (!silent) msg(`已存檔至槽位${slot}。`);
+}
+function loadGame(slot) {
+  const raw = localStorage.getItem("wjs_"+slot);
+  if (!raw) return msg("槽位為空。");
+  const data = JSON.parse(raw).g;
+  if (data.ver !== 2) return msg("舊版存檔不相容（世界系統已重做），請開新局。");
+  G = data;
+  msg(`讀取存檔${slot}。`); uiRefresh();
+}
+function listSaves() {
+  return [0,1,2].map(s => { const r=localStorage.getItem("wjs_"+s);
+    return {slot:s, empty:!r, time:r?new Date(JSON.parse(r).t).toLocaleString():"—", name:r?JSON.parse(r).g.player.name+"·"+realmText(JSON.parse(r).g.player.ri,JSON.parse(r).g.player.sub):""}; });
+}
+/* ── log ── */
+function msg(t) { G.dayLog.push({d:G?G.player.day:0, t}); if (G && G.dayLog.length>200) G.dayLog.shift(); }
+
+</script>
+<script>
+/* ═══════════ UI 框架 + 修煉/鑄劍頁 ═══════════ */
+let TAB = "xiulian";
+function el(id){ return document.getElementById(id); }
+function h(html){ const d=document.createElement("div"); d.innerHTML=html; return d.firstElementChild; }
+function esc(s){ return String(s).replace(/</g,"&lt;"); }
+
+/* ── 頂欄刷新 ── */
+function uiRefresh() {
+  if (!G) return;
+  const p = G.player;
+  el("avatar").textContent = "🗡";
+  el("pname").innerHTML = `${esc(p.name)} <span class="realm">${realmText(p.ri,p.sub)}</span>`;
+  el("statline").innerHTML =
+    `<span class="res">⚡精力${p.energy}/${p.energyMax}</span><span class="res">💰${fmt(p.stones)}</span>`+
+    `<span class="res">📜貢獻${fmt(p.contrib)}</span><span class="res">⚔武力${playerForce()}</span>`+
+    `<span class="res">⭐聲望${p.reputation}</span>`;
+  el("datebar").innerHTML = `<span>${year()}年${month()}月${dayOfMonth()}日 · ${p.age}歲</span><span>靈氣 ${fmt(p.spirit)}/${fmt(spiritCap())}</span>`;
+  el("spiritfill").style.width = clamp(p.spirit/spiritCap()*100,0,100)+"%";
+  renderTab();
+}
+/* ── log ── */
+function pushLog(entry) {
+  const box = el("log");
+  const line = h(`<div class="logline">${entry.t}</div>`);
+  box.appendChild(line);
+  setTimeout(()=>{ line.style.opacity=0; line.style.transition="opacity .8s"; setTimeout(()=>line.remove(),800); }, 7000);
+  while (box.children.length>4) box.firstChild.remove();
+}
+/* ── 彈窗 ── */
+function openModal(title, bodyHtml, onMount) {
+  el("modal-title").textContent = title;
+  el("modal-body").innerHTML = bodyHtml;
+  el("modal-mask").classList.add("show");
+  if (onMount) onMount(el("modal-body"));
+}
+function closeModal(){ el("modal-mask").classList.remove("show"); }
+
+/* ── Tab 渲染分流 ── */
+function switchTab(t){ TAB=t; if (typeof SECT_VIEW!=="undefined") SECT_VIEW=null; if (typeof JIANGHU_VIEW!=="undefined") JIANGHU_VIEW=null;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelector(`.tab[data-t="${t}"]`).classList.add("active"); renderTab(); }
+function renderTab(){
+  const m = el("main");
+  const keepScroll = m.scrollTop; // 保留滾動位置，避免重渲染後跳動
+  m.innerHTML = "";
+  if (TAB==="xiulian") m.appendChild(pageXiulian());
+  else if (TAB==="zhujian") m.appendChild(pageZhujian());
+  else if (TAB==="chuxing") m.appendChild(pageChuxing());
+  else if (TAB==="guanxi") m.appendChild(pageGuanxi());
+  else m.appendChild(pageMe());
+  m.scrollTop = keepScroll; // 原地刷新，不跳動
+}
+
+/* ═══ 修煉頁 ═══ */
+function xuiLogHtml(){
+  const L = G.dayLog;
+  if (!L.length) return `<div style="color:#9a8a75">還沒有記下什麼。</div>`;
+  return L.slice().reverse().map(l=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px dotted #e2d5bc">
+    <span style="flex:0 0 52px;color:#a8916e;font-size:12px;align-self:center">第${l.d??""}日</span>
+    <span style="flex:1">${l.t}</span></div>`).join("");
+}
+function pageXiulian(){
+  const p=G.player, cap=spiritCap();
+  const compact = "padding:8px 10px";
+  const h3s = "font-size:13px;margin:0 0 4px 0";
+  const pg = h(`<div>
+    <div class="page-title">修 煉</div>
+    <div class="card" style="${compact}"><h3 style="${h3s}">今日修行</h3>
+      <div class="kv" style="font-size:12px"><span>靈氣</span><span>${fmt(p.spirit)} / ${fmt(cap)}</span></div>
+      <div class="bar" style="height:6px"><div style="width:${clamp(p.spirit/cap*100,0,100)}%"></div></div>
+      <div class="kv" style="font-size:12px"><span>劍意熟練</span><span>${p.swordSense}</span></div>
+    <div class="btnrow" style="margin-top:6px">
+      <button id="btn-practice">練劍（-1精力·日5次）</button>
+      <button id="btn-break" class="gold">嘗試突破</button>
+      <button id="btn-class" class="ghost">上宗門大課（每月·速進下月）</button>
+      <button id="btn-tour" class="ghost">宗門遊歷（自動前進至事件）</button>
+    </div>
+    </div>
+    ${p.guest && npcById(p.guest.id) ? (()=>{ const n=npcById(p.guest.id), g=p.guest;
+      return `<div class="card" style="background:#fdf6ec;border:1px dashed #d8c8a8"><h3>院中來客</h3>
+      <div class="list-item"><div>
+        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${g.until-G.player.day+1}天後走</span>
+        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${g.bubble?`「${g.bubble}」`:"（安靜地坐著）"}</div>
+        <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""} · 就在你院中盤桓，你修煉時也不打擾</div></div></div>
+      <div class="btnrow">
+        <button class="small" id="g-chat">閒聊（每日一次）</button>
+        <button class="small ghost" id="g-flirt">調情</button>
+        <button class="small ghost" id="g-leave">送客</button>
+      </div></div>`; })() : ""}
+    <div class="card" style="${compact}"><h3 style="${h3s}">宗門任務（每月刷新）</h3>
+      <div class="list-item" style="padding:4px 0"><div><b style="font-size:13px">${G.monthTask.name}</b><div class="desc" style="font-size:11px">${G.monthTask.desc} · 報酬：靈石+貢獻</div></div>
+      <button class="small" id="btn-task">去做</button></div>
+    </div>
+    <div class="card" style="${compact}"><h3 style="${h3s}">丹藥</h3><div id="pill-list"></div></div>
+    <div class="card"><h3>修行手札（每日記事·不會消失）</h3>
+      <div id="xui-log" style="max-height:46vh;overflow-y:auto;font-size:14px;line-height:1.9;color:#4a3b28">${xuiLogHtml()}</div>
+    </div>
+  </div>`);
+  const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
+  pg.querySelector("#btn-practice").onclick = ()=>{ practice(); flushLog(); refreshLog(); };
+  pg.querySelector("#btn-break").onclick = ()=>{ tryBreak(); flushLog(); refreshLog(); };
+  pg.querySelector("#btn-class").onclick = ()=>{ takeLesson(); flushLog(); refreshLog(); };
+  pg.querySelector("#btn-tour").onclick = ()=>{ sectTour(); flushLog(); renderTab(); };
+  pg.querySelector("#btn-task").onclick = ()=>{ doTask(); flushLog(); refreshLog(); };
+  const gc = pg.querySelector("#g-chat");
+  if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
+    pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
+    pg.querySelector("#g-leave").onclick = ()=>{ guestLeave(); flushLog(); renderTab(); }; }
+  const pl = pg.querySelector("#pill-list");
+  const keys = Object.keys(p.pills);
+  pl.innerHTML = keys.length ? "" : `<div class="desc" style="color:#9a8a75;font-size:12px">背包沒有丹藥。丹藥可在【出行→坊市】購買。</div>`;
+  keys.forEach(k => { const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.pills[k]}<div class="desc">${(PILLS[k]||{}).desc||""}</div></div>
+    <button class="small ghost">${k==="聚靈散"?"服用":"說明"}</button></div>`);
+    row.querySelector("button").onclick = ()=>{ usePill(k); flushLog(); refreshLog(); }; pl.appendChild(row); });
+  return pg;
+}
+
+/* ═══ 鑄劍頁 ═══ */
+function pageZhujian(){
+  const p=G.player;
+  const pg = h(`<div>
+    <div class="page-title">鑄 劍</div>
+    <div class="card"><h3>佩劍</h3>
+      <div class="kv"><span>當前佩劍</span><span>${p.equip?SWORD_GRADES[p.equip.grade]+"「"+p.equip.name+"」 力+"+p.equip.power:"空手"}</span></div>
+      <div class="kv"><span>鍛造等級</span><span>Lv.${p.forgeLv}${p.ding?" · 神鑄劍爐(+20%)":""}</span></div>
+    </div>
+    <div class="card"><h3>劍譜</h3><div id="recipe-list"></div></div>
+    <div class="card"><h3>劍庫（${p.swords.length}）</h3><div id="sword-list"></div></div>
+    <div class="card"><h3>材料（${Object.values(p.mats).reduce((a,b)=>a+b,0)}）</h3>
+      <div class="btnrow"><button class="ghost small" id="btn-sellall">批量售賣低階</button></div>
+      <div id="mat-list"></div></div>
+  </div>`);
+  const rl = pg.querySelector("#recipe-list");
+  p.recipes.forEach(r => {
+    const rc = RECIPES[r]; if (!rc) return;
+    const needTxt = Object.entries(rc.need).map(([e,v])=>`<span class="e-${{金:"jin",木:"mu",水:"shui",火:"huo",土:"tu"}[e]}">${e}${v}</span>`).join(" ");
+    const row = h(`<div class="list-item"><div><b>${r}</b><span class="tag">${rc.type}</span>
+      <div class="desc">${rc.desc} · 需 ${needTxt} · 熟練${p.mastery[r]||0}</div></div>
+      <button class="small gold">開爐</button></div>`);
+    row.querySelector("button").onclick = ()=>openForgeModal(r);
+    rl.appendChild(row);
+  });
+  const sl = pg.querySelector("#sword-list");
+  if (!p.swords.length) sl.innerHTML = `<div class="desc" style="color:#9a8a75;font-size:12px">還沒有鑄出過劍。</div>`;
+  p.swords.forEach(s => {
+    const row = h(`<div class="list-item"><div><b>${SWORD_GRADES[s.grade]}「${s.name}」</b>${p.equip&&p.equip.id===s.id?'<span class="tag">佩劍中</span>':""}
+      <div class="desc">武力+${s.power} · 值${fmt(s.value)}</div></div>
+      <div class="btnrow"><button class="small ghost">售</button><button class="small ghost">繳</button>${p.equip&&p.equip.id===s.id?"":'<button class="small">佩</button>'}</div></div>`);
+    const [b1,b2,b3] = row.querySelectorAll("button");
+    b1.onclick=()=>{ sellSword(s.id); flushLog(); renderTab(); };
+    b2.onclick=()=>{ contribSword(s.id); flushLog(); renderTab(); };
+    if (b3) b3.onclick=()=>{ p.equip=s; uiRefresh(); };
+    sl.appendChild(row);
+  });
+  const ml = pg.querySelector("#mat-list");
+  const mats = Object.keys(p.mats).sort((a,b)=>HERBS[b].grade-HERBS[a].grade);
+  if (!mats.length) ml.innerHTML = `<div class="desc" style="color:#9a8a75;font-size:12px">去【出行】採集材料吧。</div>`;
+  mats.forEach(k => {
+    const mt = HERBS[k];
+    const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.mats[k]}<span class="tag">${["一","二","三","四","五"][mt.grade-1]}階</span>
+      <div class="desc ele"><b class="e-${{金:"jin",木:"mu",水:"shui",火:"huo",土:"tu"}[mt.ele]}">${mt.ele}${mt.ev[mt.ele]}</b>
+      ${ELES.filter(e=>e!==mt.ele&&mt.ev[e]).map(e=>`${e}${mt.ev[e]}`).join(" ")}</div></div>
+      <div class="btnrow"><button class="small ghost">售</button><button class="small ghost">繳</button></div></div>`);
+    const [b1,b2]=row.querySelectorAll("button");
+    b1.onclick=()=>{ sellMat(k,1); flushLog(); renderTab(); };
+    b2.onclick=()=>{ contribMat(k,1); flushLog(); renderTab(); };
+    ml.appendChild(row);
+  });
+  pg.querySelector("#btn-sellall").onclick = ()=>{
+    let sum=0; Object.keys(p.mats).forEach(k=>{ if(HERBS[k].grade<=2){ sum+=HERBS[k].value*p.mats[k]; delete p.mats[k]; } });
+    p.stones+=sum; flushLog([[`批量售賣一二階材料，得靈石${fmt(sum)}。`]]); renderTab(); };
+  return pg;
+}
+/* 選材開爐彈窗 */
+let forgePicks = [];
+function openForgeModal(recipeName){
+  const rc = RECIPES[recipeName];
+  forgePicks = [];
+  const mats = Object.keys(G.player.mats).sort((a,b)=>HERBS[b].grade-HERBS[a].grade);
+  openModal(`開爐：${recipeName}`, `
+    <div style="font-size:12px;color:#7a654e;margin-bottom:8px">需求：${Object.entries(rc.need).map(([e,v])=>`${e}≥${v}`).join("、")}
+    （屬性總和越全，品質越高：下→中→上→極品）</div>
+    <div id="fp-sum" style="font-size:13px;margin-bottom:8px"></div>
+    <div style="max-height:200px;overflow-y:auto" id="fp-mats"></div>
+    <div class="btnrow"><button id="fp-go" class="gold">開爐！</button><button class="ghost" onclick="closeModal()">算了</button></div>`,
+  body => {
+    const list = body.querySelector("#fp-mats");
+    const render = () => {
+      list.innerHTML = "";
+      mats.forEach(k => {
+        const mt = HERBS[k];
+        const cnt = G.player.mats[k] - forgePicks.filter(x=>x===k).length;
+        if (cnt<=0) return;
+        const row = h(`<div class="list-item"><div><b>${k}</b><div class="desc ele">${ELES.map(e=>`${e}${mt.ev[e]}`).join(" ")}</div></div>
+          <button class="small ghost">+加入</button></div>`);
+        row.querySelector("button").onclick = ()=>{ forgePicks.push(k); render(); updateSum(); };
+        list.appendChild(row);
+      });
+    };
+    const updateSum = () => {
+      const sum={}; ELES.forEach(e=>sum[e]=0); forgePicks.forEach(k=>ELES.forEach(e=>sum[e]+=HERBS[k].ev[e]));
+      const hits = Object.keys(rc.need).filter(e=>sum[e]>=rc.need[e]).length;
+      const total = forgePicks.reduce((a,k)=>a+HERBS[k].value,0);
+      body.querySelector("#fp-sum").innerHTML =
+        `已選${forgePicks.length}件 → ${ELES.map(e=>`${e}:${sum[e]}`).join(" ")} · 達標 ${hits}/${Object.keys(rc.need).length}`;
+    };
+    render(); updateSum();
+    body.querySelector("#fp-go").onclick = ()=>{
+      if (!forgePicks.length) return;
+      forgePicks.forEach(k=>{ G.player.mats[k]--; if(!G.player.mats[k]) delete G.player.mats[k]; });
+      closeModal(); forge(recipeName, forgePicks); flushLog(); renderTab();
+    };
+  });
+}
+
+</script>
+<script>
+/* ═══════════ 出行/關係/我頁 + 啟動 ═══════════ */
+let lastLogLen = 0;
+function flushLog(extra){
+  if (!G) return;
+  const news = G.dayLog.slice(lastLogLen);
+  lastLogLen = G.dayLog.length;
+  news.forEach(t => pushLog({t:t.t}));
+  (extra||[]).forEach(t => pushLog({t}));
+  uiRefresh();
+}
+
+/* ═══ 出行頁 ═══ */
+function pageChuxing(){
+  const p=G.player;
+  const pg = h(`<div>
+    <div class="page-title">出 行</div>
+    <div class="card"><h3>採集之地</h3><div id="map-list"></div></div>
+    <div class="card"><h3>週期秘境</h3><div id="dg-list"></div>
+      <div class="btnrow"><button class="small gold" id="btn-yuehua">兌換月華仙谷（2000萬貢獻）</button></div></div>
+    <div class="card"><h3>坊市</h3><div id="shop-list"></div></div>
+  </div>`);
+  const ml = pg.querySelector("#map-list");
+  MAP_NAMES.forEach((mn,i)=>{
+    const ok = p.ri >= MAP_REQ[i];
+    const row = h(`<div class="list-item"><div><b>${mn}</b><span class="tag">${["金鐵","草木","獸材","天材"][i]}</span>
+      <div class="desc">${ok?"外緣/內部/核心，可能遇妖獸":"需"+REALMS[MAP_REQ[i]].name+"修為"}</div></div>
+      <div class="btnrow">${ok?[0,1,2].map(l=>`<button class="small ghost" data-l="${l}">${LAYER_NAMES[l]}</button>`).join(""):""}</div></div>`);
+    if (ok) row.querySelectorAll("button").forEach(b=>b.onclick=()=>{ gather(i,+b.dataset.l); flushLog(); renderTab(); });
+    ml.appendChild(row);
+  });
+  const dl = pg.querySelector("#dg-list");
+  DUNGEONS.forEach(d=>{
+    const open = dgOpen(d);
+    const row = h(`<div class="list-item"><div><b>${d.name}</b>${open?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">已開啟</span>':""}
+      <div class="desc">${d.desc}</div></div>
+      <button class="small ${open?"gold":"ghost"}" ${open?"":"disabled"}>探索(-2精力)</button></div>`);
+    if (open) row.querySelector("button").onclick=()=>{ exploreDungeon(d); flushLog(); renderTab(); };
+    dl.appendChild(row);
+  });
+  pg.querySelector("#btn-yuehua").onclick=()=>{ buyYuehua(); flushLog(); };
+  const sl = pg.querySelector("#shop-list");
+  const goods = [...Object.keys(PILLS).map(k=>({...PILLS[k],name:k,bag:"pills"})),
+                 ...(p.poisonUnlocked?Object.keys(POISON_PILLS).map(k=>({...POISON_PILLS[k],name:k,bag:"poisons",poison:true})):[])];
+  goods.forEach(g=>{
+    const row = h(`<div class="list-item"><div><b>${g.name}${g.poison?"☠":""}</b><div class="desc">${g.desc}</div></div>
+      <div class="btnrow"><span style="font-size:12px;color:#8a6a40;align-self:center">${fmt(g.price)}石</span><button class="small">買</button></div></div>`);
+    row.querySelector("button").onclick=()=>{ buyPill(g.name); flushLog(); };
+    sl.appendChild(row);
+  });
+  if (p.poisonUnlocked===false) sl.appendChild(h(`<div class="desc" style="color:#b07050;font-size:11px;margin-top:6px">☠ 毒丹：與藥王谷眾人交好（平均好感60）後解鎖。</div>`));
+  return pg;
+}
+
+/* ═══ 關係頁：宗門總部（列表 ↔ 總部 兩層） ═══ */
+let SECT_VIEW = null; // 當前打開的宗門總部視圖
+let JIANGHU_VIEW = null; // null=門派列表 "friends"=相識名錄
+function pageGuanxi(){
+  if (SECT_VIEW) return pageSectHub(SECT_VIEW);
+  if (JIANGHU_VIEW==="friends") return pageFriends();
+  const p=G.player;
+  const metN = G.npcs.filter(n=>n.met&&n.alive).length;
+  const pg = h(`<div>
+    <div class="page-title">江 湖</div>
+    <div class="btnrow" style="margin-bottom:6px"><button class="gold small" id="jk-friends">我的相識（${metN}人）</button></div>
+    <div class="card"><h3>江湖傳聞</h3><div id="world-log" style="max-height:150px;overflow-y:auto;font-size:12px;line-height:1.8;color:#6b5a48">
+      ${G.worldLog.length?G.worldLog.slice(0,20).map(l=>`<div>·${l.t}</div>`).join(""):"<div style='color:#9a8a75'>江湖暫無風浪。</div>"}</div></div>
+    <div class="card"><h3>各大門派</h3><div id="sect-list"></div>
+      <div class="desc" style="font-size:11px;margin-top:4px">點開門派看名冊與人際關係，還能去廣場偶遇結識。</div></div>
+  </div>`);
+  pg.querySelector("#jk-friends").onclick=()=>{ JIANGHU_VIEW="friends"; renderTab(); };
+  const sl = pg.querySelector("#sect-list");
+  SECT.forEach(s=>{
+    const here = hallHere(s).filter(n=>!n.met&&n.rank!=="稚童").length;
+    const row = h(`<div class="list-item" style="cursor:pointer"><div>
+      <b>${s}</b>${here?`<span class="tag" style="background:#f5d7b0;color:#8a5a20">有生面孔${here}</span>`:""}
+      <div class="desc">${G.npcs.filter(n=>n.sect===s&&n.alive).length} 位修士</div></div>
+      <span style="color:#b0a08a">›</span></div>`);
+    row.onclick=()=>{ SECT_VIEW=s; renderTab(); };
+    sl.appendChild(row);
+  });
+  return pg;
+}
+function pageFriends(){
+  const p=G.player;
+  const met = G.npcs.filter(n=>n.met&&n.alive)
+    .sort((a,b)=> (b.love-a.love) || (b.favor-a.favor));
+  const gone = G.npcs.filter(n=>n.met&&!n.alive);
+  const pg = h(`<div>
+    <div class="btnrow" style="margin-bottom:2px"><button class="small ghost" id="fr-back">← 返回江湖</button></div>
+    <div class="page-title">我的相識</div>
+    ${met.length?`<div class="card"><h3>在世（${met.length}）</h3><div id="fr-list"></div></div>`
+      :`<div class="card"><div class="desc">還不認識誰。去門派廣場搭話，或宗門遊歷碰碰運氣。</div></div>`}
+    ${gone.length?`<div class="card"><h3 style="color:#a08080">故人（${gone.length}）</h3><div id="fr-gone"></div></div>`:""}
+  </div>`);
+  pg.querySelector("#fr-back").onclick=()=>{ JIANGHU_VIEW=null; renderTab(); };
+  const box = pg.querySelector("#fr-list");
+  met.forEach(n=>{
+    const away = n.loc!==n.sect;
+    const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
+    const proposed = n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const row = h(`<div class="list-item" style="cursor:pointer"><div>
+      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${spouse}${proposed}
+      <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""}${away?" · 雲遊中":""}</div></div>
+      <span style="color:#b0a08a">›</span></div>`);
+    row.onclick=()=>openNpcModal(n.id);
+    box.appendChild(row);
+  });
+  const gbox = pg.querySelector("#fr-gone");
+  if (gbox) gone.forEach(n=>{
+    gbox.appendChild(h(`<div class="list-item" style="opacity:.55"><div>
+      <b>† ${n.name}</b><span class="tag">${n.sect}</span>
+      <div class="desc">${n.love>0?"生前與你有過一段情":"故人"}</div></div></div>`));
+  });
+  return pg;
+}
+function pageSectHub(sect){
+  const p=G.player;
+  const alive = G.npcs.filter(n=>n.sect===sect&&n.alive);
+  const dead = G.npcs.filter(n=>n.sect===sect&&!n.alive);
+  const meetCost = p.energy<1?"（精力不足）":"（-1精力）";
+  /* 每日固定洗牌：一天內順序穩定，隔天換位 */
+  const seed = G.player.day*97 + SECT.indexOf(sect)*13 + 7;
+  let sd = seed % 233280 + 1;
+  const roster = [...alive];
+  for (let i=roster.length-1;i>0;i--){ sd = (sd*9301+49297)%233280;
+    const j = Math.floor(sd/233280*(i+1)); [roster[i],roster[j]]=[roster[j],roster[i]]; }
+  const pg = h(`<div>
+    <div class="btnrow" style="margin-bottom:2px"><button class="small ghost" id="hub-back">← 返回江湖</button></div>
+    <div class="page-title">${sect}</div>
+    <div class="card">
+      <div class="btnrow"><button class="gold small" id="hub-plaza">廣場偶遇${meetCost}·過天</button></div>
+      <div class="desc" style="font-size:11px;margin-top:4px">去廣場轉轉：可能結識生面孔，也可能撞見舊識聊上幾句。</div>
+    </div>
+    <div class="card"><h3>山門名冊（${alive.length}人·順序每日變動）</h3><div id="hub-roster"></div></div>
+    ${dead.length?`<div class="card"><h3 style="color:#a08080">往生（${dead.length}）</h3><div id="rk-dead"></div></div>`:""}
+  </div>`);
+  pg.querySelector("#hub-back").onclick=()=>{ SECT_VIEW=null; renderTab(); };
+  pg.querySelector("#hub-plaza").onclick=()=>{ visitPlaza(sect); flushLog(); renderTab(); };
+  const box = pg.querySelector("#hub-roster");
+  roster.forEach(n=>{
+    const away = n.loc!==sect;
+    const met = n.met;
+    const heart = met&&n.love>0?` ❤${n.love}`:"";
+    const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
+    const proposed = met&&n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const row = h(`<div class="list-item"><div>
+      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${spouse}${proposed}
+      <div class="desc">${met?`友${n.favor}${heart}${away?" · 雲遊中":""}`:(away?"面生，雲遊在外":"面生的"+(n.gender==="M"?"男修":"女修"))}</div></div>
+      ${met?'<button class="small ghost" data-open="'+n.id+'">往來</button>'
+           :(away?"":'<button class="small gold" data-meet="'+n.id+'">搭話'+meetCost+'</button>')}</div>`);
+    box.appendChild(row);
+  });
+  if (dead.length) {
+    const dbox = pg.querySelector("#rk-dead");
+    dead.forEach(n=>{
+      dbox.appendChild(h(`<div class="list-item" style="opacity:.55"><div>
+        <b>† ${n.met?n.name:"？？？"}</b>
+        <div class="desc">${n.met?(n.love>0?"生前與你有過一段情":"故人"):"身分不明"}</div></div></div>`));
+    });
+  }
+  pg.querySelectorAll("[data-meet]").forEach(b=>b.onclick=()=>{
+    const id=+b.dataset.meet, n=npcById(id);
+    if (p.energy<1) return flushLog([["精力不足，改日再聊。"]]);
+    p.energy--;
+    meetNpc(id);
+    msg(`${n.name}：${q(greetLine(n))}`);
+    nextDay(); flushLog(); renderTab();
+  });
+  pg.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openNpcModal(+b.dataset.open));
+  return pg;
+}
+function openNpcModal(id){
+  let curLast = null; // 本次互動的最新台詞（顯示在名字下橫幅）
+  const renderBody = ()=>{
+    const n = npcById(id), p=G.player, P = PERS[n.pers];
+    const isMonk = n.sect==="大自在殿";
+    const showLove = !isMonk; // 佛門愛情隱藏
+    const relOf = rid => { const x = npcById(rid); if(!x) return "";
+      return `${x.met?`<b data-open="${x.id}" style="text-decoration:underline;cursor:pointer">${x.name}</b>`:`<span style="color:#b0a08a">${x.alive?"未結識":"已故"}</span>`}（${x.sect}${x.alive?"":"·已故"}）`; };
+    let relHtml = "";
+    if (n.rel.master!==null) relHtml += `<div class="kv"><span>師尊</span><span>${relOf(n.rel.master)}</span></div>`;
+    if (n.spouseId!==null) relHtml += `<div class="kv"><span>道侶</span><span>${relOf(n.spouseId)}</span></div>`;
+    if (n.rel.friends.length) relHtml += `<div class="kv"><span>摯友</span><span>${n.rel.friends.slice(0,3).map(relOf).join("、")}</span></div>`;
+    if (n.rel.parents.length) relHtml += `<div class="kv"><span>父母</span><span>${n.rel.parents.map(relOf).join("、")}</span></div>`;
+    if (n.rel.children.length) relHtml += `<div class="kv"><span>孩子</span><span>${n.rel.children.map(relOf).join("、")}</span></div>`;
+    if (!relHtml) relHtml = `<div class="desc" style="font-size:11px;color:#b0a08a">萍水相逢，還不知他的師承故舊。</div>`;
+    const gifts = [];
+    p.swords.filter(s=>s.grade>=1).slice(0,8).forEach(s=>gifts.push(s.name));
+    Object.keys(p.pills).forEach(k=>gifts.push(k));
+    RECIPES && Object.keys(RECIPES).forEach(r=>{ const rc=RECIPES[r];
+      if (rc.type==="禮物" && p.swords.some(s=>s.name===r)) gifts.push(r); });
+    const uniqGifts = [...new Set(gifts)];
+    return `
+    <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0;min-height:38px">
+      ${curLast || `${n.name}：${q(greetLine(n))}`}</div>
+    <div class="kv"><span>友情 ${n.favor}</span><span>${showLove?`愛情 ${n.love}`:"愛情 ???"}</span></div>
+    <div class="bar favorbar"><div style="width:${clamp(n.favor,0,100)}%"></div></div>
+    <div class="bar lovebar"><div style="width:${showLove?clamp(n.love,0,100):0}%"></div></div>
+    ${n.loc!==n.sect?`<div class="desc" style="font-size:11px;color:#9a8a75;margin:6px 0">現在人在${n.loc}</div>`:""}
+    ${n.proposed?`<div class="btnrow" style="margin:6px 0"><button class="gold small" data-prop="yes">答應求婚</button><button class="ghost small" data-prop="no">婉拒</button></div>`:""}
+    <h3 style="margin-top:12px;font-size:14px;color:#7a5540">師門親友</h3>
+    <div style="font-size:12px">${relHtml}</div>
+    <div class="btnrow" style="margin-top:6px"><button class="small ghost" data-act="引薦">請他引薦親友（友情60）</button></div>
+    <h3 style="margin-top:12px;font-size:14px;color:#7a5540">往來</h3>
+    <div class="btnrow">
+      <button class="ghost small" data-act="交好">攀談(-1精力)</button>
+      <button class="ghost small" data-act="誇讚">誇讚(-1精力)</button>
+      <button class="ghost small" data-act="逗弄">逗弄(-1精力)</button>
+      <button class="ghost small" data-act="安慰">安慰(-1精力)</button>
+      <button class="ghost small" data-act="調情">調情</button>
+      <button class="ghost small" data-act="切磋">切磋</button>
+      <button class="ghost small" data-act="雙修">雙修</button>
+    </div>
+    <h3 style="margin-top:12px;font-size:14px;color:#7a5540">送禮</h3>
+    <div id="gift-row" class="btnrow" style="max-height:110px;overflow-y:auto;border:1px dashed #d8c6a8;border-radius:8px;padding:8px">
+      ${uniqGifts.length?uniqGifts.map(g=>`<button class="small ghost" data-g="${g}">${g}</button>`).join(""):"<span style='font-size:12px;color:#9a8a75'>沒有可送的東西：鑄禮物劍或買丹藥</span>"}</div>
+    <h3 style="margin-top:12px;font-size:14px;color:#7a5540">陰私</h3>
+    <div class="btnrow">
+      <button class="warn small" data-act="下毒">下毒</button>
+      <button class="warn small" data-act="暗殺">暗殺</button>
+      ${p.spouse===n.id?'<button class="warn small" id="btn-div">和離</button>':""}
+      <button class="warn small" data-act="死鬥">死鬥</button>
+    </div>`;
+  };
+  const bind = body=>{
+    const lastMsg = ()=>{ const L=G.dayLog; return L.length? L[L.length-1].t : null; };
+    body.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{ const x=npcById(+b.dataset.open);
+      if(x&&x.alive){ openNpcModal(x.id); } });
+    body.querySelectorAll("[data-prop]").forEach(b=>b.onclick=()=>{ answerProposal(id, b.dataset.prop==="yes"); curLast=lastMsg(); refresh(); flushLog(); });
+    body.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
+      const act = b.dataset.act;
+      if (act==="下毒") return uiPickPoison(npcById(id));
+      if (act==="死鬥") { sparNpc(npcById(id),true); flushLog(); closeModal(); renderTab(); return; }
+      if (act==="引薦") { introduce(id); curLast=lastMsg(); flushLog(); return refresh(); }
+      interact(id, act); curLast=lastMsg(); flushLog(); refresh();
+    });
+    body.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{
+      gift(id, b.dataset.g); curLast=lastMsg(); flushLog(); refresh();
+    });
+    const dv = body.querySelector("#btn-div");
+    if (dv) dv.onclick=()=>{ divorce(npcById(id)); flushLog(); closeModal(); renderTab(); };
+  };
+  const refresh = ()=>{ // 原地刷新彈窗內容（不關閉、不打斷連續操作）
+    const body = el("modal-body");
+    const keep = body.scrollTop;
+    body.innerHTML = renderBody();
+    bind(body);
+    body.scrollTop = keep;
+    if (npcById(id) && !npcById(id).alive) closeModal();
+  };
+  const n0 = npcById(id);
+  openModal(`${n0.gender==="M"?"♂":"♀"} ${n0.name}（${n0.sect}·${n0.rank}·${realmText(n0.ri,n0.sub)}）`, renderBody(), body=>bind(body));
+}
+
+function uiPickPoison(n){
+  const p=G.player, ps=Object.keys(p.poisons);
+  if (!ps.length) { closeModal(); return flushLog([["你沒有毒丹。（坊市·藥王谷解鎖後可購）"]]); }
+  openModal(`對 ${n.name} 下毒`, `<div id="pp-list"></div><div class="btnrow"><button class="ghost" onclick="closeModal()">罷手</button></div>`, body=>{
+    const list = body.querySelector("#pp-list");
+    ps.forEach(k=>{ const row = h(`<div class="list-item"><div><b>☠${k}</b> ×${p.poisons[k]}<div class="desc">${POISON_PILLS[k].desc}</div></div><button class="small warn">下</button></div>`);
+      row.querySelector("button").onclick=()=>{ closeModal(); givePoison(n,k); flushLog(); renderTab(); }; list.appendChild(row); });
+  });
+}
+
+/* ═══ 我頁 ═══ */
+function pageMe(){
+  const p=G.player;
+  const saves = listSaves();
+  const pg = h(`<div>
+    <div class="page-title">我</div>
+    <div class="card"><h3>面板</h3>
+      <div class="kv"><span>姓名/年齡</span><span>${esc(p.name)} · ${p.age}歲</span></div>
+      <div class="kv"><span>境界</span><span>${realmText(p.ri,p.sub)}</span></div>
+      <div class="kv"><span>武力構成</span><span>基礎${p.ri*40+p.sub*8+5} + 劍意${Math.round((p.ri*40+p.sub*8+5)*p.swordSense*0.003)} + 劍${p.equip?p.equip.power:0}</span></div>
+      <div class="kv"><span>聲望</span><span>${p.reputation} ${p.reputation<-50?"（正道通緝中！）":""}</span></div>
+      <div class="kv"><span>佩劍</span><span>${p.equip?SWORD_GRADES[p.equip.grade]+"「"+p.equip.name+"」":"空手"}</span></div>
+      <div class="kv"><span>道侶</span><span>${p.spouse!==null&&p.spouse!==undefined&&G.npcs[p.spouse]?G.npcs[p.spouse].name:"—"}</span></div>
+      <div class="kv"><span>三生石</span><span>${G.flags.sanshengDone.length?G.flags.sanshengDone.map(i=>G.npcs[i].name).join("、"):"—"}</span></div>
+    </div>
+    <div class="card"><h3>存檔（SL：行動前手動存）</h3><div id="save-list"></div>
+      <div class="kv" style="margin-top:8px"><span>自動存檔（每日）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div></div>
+    <div class="card"><h3>冒險日誌</h3><div style="max-height:180px;overflow-y:auto;font-size:12px;line-height:1.7;color:#6b5a48">
+      ${G.dayLog.slice(-40).reverse().map(l=>`<div>·${l.t}</div>`).join("")}</div></div>
+  </div>`);
+  const sl = pg.querySelector("#save-list");
+  saves.forEach(s=>{
+    const row = h(`<div class="list-item"><div><b>槽${s.slot}</b>${s.slot===0?"（自動）":""}
+      <div class="desc">${s.empty?"空":esc(s.name)+" · "+s.time}</div></div>
+      <div class="btnrow"><button class="small" data-op="save">存</button><button class="small ghost" data-op="load" ${s.empty?"disabled":""}>讀</button></div></div>`);
+    row.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if (b.dataset.op==="save"){ saveGame(s.slot); flushLog(); }
+      else { loadGame(s.slot); lastLogLen = G.dayLog.length; flushLog(); }
+      renderTab();
+    });
+    sl.appendChild(row);
+  });
+  pg.querySelector("#btn-auto").onclick=()=>{ p.autoSave=!p.autoSave; uiRefresh(); };
+  return pg;
+}
+
+/* ═══ 開場 & 啟動 ═══ */
+function showIntro(){
+  const app = el("app");
+  app.insertAdjacentHTML("beforeend", `
+  <div id="intro">
+    <div style="font-size:40px">🗡</div>
+    <h1>萬劍山弟子修煉手札</h1>
+    <p>你以凡人之軀拜入萬劍山。<br>練劍、鑄劍、斬妖、論劍，<br>山高路遠，道侶同行。<br>——男女皆可攻略，請自便。</p>
+    <input id="intro-name" placeholder="道號（2-6字）" maxlength="6" value="">
+    <div class="btnrow" style="justify-content:center">
+      <button id="intro-go">拜入山門</button>
+      <button class="ghost" id="intro-load">讀取存檔1</button>
+    </div>
+  </div>`);
+  el("intro-go").onclick = ()=>{
+    const name = el("intro-name").value.trim() || "無名";
+    newGame(name);
+    el("intro").remove();
+    lastLogLen = 0; flushLog();
+    saveGame(0,true);
+  };
+  el("intro-load").onclick = ()=>{
+    if (!localStorage.getItem("wjs_1")) return alert("槽位1為空");
+    loadGame(1); el("intro").remove(); lastLogLen = G.dayLog.length; flushLog();
+  };
+}
+function boot(){
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.t));
+  el("modal-close-btn").onclick = closeModal;
+  el("modal-mask").onclick = e=>{ if(e.target.id==="modal-mask") closeModal(); };
+  showIntro();
+}
+document.addEventListener("DOMContentLoaded", boot);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "萬劍山弟子修煉手札",
+  "short_name": "萬劍山手札",
+  "description": "女劍修的江湖人生：修煉、鑄劍、結緣、遊歷，一個檔案走天下。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7efe0",
+  "theme_color": "#8a5a20",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

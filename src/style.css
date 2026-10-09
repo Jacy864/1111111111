@@ -1,0 +1,88 @@
+/* 藥王谷 · 自用版 —— 仿手機 UI */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; }
+body {
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#2b2420; display:flex; justify-content:center;
+  color:#3a2f28; user-select:none;
+}
+#app {
+  width:100%; max-width:480px; height:100%;
+  background:linear-gradient(180deg,#f7f1e6 0%,#f2ead9 100%);
+  display:flex; flex-direction:column; position:relative; overflow:hidden;
+  box-shadow:0 0 40px rgba(0,0,0,.5);
+}
+/* ── 頂部狀態欄 ── */
+#statusbar { padding:8px 12px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
+#statusbar .row1 { display:flex; align-items:center; gap:10px; }
+.avatar { width:46px; height:46px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
+  display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+.pinfo { flex:1; min-width:0; }
+.pname { font-size:15px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
+.realm { font-size:12px; color:#ffe3c0; }
+.statline { display:flex; gap:10px; font-size:11px; margin-top:3px; opacity:.95; flex-wrap:wrap; }
+.datebar { font-size:12px; margin-top:6px; display:flex; justify-content:space-between; opacity:.9; }
+.spiritbar { height:8px; background:rgba(0,0,0,.25); border-radius:4px; margin-top:4px; overflow:hidden; }
+.spiritbar>div { height:100%; background:linear-gradient(90deg,#ffd98a,#ff9d5c); border-radius:4px; transition:width .3s; }
+/* ── 主內容區 ── */
+#main { flex:1; overflow-y:auto; padding:12px; }
+#main::-webkit-scrollbar { width:4px; } #main::-webkit-scrollbar-thumb { background:#c9b8a0; border-radius:2px; }
+.page-title { font-size:17px; font-weight:700; color:#6b4a35; margin-bottom:10px; letter-spacing:2px; }
+.card { background:#fffdf7; border:1px solid #e5d8c2; border-radius:12px; padding:12px; margin-bottom:10px;
+  box-shadow:0 1px 4px rgba(120,90,60,.08); }
+.card h3 { font-size:14px; color:#7a5540; margin-bottom:8px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+/* ── 按鈕 ── */
+button {
+  font-family:inherit; border:none; border-radius:8px; padding:8px 14px; font-size:13px;
+  background:#8c5a44; color:#fdf6ec; cursor:pointer; transition:transform .06s, opacity .2s;
+}
+button:active { transform:scale(.96); }
+button:disabled { opacity:.4; cursor:default; }
+button.ghost { background:#efe4d0; color:#6b4a35; border:1px solid #d8c6a8; }
+button.warn { background:#b0524a; }
+button.gold { background:#b8863a; }
+button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
+.btnrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+/* ── 列表項 ── */
+.list-item { display:flex; justify-content:space-between; align-items:center; padding:9px 10px;
+  border-bottom:1px dashed #e0d3bc; font-size:13px; }
+.list-item:last-child { border-bottom:none; }
+.list-item .desc { font-size:11px; color:#9a8a75; margin-top:2px; }
+.tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#efe4d0; color:#7a654e; margin-left:4px; }
+/* ── 消息 log ── */
+#log { position:fixed; left:50%; transform:translateX(-50%); bottom:78px; max-width:440px; width:92%;
+  max-height:180px; overflow-y:auto; z-index:50; pointer-events:none; }
+.logline { background:rgba(40,30,22,.88); color:#f5ead6; font-size:12px; padding:6px 12px;
+  border-radius:8px; margin-bottom:4px; animation:fadein .25s; line-height:1.5; }
+@keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
+/* ── 彈窗 ── */
+#modal-mask { position:absolute; inset:0; background:rgba(30,20,14,.55); z-index:90;
+  display:none; align-items:flex-end; }
+#modal-mask.show { display:flex; }
+#modal { background:#fbf5e9; width:100%; max-height:75%; border-radius:16px 16px 0 0;
+  padding:16px 16px 30px; overflow-y:auto; animation:slideup .22s; }
+@keyframes slideup { from{transform:translateY(40px); opacity:.4;} to{transform:none; opacity:1;} }
+#modal h2 { font-size:16px; color:#6b4a35; margin-bottom:10px; }
+.modal-close { float:right; font-size:18px; color:#9a8a75; background:none; padding:0 4px; }
+/* ── 底部選單 ── */
+#tabbar { display:flex; background:#3d322a; flex-shrink:0; padding-bottom:env(safe-area-inset-bottom); }
+.tab { flex:1; padding:8px 0 6px; text-align:center; color:#bfae96; font-size:11px; cursor:pointer; }
+.tab .ico { font-size:20px; display:block; margin-bottom:1px; }
+.tab.active { color:#ffd98a; background:#4a3d32; }
+/* ── 進度/資源行 ── */
+.res { display:inline-flex; align-items:center; gap:3px; }
+.kv { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+.bar { height:6px; background:#e8dcc6; border-radius:3px; overflow:hidden; margin:2px 0 6px; }
+.bar>div { height:100%; border-radius:3px; background:#c98a5a; }
+.lovebar>div { background:#d96a6a; } .favorbar>div { background:#7aa5c9; }
+.ele { font-size:10px; color:#9a8a75; }
+.ele b { margin-right:6px; }
+.e-jin{color:#c9a227}.e-mu{color:#5a9e4f}.e-shui{color:#4f7fc9}.e-huo{color:#d05a3a}.e-tu{color:#a5764f}
+/* 開場 */
+#intro { position:absolute; inset:0; background:linear-gradient(160deg,#f7f1e6,#e9dcc4); z-index:200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; text-align:center; }
+#intro h1 { font-size:26px; letter-spacing:6px; color:#6b4a35; margin-bottom:8px; }
+#intro p { font-size:13px; color:#8a7660; margin-bottom:24px; line-height:1.8; }
+#intro input { font-size:15px; padding:10px 14px; border:1px solid #cbb894; border-radius:8px; width:220px; margin-bottom:16px; text-align:center; background:#fffdf7; outline:none; }

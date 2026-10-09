@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#8a5a20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="萬劍山手札">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<script>if ("serviceWorker" in navigator && location.protocol !== "file:") window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<title>萬劍山弟子修煉手札</title>
+<style>
+__CSS__
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="statusbar">
+    <div class="row1">
+      <div class="avatar" id="avatar">🗡</div>
+      <div class="pinfo">
+        <div class="pname" id="pname">…</div>
+        <div class="statline" id="statline"></div>
+      </div>
+    </div>
+    <div class="datebar" id="datebar"></div>
+    <div class="spiritbar"><div id="spiritfill" style="width:0%"></div></div>
+  </div>
+  <div id="main"></div>
+  <div id="log"></div>
+  <div id="tabbar">
+    <div class="tab active" data-t="xiulian"><span class="ico">⛩</span>修煉</div>
+    <div class="tab" data-t="zhujian"><span class="ico">⚒</span>鑄劍</div>
+    <div class="tab" data-t="chuxing"><span class="ico">🏔</span>出行</div>
+    <div class="tab" data-t="guanxi"><span class="ico">🌸</span>江湖</div>
+    <div class="tab" data-t="me"><span class="ico">📜</span>我</div>
+  </div>
+  <div id="modal-mask">
+    <div id="modal">
+      <button class="modal-close" id="modal-close-btn">✕</button>
+      <h2 id="modal-title"></h2>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+</div>
+<script>
+__DATA__
+</script>
+<script>
+__PERS__
+</script>
+<script>
+__ENGINE__
+</script>
+<script>
+__UI__
+</script>
+<script>
+__UI2__
+</script>
+</body>
+</html>

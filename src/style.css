@@ -12,15 +12,20 @@ body {
   display:flex; flex-direction:column; position:relative; overflow:hidden;
   box-shadow:0 0 40px rgba(0,0,0,.5);
 }
-/* ── 頂部狀態欄 ── */
-#statusbar { padding:8px 12px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
-#statusbar .row1 { display:flex; align-items:center; gap:10px; }
-.avatar { width:46px; height:46px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
-  display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+/* ── 頂部狀態欄（貼齊劉海，含修行按鈕列） ── */
+#statusbar { padding:calc(env(safe-area-inset-top) + 6px) 10px 8px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
+#statusbar .row1 { display:flex; align-items:center; gap:8px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
+  display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
 .pinfo { flex:1; min-width:0; }
-.pname { font-size:15px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
-.realm { font-size:12px; color:#ffe3c0; }
-.statline { display:flex; gap:10px; font-size:11px; margin-top:3px; opacity:.95; flex-wrap:wrap; }
+.pname { font-size:14px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
+.realm { font-size:11px; color:#ffe3c0; }
+.statline { display:flex; gap:8px; font-size:10px; margin-top:2px; opacity:.95; flex-wrap:wrap; }
+.actrow { display:flex; gap:5px; margin-top:6px; }
+.sbtn { flex:1; padding:6px 0; font-size:12px; border-radius:8px; background:rgba(253,246,236,.18);
+  color:#fdf6ec; border:1px solid rgba(253,246,236,.3); line-height:1.2; }
+.sbtn.gold { background:#b8863a; border-color:#b8863a; }
+.sbtn:active { transform:scale(.95); }
 .datebar { font-size:12px; margin-top:6px; display:flex; justify-content:space-between; opacity:.9; }
 .spiritbar { height:8px; background:rgba(0,0,0,.25); border-radius:4px; margin-top:4px; overflow:hidden; }
 .spiritbar>div { height:100%; background:linear-gradient(90deg,#ffd98a,#ff9d5c); border-radius:4px; transition:width .3s; }
@@ -51,12 +56,6 @@ button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
 .list-item:last-child { border-bottom:none; }
 .list-item .desc { font-size:11px; color:#9a8a75; margin-top:2px; }
 .tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#efe4d0; color:#7a654e; margin-left:4px; }
-/* ── 消息 log ── */
-#log { position:fixed; left:50%; transform:translateX(-50%); bottom:78px; max-width:440px; width:92%;
-  max-height:180px; overflow-y:auto; z-index:50; pointer-events:none; }
-.logline { background:rgba(40,30,22,.88); color:#f5ead6; font-size:12px; padding:6px 12px;
-  border-radius:8px; margin-bottom:4px; animation:fadein .25s; line-height:1.5; }
-@keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
 /* ── 彈窗 ── */
 #modal-mask { position:absolute; inset:0; background:rgba(30,20,14,.55); z-index:90;
   display:none; align-items:flex-end; }

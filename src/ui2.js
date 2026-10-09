@@ -118,12 +118,9 @@ function pageSectHub(sect){
   const alive = G.npcs.filter(n=>n.sect===sect&&n.alive);
   const dead = G.npcs.filter(n=>n.sect===sect&&!n.alive);
   const meetCost = p.energy<1?"（精力不足）":"（-1精力）";
-  /* 每日固定洗牌：一天內順序穩定，隔天換位 */
-  const seed = G.player.day*97 + SECT.indexOf(sect)*13 + 7;
-  let sd = seed % 233280 + 1;
-  const roster = [...alive];
-  for (let i=roster.length-1;i>0;i--){ sd = (sd*9301+49297)%233280;
-    const j = Math.floor(sd/233280*(i+1)); [roster[i],roster[j]]=[roster[j],roster[i]]; }
+  /* 名冊固定排序（掌門→長老→弟子→稚童，同階按入門先後）：位置穩定，搭話後不會亂飛 */
+  const RANK_ORDER = {"掌門":0,"長老":1,"弟子":2,"稚童":3};
+  const roster = [...alive].sort((a,b)=> (RANK_ORDER[a.rank]-RANK_ORDER[b.rank]) || (a.id-b.id));
   const pg = h(`<div>
     <div class="btnrow" style="margin-bottom:2px"><button class="small ghost" id="hub-back">← 返回江湖</button></div>
     <div class="page-title">${sect}</div>
@@ -131,7 +128,7 @@ function pageSectHub(sect){
       <div class="btnrow"><button class="gold small" id="hub-plaza">廣場偶遇${meetCost}·過天</button></div>
       <div class="desc" style="font-size:11px;margin-top:4px">去廣場轉轉：可能結識生面孔，也可能撞見舊識聊上幾句。</div>
     </div>
-    <div class="card"><h3>山門名冊（${alive.length}人·順序每日變動）</h3><div id="hub-roster"></div></div>
+    <div class="card"><h3>山門名冊（${alive.length}人）</h3><div id="hub-roster"></div></div>
     ${dead.length?`<div class="card"><h3 style="color:#a08080">往生（${dead.length}）</h3><div id="rk-dead"></div></div>`:""}
   </div>`);
   pg.querySelector("#hub-back").onclick=()=>{ SECT_VIEW=null; renderTab(); };
@@ -278,7 +275,14 @@ function pageMe(){
       <div class="kv"><span>三生石</span><span>${G.flags.sanshengDone.length?G.flags.sanshengDone.map(i=>G.npcs[i].name).join("、"):"—"}</span></div>
     </div>
     <div class="card"><h3>存檔（SL：行動前手動存）</h3><div id="save-list"></div>
-      <div class="kv" style="margin-top:8px"><span>自動存檔（每日）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div></div>
+      <div class="kv" style="margin-top:8px"><span>自動存檔（每日+每月）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div>
+      <div class="desc" style="margin-top:6px;font-size:11px">換手機／換瀏覽器／清快取都不怕：把存檔碼複製存好，隨時導入回來。</div>
+      <div class="btnrow" style="margin-top:6px">
+        <button class="small ghost" id="btn-export">導出存檔碼</button>
+        <button class="small ghost" id="btn-import">導入存檔碼</button>
+      </div>
+      <textarea id="save-io" placeholder="存檔碼會顯示在這裡；導入時把碼貼進來再按導入" style="display:none;width:100%;box-sizing:border-box;margin-top:6px;height:72px;font-size:11px;padding:6px;border:1px solid #d8c9a8;border-radius:8px;background:#faf6ec;color:#4a3b28"></textarea>
+    </div>
     <div class="card"><h3>冒險日誌</h3><div style="max-height:180px;overflow-y:auto;font-size:12px;line-height:1.7;color:#6b5a48">
       ${G.dayLog.slice(-40).reverse().map(l=>`<div>·${l.t}</div>`).join("")}</div></div>
   </div>`);
@@ -295,6 +299,25 @@ function pageMe(){
     sl.appendChild(row);
   });
   pg.querySelector("#btn-auto").onclick=()=>{ p.autoSave=!p.autoSave; uiRefresh(); };
+  const io = pg.querySelector("#save-io");
+  pg.querySelector("#btn-export").onclick=()=>{
+    io.style.display="block";
+    io.value = JSON.stringify({g:G, t:Date.now()}); // 直接導出當前進度
+    io.readOnly = true; io.select();
+    try { navigator.clipboard && navigator.clipboard.writeText(io.value); } catch(e){}
+  };
+  pg.querySelector("#btn-import").onclick=()=>{
+    io.style.display="block"; io.readOnly = false; io.value=""; io.placeholder="把存檔碼貼進這裡，再按一次「導入存檔碼」"; io.focus();
+    const raw = io.value.trim();
+    if (!raw.startsWith("{")) return; // 第一次點＝清空待貼
+    try {
+      const data = JSON.parse(raw).g;
+      if (!data || data.ver!==2) throw 0;
+      G = data; migratePers(); migratePersV2();
+      msg("存檔碼導入成功。"); lastLogLen = G.dayLog.length;
+    } catch(e){ msg("存檔碼無效，請檢查是否複製完整。"); }
+    flushLog(); renderTab();
+  };
   return pg;
 }
 
@@ -303,7 +326,6 @@ function showIntro(){
   const app = el("app");
   app.insertAdjacentHTML("beforeend", `
   <div id="intro">
-    <div style="font-size:40px">🗡</div>
     <h1>萬劍山弟子修煉手札</h1>
     <p>你以凡人之軀拜入萬劍山。<br>練劍、鑄劍、斬妖、論劍，<br>山高路遠，道侶同行。<br>——男女皆可攻略，請自便。</p>
     <input id="intro-name" placeholder="道號（2-6字）" maxlength="6" value="">
@@ -332,6 +354,11 @@ function restoreTab(){
 function boot(){
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.t));
   restoreTab();
+  el("sb-practice").onclick = ()=>{ practice(); flushLog(); };
+  el("sb-break").onclick   = ()=>{ tryBreak(); flushLog(); };
+  el("sb-class").onclick   = ()=>{ takeLesson(); flushLog(); };
+  el("sb-tour").onclick    = ()=>{ sectTour(); flushLog(); };
+  el("sb-task").onclick    = ()=>{ doTask(); flushLog(); };
   el("modal-close-btn").onclick = closeModal;
   el("modal-mask").onclick = e=>{ if(e.target.id==="modal-mask") closeModal(); };
   showIntro();

@@ -48,7 +48,7 @@ function mkNpc(sect, rank, ri, gender, ageHint) {
     id: NPC_UID++, name: genName(gender), sect, rank, gender, ri,
     sub: REALMS[ri].layers ? rnd(9) : rnd(3),
     age: ageHint !== undefined ? ageHint : (rank==="弟子" ? 16+rnd(30) : rank==="長老" ? 90+rnd(300) : 280+rnd(400)),
-    pers: rollPers(), special: "",
+    pers: rollPers(sect), special: "",
     met:false, favor:0, love:0, alive:true, deadBy:"",
     spouseId:null, spouse:"", rel:{master:null, friends:[], parents:[], children:[]},
     loc: sect, poison:null, danToxin:0, proposed:false,
@@ -203,7 +203,7 @@ function hallHere(sect) { return G.npcs.filter(n=>n.alive && n.loc===sect); }
 /* 台詞引號：行內已帶「」則不再外包 */
 function q(s){ return s.startsWith("「") ? s : "「"+s+"」"; }
 function gdial(n, s){
-  if (n.gender!=="M") return s;
+  if (n.gender!=="M") return s.replace(/老夫/g,"老身"); // 女性自稱修正
   return s.replace(/老娘/g,"老子").replace(/姑奶奶/g,"大爺").replace(/姐姐/g,"哥哥")
           .replace(/小女子/g,"小生").replace(/女兒家/g,"男兒家");
 }
@@ -287,7 +287,9 @@ function nextDay(n=1) {
   }
   uiRefresh();
 }
-function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月】宗門發布新任務：${G.monthTask.name}`); }
+function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月】宗門發布新任務：${G.monthTask.name}`);
+  if (G.player.autoSave) saveGame(0, true); // 每月自動存檔（槽0，靜默）
+}
 function onYear() { /* NPC 成長在 tickNpcYear 內按年處理 */ }
 function onSummit() {
   msg("五年一度的正道大會召開，各派弟子雲集論劍。");
@@ -309,6 +311,22 @@ function guestBubble(n){
   const pool = P.chat[st3(n.favor)];
   return gdial(n, pool[rnd(pool.length)]);
 }
+/* 來訪門檻：友情、愛情雙高才上門（只有友情高的普通朋友不會賴來家裡） */
+const GUEST_REQ_FAV = 60, GUEST_REQ_LOVE = 50;
+/* 家中有客仍出門：訪客抱怨（不掉好感，純鬧脾氣） */
+function guestSulk(why){
+  const p = G.player;
+  if (!p.guest) return;
+  const n = npcById(p.guest.id);
+  if (!n || !n.alive) return;
+  const SULK = [
+    `「去吧去吧，誰稀罕你陪。」${n.name}抱著膝蓋坐到牆角，背影寫滿怨念。`,
+    `「……你走你的。」${n.name}把茶杯磕得很響，顯然在鬧脾氣。`,
+    `${n.name}嘟囔著「把我一個人丟在院裡」，賭氣不吃你留的點心。`,
+    `「早去早回……哼，我才沒有等你。」${n.name}彆扭地擺手。`,
+  ];
+  msg(`${SULK[rnd(SULK.length)]}（${why}照常進行，${n.name}有些不高興，但不記仇）`);
+}
 function tickGuest(){
   const p = G.player;
   if (p.guest) {
@@ -321,9 +339,9 @@ function tickGuest(){
     g.chatted = false; g.bubble = guestBubble(n); // 每日換一句閒話
     return;
   }
-  const cands = G.npcs.filter(n=>n.alive&&n.met&&(n.favor>=50||n.love>=40));
+  const cands = G.npcs.filter(n=>n.alive&&n.met&&n.favor>=GUEST_REQ_FAV&&n.love>=GUEST_REQ_LOVE);
   if (!cands.length) return;
-  const heat = cands.reduce((s,n)=>s+Math.max(0,n.favor-50)+Math.max(0,n.love-40), 0);
+  const heat = cands.reduce((s,n)=>s+Math.max(0,n.favor-GUEST_REQ_FAV)+Math.max(0,n.love-GUEST_REQ_LOVE), 0);
   if (Math.random() >= 0.05 + heat/6000) return;
   const n = cands[rnd(cands.length)];
   const stayBoth = n.favor>=70 && n.love>=60;
@@ -354,6 +372,23 @@ function guestFlirt(){
   g.bubble = line;
   msg(`${n.name}：${q(line)}（愛情+${lg}）`);
 }
+function guestDual(){ // 院中來客雙修：門檻與切磋台一致
+  const p=G.player, g=p.guest; if(!g) return;
+  const n = npcById(g.id), P = PERS[n.pers];
+  if (n.rank==="稚童") return msg("對方還是個孩子。");
+  const openMind = P.flirtReq<=50;
+  const ok = n.love>=70 || (openMind && n.love>=40 && n.favor>=60);
+  if (!ok) return msg(`${n.name}還未與你到那一步（需愛情70${openMind?"，或此性情者 愛情40+友情60":""}；現愛情${n.love}·友情${n.favor}）。`);
+  if (p.spouse!==n.id) msg(`（客居小院，孤男寡女……兩情相悅，何必在乎名分。）`);
+  if (sectUnlocked("合歡宗")) { p.spirit += 800; msg(`一夜雙修，靈氣+800。`); }
+  else { p.spirit += 400; msg(`一夜雙修，靈氣+400。`); }
+  const line = gdial(n,P.intimate[rnd(P.intimate.length)]);
+  g.bubble = line;
+  msg(`${n.name}：${q(line)}（愛情+5，友情+3）`);
+  n.love = clamp(n.love+5,0,P.loveCap||100); n.favor = clamp(n.favor+3,-200,120);
+  if (p.spouse===null && n.love>=85 && Math.random()<0.3) propose(n);
+  uiRefresh();
+}
 function guestLeave(){
   const p=G.player, g=p.guest; if(!g) return;
   const n = npcById(g.id);
@@ -364,7 +399,7 @@ function guestLeave(){
 /* ═══ 宗門遊歷：自動推進天數，直到撞上事件點 ═══ */
 function sectTour(){
   const p = G.player, start = p.day;
-  if (p.guest) return msg(`${npcById(p.guest.id).name}還在你院裡賴著，先陪人家吧。`);
+  guestSulk("遊歷"); // 家中有客也照樣出門，只是TA會不高興
   for (let i=0; i<120; i++){
     const mark = G.dayLog.length;
     nextDay(1);
@@ -410,6 +445,7 @@ function takeLesson() {
   const ym = year()*12 + (month()-1);
   if (p.lessonYM === ym) return msg("本月大課已上過（每月一次，開課即入下月）。");
   p.lessonYM = ym;
+  guestSulk("閉關聽課"); // 家中有客仍去聽課，TA會抱怨
   const cap = spiritCap();
   const g = Math.round(cap*0.3) + 40 + rnd(30);
   p.spirit = Math.min(cap, p.spirit + g);
@@ -836,7 +872,34 @@ function loadGame(slot) {
   const data = JSON.parse(raw).g;
   if (data.ver !== 2) return msg("舊版存檔不相容（世界系統已重做），請開新局。");
   G = data;
+  if (!G.flags) G.flags = {};
+  migratePers(); // 舊檔修正：門派專屬性格錯配（如合歡宗的藥罐整天聊丹爐）
+  migratePersV2(); // 舊檔重洗：早期版本性格池未生效，重擲一次門派性格
   msg(`讀取存檔${slot}。`); uiRefresh();
+}
+const PERS_SECT_ONLY = { "藥罐":"藥王谷", "蕩浪":"合歡宗" }; // 這些台詞設定強綁門派
+function migratePers(){
+  let fixed = 0;
+  G.npcs.forEach(n=>{
+    const home = PERS_SECT_ONLY[n.pers];
+    if (home && n.sect!==home) {
+      const pool = (SECT_PERS[n.sect]||PERS_KEYS).filter(k=>!PERS_SECT_ONLY[k]||PERS_SECT_ONLY[k]===n.sect);
+      n.pers = pool[rnd(pool.length)];
+      fixed++;
+    }
+  });
+  if (fixed) msg(`【修正】${fixed}位修士的性情歸位了（門派專屬性格不再錯配）。`);
+}
+function migratePersV2(){ // 一次性：修復早期「門派性格池從未生效」的世界
+  if (G.flags.persV2) return;
+  G.flags.persV2 = true;
+  let rerolled = 0;
+  G.npcs.forEach(n=>{
+    if (n.special && n.pers==="無情") return; // 大自在殿方丈的無情設定保留
+    n.pers = rollPers(n.sect);
+    rerolled++;
+  });
+  msg(`【性情重洗】山門上下氣象一新：性格按門派風骨重新分派（${rerolled}人）。舊識的性格可能變了。`);
 }
 function listSaves() {
   return [0,1,2].map(s => { const r=localStorage.getItem("wjs_"+s);

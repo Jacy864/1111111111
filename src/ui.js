@@ -16,16 +16,14 @@ function uiRefresh() {
     `<span class="res">⭐聲望${p.reputation}</span>`;
   el("datebar").innerHTML = `<span>${year()}年${month()}月${dayOfMonth()}日 · ${p.age}歲</span><span>靈氣 ${fmt(p.spirit)}/${fmt(spiritCap())}</span>`;
   el("spiritfill").style.width = clamp(p.spirit/spiritCap()*100,0,100)+"%";
+  const bp = el("sb-practice");
+  if (bp) { bp.textContent = `練劍${p.practiceCnt}/5`; bp.disabled = p.practiceCnt>=5 || p.energy<1; }
+  const bt = el("sb-task");
+  if (bt && G.monthTask) { bt.textContent = G.monthTask.name.slice(0,2); bt.title = `宗門任務：${G.monthTask.name}——${G.monthTask.desc}`; }
   renderTab();
 }
-/* ── log ── */
-function pushLog(entry) {
-  const box = el("log");
-  const line = h(`<div class="logline">${entry.t}</div>`);
-  box.appendChild(line);
-  setTimeout(()=>{ line.style.opacity=0; line.style.transition="opacity .8s"; setTimeout(()=>line.remove(),800); }, 7000);
-  while (box.children.length>4) box.firstChild.remove();
-}
+/* ── log（底部彈窗已移除：訊息一律記入修行手札） ── */
+function pushLog(entry) { /* 手札即時區在 renderTab 時刷新 */ }
 /* ── 彈窗 ── */
 function openModal(title, bodyHtml, onMount) {
   el("modal-title").textContent = title;
@@ -60,22 +58,12 @@ function xuiLogHtml(){
     <span style="flex:1">${l.t}</span></div>`).join("");
 }
 function pageXiulian(){
-  const p=G.player, cap=spiritCap();
+  const p=G.player;
   const compact = "padding:8px 10px";
   const h3s = "font-size:13px;margin:0 0 4px 0";
   const pg = h(`<div>
     <div class="page-title">修 煉</div>
-    <div class="card" style="${compact}"><h3 style="${h3s}">今日修行</h3>
-      <div class="kv" style="font-size:12px"><span>靈氣</span><span>${fmt(p.spirit)} / ${fmt(cap)}</span></div>
-      <div class="bar" style="height:6px"><div style="width:${clamp(p.spirit/cap*100,0,100)}%"></div></div>
-      <div class="kv" style="font-size:12px"><span>劍意熟練</span><span>${p.swordSense}</span></div>
-    <div class="btnrow" style="margin-top:6px">
-      <button id="btn-practice">練劍（-1精力·日5次）</button>
-      <button id="btn-break" class="gold">嘗試突破</button>
-      <button id="btn-class" class="ghost">上宗門大課（每月·速進下月）</button>
-      <button id="btn-tour" class="ghost">宗門遊歷（自動前進至事件）</button>
-    </div>
-    </div>
+    <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
     ${p.guest && npcById(p.guest.id) ? (()=>{ const n=npcById(p.guest.id), g=p.guest;
       return `<div class="card" style="background:#fdf6ec;border:1px dashed #d8c8a8"><h3>院中來客</h3>
       <div class="list-item"><div>
@@ -85,26 +73,19 @@ function pageXiulian(){
       <div class="btnrow">
         <button class="small" id="g-chat">閒聊（每日一次）</button>
         <button class="small ghost" id="g-flirt">調情</button>
+        <button class="small ghost" id="g-dual">雙修</button>
         <button class="small ghost" id="g-leave">送客</button>
       </div></div>`; })() : ""}
-    <div class="card" style="${compact}"><h3 style="${h3s}">宗門任務（每月刷新）</h3>
-      <div class="list-item" style="padding:4px 0"><div><b style="font-size:13px">${G.monthTask.name}</b><div class="desc" style="font-size:11px">${G.monthTask.desc} · 報酬：靈石+貢獻</div></div>
-      <button class="small" id="btn-task">去做</button></div>
-    </div>
     <div class="card" style="${compact}"><h3 style="${h3s}">丹藥</h3><div id="pill-list"></div></div>
     <div class="card"><h3>修行手札（每日記事·不會消失）</h3>
       <div id="xui-log" style="max-height:46vh;overflow-y:auto;font-size:14px;line-height:1.9;color:#4a3b28">${xuiLogHtml()}</div>
     </div>
   </div>`);
   const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
-  pg.querySelector("#btn-practice").onclick = ()=>{ practice(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-break").onclick = ()=>{ tryBreak(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-class").onclick = ()=>{ takeLesson(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-tour").onclick = ()=>{ sectTour(); flushLog(); renderTab(); };
-  pg.querySelector("#btn-task").onclick = ()=>{ doTask(); flushLog(); refreshLog(); };
   const gc = pg.querySelector("#g-chat");
   if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
     pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
+    pg.querySelector("#g-dual").onclick = ()=>{ guestDual(); flushLog(); renderTab(); };
     pg.querySelector("#g-leave").onclick = ()=>{ guestLeave(); flushLog(); renderTab(); }; }
   const pl = pg.querySelector("#pill-list");
   const keys = Object.keys(p.pills);

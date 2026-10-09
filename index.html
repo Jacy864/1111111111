@@ -29,15 +29,20 @@ body {
   display:flex; flex-direction:column; position:relative; overflow:hidden;
   box-shadow:0 0 40px rgba(0,0,0,.5);
 }
-/* ── 頂部狀態欄 ── */
-#statusbar { padding:8px 12px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
-#statusbar .row1 { display:flex; align-items:center; gap:10px; }
-.avatar { width:46px; height:46px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
-  display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+/* ── 頂部狀態欄（貼齊劉海，含修行按鈕列） ── */
+#statusbar { padding:calc(env(safe-area-inset-top) + 6px) 10px 8px; background:linear-gradient(135deg,#8c5a44,#a06a50); color:#fdf6ec; flex-shrink:0; }
+#statusbar .row1 { display:flex; align-items:center; gap:8px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:#f2d8b8; border:2px solid #f0e0c0;
+  display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
 .pinfo { flex:1; min-width:0; }
-.pname { font-size:15px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
-.realm { font-size:12px; color:#ffe3c0; }
-.statline { display:flex; gap:10px; font-size:11px; margin-top:3px; opacity:.95; flex-wrap:wrap; }
+.pname { font-size:14px; font-weight:600; display:flex; gap:8px; align-items:baseline; }
+.realm { font-size:11px; color:#ffe3c0; }
+.statline { display:flex; gap:8px; font-size:10px; margin-top:2px; opacity:.95; flex-wrap:wrap; }
+.actrow { display:flex; gap:5px; margin-top:6px; }
+.sbtn { flex:1; padding:6px 0; font-size:12px; border-radius:8px; background:rgba(253,246,236,.18);
+  color:#fdf6ec; border:1px solid rgba(253,246,236,.3); line-height:1.2; }
+.sbtn.gold { background:#b8863a; border-color:#b8863a; }
+.sbtn:active { transform:scale(.95); }
 .datebar { font-size:12px; margin-top:6px; display:flex; justify-content:space-between; opacity:.9; }
 .spiritbar { height:8px; background:rgba(0,0,0,.25); border-radius:4px; margin-top:4px; overflow:hidden; }
 .spiritbar>div { height:100%; background:linear-gradient(90deg,#ffd98a,#ff9d5c); border-radius:4px; transition:width .3s; }
@@ -68,12 +73,6 @@ button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
 .list-item:last-child { border-bottom:none; }
 .list-item .desc { font-size:11px; color:#9a8a75; margin-top:2px; }
 .tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#efe4d0; color:#7a654e; margin-left:4px; }
-/* ── 消息 log ── */
-#log { position:fixed; left:50%; transform:translateX(-50%); bottom:78px; max-width:440px; width:92%;
-  max-height:180px; overflow-y:auto; z-index:50; pointer-events:none; }
-.logline { background:rgba(40,30,22,.88); color:#f5ead6; font-size:12px; padding:6px 12px;
-  border-radius:8px; margin-bottom:4px; animation:fadein .25s; line-height:1.5; }
-@keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
 /* ── 彈窗 ── */
 #modal-mask { position:absolute; inset:0; background:rgba(30,20,14,.55); z-index:90;
   display:none; align-items:flex-end; }
@@ -116,11 +115,17 @@ button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
         <div class="statline" id="statline"></div>
       </div>
     </div>
+    <div class="actrow">
+      <button class="sbtn" id="sb-practice">練劍0/5</button>
+      <button class="sbtn gold" id="sb-break">突破</button>
+      <button class="sbtn" id="sb-class">大課</button>
+      <button class="sbtn" id="sb-tour">遊歷</button>
+      <button class="sbtn" id="sb-task">任務</button>
+    </div>
     <div class="datebar" id="datebar"></div>
     <div class="spiritbar"><div id="spiritfill" style="width:0%"></div></div>
   </div>
   <div id="main"><div class="boot" aria-hidden="true" style="min-height:60dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#f7f1e6,#f2ead9)"><div style="font-size:44px">⛩</div><div style="width:28px;height:2px;background:#8a5a20;margin-top:14px;animation:wjsboot 1.1s ease-in-out infinite"></div><div style="margin-top:10px;font-size:12px;color:#a8916e">翻開手札……</div></div><style>@keyframes wjsboot{0%,100%{opacity:.25}50%{opacity:1}}@media(prefers-reduced-motion:reduce){.boot div{animation:none!important}}</style></div>
-  <div id="log"></div>
   <div id="tabbar">
     <div class="tab active" data-t="xiulian"><span class="ico">⛩</span>修煉</div>
     <div class="tab" data-t="zhujian"><span class="ico">⚒</span>鑄劍</div>
@@ -292,10 +297,10 @@ const LINES = {
 /* chat/flirt 各3階段：<30 陌生期 / 30-69 熟絡期 / ≥70 心腹(情深)期 */
 const PERS = {
 "高傲":{giftMul:0.7,chatFav:1,flirtReq:80,loveGain:2,decay:1,desc:"下巴抬得很高，心卻不一定",
- greet:["「哦，是你。」他眼皮都懶得抬。","「今日也這麼閒？」"],
- chat:[["「別擋著我曬太陽。」","「跟你說話浪費口水。」"],
-       ["「你倒是不煩人……勉強。」","「劍還行。人一般。」"],
-       ["「全世界我只等你一個人打招呼，你知道嗎。」","「別走了，坐下。這是命令。」"]],
+ greet:["「哦，是你。」他眼皮都懶得抬。","「今日也這麼閒？」","「（微微頷首）嗯。」"],
+ chat:[["「別擋著我曬太陽。」","「跟你說話浪費口水。」","「山門禮數我懂。行過禮，就讓開。」"],
+       ["「你倒是不煩人……勉強。」","「劍還行。人一般。」","「今日准你並肩走。下不為例。」"],
+       ["「全世界我只等你一個人打招呼，你知道嗎。」","「別走了，坐下。這是命令。」","「旁人妄議你一句，我第一個不答應。」"]],
  gift:["「哼……正好缺這個。」（嘴角壓不住）","「算你有心。放下吧。」"],
  giftBad:["「拿走。我不收來路不明的東西。」"],
  flirt:[["「調戲我？你膽子不小。」","「離我遠一點。」"],
@@ -304,10 +309,10 @@ const PERS = {
  flirtNo:["「你不配。……還不配。」"],
  intimate:["「閉嘴，過來。」","「記住，是我先低頭的。只有這一次。」"]},
 "傲嬌":{giftMul:0.8,chatFav:2,flirtReq:70,loveGain:4,decay:1,desc:"嘴上嫌棄，身體老實",
- greet:["「哼，才不是在等你。」","「……又來了。真拿你沒辦法。」"],
- chat:[["「別自作多情，我只是剛好路過。」","「跟你講話？我寧願擦劍。」"],
-       ["「今、今天的你……也就那樣吧。」（偷瞄）","「這個給你。不是我買的，是撿的。」"],
-       ["「你要是敢跟別人這樣說笑，我就……我就……哼。」","「笨蛋。我最喜歡的笨蛋。」"]],
+ greet:["「哼，才不是在等你。」","「……又來了。真拿你沒辦法。」","「哦，是你啊。（假裝繼續擦劍）」"],
+ chat:[["「別自作多情，我只是剛好路過。」","「跟你講話？我寧願擦劍。」","「……有事？沒事讓讓，你擋著光了。」"],
+       ["「今、今天的你……也就那樣吧。」（偷瞄）","「這個給你。不是我買的，是撿的。」","「陪你去坊市？……我是剛好順路！」"],
+       ["「你要是敢跟別人這樣說笑，我就……我就……哼。」","「笨蛋。我最喜歡的笨蛋。」","「別誤會，我只是……只是想天天見到你，不行嗎！」"]],
  gift:["「誰、誰要你的東西！（收下）唔……謝了。」","「正好缺這個，別誤會，是順便。」"],
  giftBad:["「什麼破爛。拿回去！」"],
  flirt:[["「你、你說什麼呢！變態！」","「臉湊這麼近幹嘛！」"],
@@ -316,10 +321,10 @@ const PERS = {
  flirtNo:["「哼，誰要跟你……一邊去！」"],
  intimate:["「只此一次……不對，以身相許就算了……唔。」","「手、手要好好牽著啊笨蛋。」"]},
 "溫柔":{giftMul:1.2,chatFav:3,flirtReq:60,loveGain:3,decay:0,desc:"春風一樣的人",
- greet:["「你來了。累不累？」","「等你很久了，走吧，我燉了湯。」"],
- chat:[["「慢慢來，修行急不得。」","「受傷了要說，別硬撐。」"],
-       ["「有你在，今日的劍都順手些。」","「你的事，我都記得。」"],
-       ["「我這輩子最正確的事，就是對你好。」","「別怕，天塌下來我頂著。」"]],
+ greet:["「來得巧，山茶剛開。要看看嗎？」","「道好。今日風大，添件衣。」","「（擱下手裡的活）來啦？坐。」"],
+ chat:[["「修行的事，急不得，慢慢來。」","「山裡濕氣重，照顧好自己。」","「你若迷路了，可以來問我。」"],
+       ["「有你在，今日的劍都順手些。」","「你的事，我都記得。」","「累了就來坐坐，我這裡永遠有熱茶。」"],
+       ["「我這輩子最正確的事，就是對你好。」","「別怕，天塌下來我頂著。」","「往後的日子，我都替你想好了——連你那份一起。」"]],
  gift:["「留給你自己……好吧，我收下，很喜歡。」","「你總是這麼細心。」"],
  giftBad:["「沒關係，我知道你盡力了。」"],
  flirt:[["「（微笑注視）你在說什麼傻話。」","「玩笑話，我就當沒聽見囉。」"],
@@ -328,10 +333,10 @@ const PERS = {
  flirtNo:["「對不起……我還沒準備好。」"],
  intimate:["「今晚，別走了。」","「我會很溫柔的。」"]},
 "風流":{giftMul:1,chatFav:2,flirtReq:50,loveGain:4,decay:2,desc:"處處留情，也處處無情",
- greet:["「喲，這不是我的小劍修嗎。」","「來得正好，陪我喝一杯？」"],
- chat:[["「山下的故事想聽嗎？很長，也很香豔。」","「你臉紅什麼，我還沒開始講呢。」"],
-       ["「說來奇怪，別人我都膩了，你還行。」","「這杯敬你。只敬你。」"],
-       ["「江湖三千飲，我獨想飲你這一盞。」","「收心這種事，我居然對你做了。」"]],
+ greet:["「喲，這不是我的小劍修嗎。」","「來得正好，陪我喝一杯？」","「生面孔？坐吧，這桌不嫌人多。」"],
+ chat:[["「山下的故事想聽嗎？很長，也很香豔。」","「你臉紅什麼，我還沒開始講呢。」","「放心，我對誰都這樣，你不必多心。」"],
+       ["「說來奇怪，別人我都膩了，你還行。」","「這杯敬你。只敬你。」","「別人不過走馬，你是能坐下來喝完一壺的。」"],
+       ["「江湖三千飲，我獨想飲你這一盞。」","「收心這種事，我居然對你做了。」","「去哪都好，回來就好——這話我只對你說。」"]],
  gift:["「巧了，正想討個信物。」","「那你可就是我的人了——開玩笑的。……也許。」"],
  giftBad:["「品味堪憂。送錯人了吧？」"],
  flirt:[["「火上澆油？可以，我奉陪。」","「你主動的，可別哭。」"],
@@ -340,10 +345,10 @@ const PERS = {
  flirtNo:["「今天沒心情。改日，改日一定。」"],
  intimate:["「今夜月色太浪費。」","「我閱人無數，卻在你這裡技窮。」"]},
 "綠茶":{giftMul:1.2,chatFav:2,flirtReq:60,loveGain:3,decay:1,desc:"話軟刀甜，句句拿捏",
- greet:["「哎？你終於來啦，人家等好久了。」","「別人都欺負我，只有你不會，對吧？」"],
- chat:[["「我才不說别人壞話……但是那個人真的過分。」","「你今日怎麼沒理我，我傷心了一下午。」"],
-       ["「師兄又誇你了？……人家有點吃味呢。」","「你說，我跟那個誰，誰更好？老實說。」"],
-       ["「全門派都以為我好欺負，只有你護著我。」","「我們的祕密，你可要爛在肚子裡。」"]],
+ greet:["「哎？你終於來啦，人家等好久了。」","「別人都欺負我，只有你不會，對吧？」","「初次見面……我的名字，你要記住哦。」"],
+ chat:[["「我才不說別人壞話……但是那個人真的過分。」","「你今日怎麼沒理我，我傷心了一下午。」","「幫我看看這個嘛……我最信得過你了。」"],
+       ["「師兄又誇你了？……人家有點吃味呢。」","「你說，我跟那個誰，誰更好？老實說。」","「也就你肯聽我說這些，別人都嫌我煩。」"],
+       ["「全門派都以為我好欺負，只有你護著我。」","「我們的祕密，你可要爛在肚子裡。」","「別人面前我乖巧就夠了，你面前——我想撒嬌。」"]],
  gift:["「呀，這麼貴重的……人家怎麼好意思。（已收好）」","「你對我最好了，真的。」"],
  giftBad:["「……沒事，我就是隨口說想要而已。」（眼眶紅了）"],
  flirt:[["「討厭～但是可以繼續說。」","「你這樣，我會睡不着覺的。」"],
@@ -352,10 +357,10 @@ const PERS = {
  flirtNo:["「現在還不行哦～再培養培養感情嘛。」"],
  intimate:["「門關好了……現在，只剩我們了。」","「叫我名字，別停。」"]},
 "單純":{giftMul:1.5,chatFav:3,flirtReq:55,loveGain:3,decay:0,desc:"一張白紙，全信你",
- greet:["「哇，是你！今日練劍了嗎？」","「我正想找你！你看你看，我養的靈雀！」"],
- chat:[["「雙修是兩個人一起打坐的意思嗎？」","「長老說的話我都聽不懂，你能教我嗎？」"],
-       ["「把好吃的分你一半！最好的朋友！」","「你上次說的那本書，我讀了三遍！」"],
-       ["「你要一直都在哦，拉鉤！」","「長大以後，我也想成為你這樣的人。」"]],
+ greet:["「哇，是你！今日練劍了嗎？」","「我正想找你！你看你看，我養的靈雀！」","「你好你好！我們做朋友吧！」"],
+ chat:[["「雙修是兩個人一起打坐的意思嗎？」","「長老說的話我都聽不懂，你能教我嗎？」","「後山有兔子！我帶你看！」"],
+       ["「把好吃的分你一半！最好的朋友！」","「你上次說的那本書，我讀了三遍！」","「今日你不在，靈雀都不肯唱歌了。」"],
+       ["「你要一直都在哦，拉鉤！」","「長大以後，我也想成為你這樣的人。」","「我攢了好吃的，全給你——一顆都沒偷吃！」"]],
  gift:["「給我的？！真的？！（捧在手心）」","「我要把它供起來……不對，要用起來！」"],
  giftBad:["「嗚……沒關係，禮物壞了心意還在！」"],
  flirt:[["「你的臉好近……心跳為什麼這麼快？」","「這是什麼遊戲？我沒玩過……」"],
@@ -364,10 +369,10 @@ const PERS = {
  flirtNo:["「唔……師父說這樣不行。先不要。」"],
  intimate:["「原來長大是這種感覺……」","「只跟你，因為是你。」"]},
 "潑辣":{giftMul:0.9,chatFav:2,flirtReq:65,loveGain:3,decay:1,desc:"火爆脾氣，熱心腸",
- greet:["「來得正好！幫我搬這個！」","「站住！昨日是不是躲著我？」"],
- chat:[["「少貧嘴，幹活！」","「你再瞅一眼試試？」"],
-       ["「罵你是看得起你，懂不懂。」","「受欺負了報我名字！我罩你！」"],
-       ["「這輩子認定的朋友沒幾個，你算一個。」","「誰動你，我撕了誰。」"]],
+ greet:["「來得正好！幫我搬這個！」","「站住！昨日是不是躲著我？」","「喲，是你啊。吃了沒？」"],
+ chat:[["「少貧嘴，幹活！」","「你再瞅一眼試試？」","「問路就問路，站那麼遠幹嘛，我又不吃人。」"],
+       ["「罵你是看得起你，懂不懂。」","「受欺負了報我名字！我罩你！」","「這頓我請！吃完給我把碗洗了！」"],
+       ["「這輩子認定的朋友沒幾個，你算一個。」","「誰動你，我撕了誰。」","「哭什麼哭！……行了行了，靠過來，肩膀借你。」"]],
  gift:["「喲，還挺孝敬姑奶奶。（笑）」","「算你有良心！記你一功！」"],
  giftBad:["「就拿這種破玩意打發我？！」"],
  flirt:[["「調戲老娘？活膩了！」","「信不信我現在就揍你！」"],
@@ -378,10 +383,10 @@ const PERS = {
 };
 Object.assign(PERS, {
 "寡言":{giftMul:0.8,chatFav:1,flirtReq:75,loveGain:2,decay:0,desc:"一年說不了十句話",
- greet:["「……嗯。」","（點頭示意）"],
- chat:[["「……」","「劍，不錯。」"],
-       ["「來了。」","「坐。」"],
-       ["「等你。」","「別走。」"]],
+ greet:["「……嗯。」","（點頭示意）","（抬眼看你，又低頭）"],
+ chat:[["「……」","「劍，不錯。」","（沉默地讓開半步，算是禮讓）"],
+       ["「來了。」","「坐。」","（推過來一杯茶）「燙。」"],
+       ["「等你。」","「別走。」","（把你的劍和他的劍並排放好）"]],
  gift:["「……謝。」","（珍重地收進懷裡）"],
  giftBad:["（推回來，搖頭）"],
  flirt:[["「……」","（後退半步）"],
@@ -390,10 +395,10 @@ Object.assign(PERS, {
  flirtNo:["「……還不行。」"],
  intimate:["「……別怕。」","（一夜無話，晨起十指仍扣）"]},
 "無情":{giftMul:0.6,chatFav:1,flirtReq:90,loveGain:1,decay:0,loveCap:99,rare:6,desc:"此心已斬，情關不開",
- greet:["「俗緣，斬。」","「又是你。」"],
- chat:[["「與我無關。」","「讓開。」"],
-       ["「……你倒是執著。」","「說完就走。」"],
-       ["「你若死了，我會知道。僅此而已。」","「我斬得斷萬物，斬不斷你，麻煩。」"]],
+ greet:["「俗緣，斬。」","「又是你。」","（目視前方，如無人經過）"],
+ chat:[["「與我無關。」","「讓開。」","「塵緣擾人。退下。」"],
+       ["「……你倒是執著。」","「說完就走。」","（嘆氣）「你要說什麼，快說。」"],
+       ["「你若死了，我會知道。僅此而已。」","「我斬得斷萬物，斬不斷你，麻煩。」","「此生多你一個破例。僅此一個。」"]],
  gift:["「無用之物。」（但記住了）","「……放下吧。」"],
  giftBad:["「拿走。最後一次警告。」"],
  flirt:[["「找死。」","「情之一字，我見一次斬一次。」"],
@@ -402,10 +407,10 @@ Object.assign(PERS, {
  flirtNo:["「念在你蠢，饒你這次。」"],
  intimate:["「……就這一次，下不為例。」","「閉眼。今夜我不是我。」"]},
 "病嬌":{giftMul:1.2,chatFav:2,flirtReq:50,loveGain:5,decay:0,rare:4,desc:"笑容甜糯，眼底藏著刀",
- greet:["「你來啦……我數過了，你今日還沒來看我。」","「再晚一步，我就要去找你了喔。」"],
- chat:[["「別跟別人說話，跟我說。」","「你身上有別人的氣味……我頭好暈。」"],
-       ["「今日劍坪那個人一直看你。我記下他了。」","「你遲到了一刻鐘。我等了很久，很久。」"],
-       ["「全世界都可以背叛你——只有我不會。只有我。」","「你要是消失，我就去把你找回來。天涯海角，骨頭也認得。」"]],
+ greet:["「你來啦……我數過了，你今日還沒來看我。」","「再晚一步，我就要去找你了喔。」","（笑得很好看）「你好呀。」"],
+ chat:[["「別跟別人說話，跟我說。」","「你身上有別人的氣味……我頭好暈。」","「你叫這個名字？我記住了。不會忘的那種。」"],
+       ["「今日劍坪那個人一直看你。我記下他了。」","「你遲到了一刻鐘。我等了很久，很久。」","「你跟別人笑的時候……我這裡，怪怪的。」"],
+       ["「全世界都可以背叛你——只有我不會。只有我。」","「你要是消失，我就去把你找回來。天涯海角，骨頭也認得。」","「看著我。只看我。這樣我就很乖很乖。」"]],
  gift:["「給我的？……真的只給我一個人？」","「我會收得很好，誰碰誰死。」"],
  giftBad:["「……不喜歡。（捏碎）再買一份，好嗎？」"],
  flirt:[["「調戲我？……可以再試一次，我不介意。」","「心跳好吵。是你的，還是我的？」"],
@@ -414,10 +419,10 @@ Object.assign(PERS, {
  flirtNo:["「……還不是時候。快點到時候吧。」"],
  intimate:["「痛和甜是一起來的。我教你。」","「繩子只是怕你離開。你乖，就不用。」"]},
 "腹黑":{giftMul:1,chatFav:2,flirtReq:65,loveGain:3,decay:1,desc:"笑面算盤，句句有鉤",
- greet:["「稀客。我可是『恰好』在等你。」","「來談筆生意？還是來談心？」"],
- chat:[["「你想要的，我剛好知道。代價嘛……」","「免費的消息最貴，聽過嗎？」"],
-       ["「告訴你個祕密——別人也用這個價問過你。」","「幫你這次。人情，先記著。」"],
-       ["「我算計天下人，唯獨想對你誠實一次。」","「你的軟肋是我？……那可真是，好大一個把柄。」"]],
+ greet:["「稀客。我可是『恰好』在等你。」","「來談筆生意？還是來談心？」","（微笑）「新面孔。我記性很好，最好別得罪我。」"],
+ chat:[["「你想要的，我剛好知道。代價嘛……」","「免費的消息最貴，聽過嗎？」","「茶剛沏好。坐——你想知道的事，坐下了才好談。」"],
+       ["「告訴你個祕密——別人也用這個價問過你。」","「幫你這次。人情，先記著。」","「你這人有趣。留著，日後有用——這是誇獎。」"],
+       ["「我算計天下人，唯獨想對你誠實一次。」","「你的軟肋是我？……那可真是，好大一個把柄。」","「棋盤讓你，輸贏都陪你——我什麼時候這麼大方過。」"]],
  gift:["「哦？有所求？說吧，我聽著。」（收下）","「懂規矩。我喜歡懂規矩的人。」"],
  giftBad:["「這是試探，還是羞辱？（笑）膽子不小。」"],
  flirt:[["「撩我？先想想輸得起什麼。」","「有意思。繼續，我在評估。」"],
@@ -426,10 +431,10 @@ Object.assign(PERS, {
  flirtNo:["「價碼不夠。回去練練再來。」"],
  intimate:["「今夜之後，你就是我最大的變數。」","「聰明人做糊塗事——最銷魂。」"]},
 "妖媚":{giftMul:1.1,chatFav:3,flirtReq:45,loveGain:5,decay:2,desc:"眼波一轉，魂就沒了",
- greet:["「呀～小傢伙，主動送上門？」","「你眼裡有東西在燒哦。」"],
- chat:[["「陪姐姐坐坐嘛，一個人喝酒好冷。」","「你臉紅的樣子，比酒還醉人。」"],
-       ["「別人都想從我這討好處，你想要什麼？」","「再看我一眼，就要收錢了哦。」"],
-       ["「閱盡千帆，唯獨你的船，我想登一輩子。」","「魅術對你沒用——因為不需要，對吧？」"]],
+ greet:["「呀～小傢伙，主動送上門？」","「你眼裡有東西在燒哦。」","「生人？也好，生人才有趣～」"],
+ chat:[["「陪姐姐坐坐嘛，一個人喝酒好冷。」","「你臉紅的樣子，比酒還醉人。」","「別緊張～我對誰都這樣，你不算特別。……目前。」"],
+       ["「別人都想從我這討好處，你想要什麼？」","「再看我一眼，就要收錢了哦。」","「你倒是難得，看了我三眼還沒暈。」"],
+       ["「閱盡千帆，唯獨你的船，我想登一輩子。」","「魅術對你沒用——因為不需要，對吧？」","「這雙手抱過很多人取暖。往後，只暖你。」"]],
  gift:["「懂事。（指尖挑起你下巴）有賞。」","「禮物我收下了，人……也一起收？」"],
  giftBad:["「啧，敷衍。人家傷心了哦。（並沒有）"],
  flirt:[["「哦？膽子肥了。喜歡。」","「這句話，換我說給你聽更合適。」"],
@@ -438,10 +443,10 @@ Object.assign(PERS, {
  flirtNo:["「今天興致不在這。改日～本座說話算話。」"],
  intimate:["「門，我鎖了。」","「叫出來也沒關係，這裡只我們兩個。」"]},
 "癡纏":{giftMul:1.3,chatFav:3,flirtReq:40,loveGain:6,decay:1,rare:4,desc:"認定了就不撒手",
- greet:["「你去哪了？我找遍了三座峰！」","「今天陪我。就今天。還有明天。」"],
- chat:[["「我打聽過你的課表，別生氣嘛。」","「這條路我等了一個時辰，腳都麻了。」"],
-       ["「你是不是躲我？……不許躲。」","「我給你帶了早飯、午飯，還有明天的。」"],
-       ["「道侶契我都刻好了，就差你按手印。」","「你要是不喜歡我，就直說——不許直說！」"]],
+ greet:["「你去哪了？我找遍了三座峰！」","「今天陪我。就今天。還有明天。」","「又見面了！這是今天第三次哦，我數著呢。」"],
+ chat:[["「我打聽過你的課表，別生氣嘛。」","「這條路我等了一個時辰，腳都麻了。」","「你往哪走？我順路！我哪裡都順路！」"],
+       ["「你是不是躲我？……不許躲。」","「我給你帶了早飯、午飯，還有明天的。」","「今日跟你說了好多話。我回去要記進冊子裡。」"],
+       ["「道侶契我都刻好了，就差你按手印。」","「你要是不喜歡我，就直說——不許直說！」","「生生世世那種話，你敢說，我就敢信。」"]],
  gift:["「你送的！（原地轉圈）我要昭告全門派！」","「供起來！不捨得用！」"],
  giftBad:["「嗚……你是不是討厭我了。我做錯什麼了我改！」"],
  flirt:[["「你先說的啊！不許反悔！婚期定什麼時候？！」","「心跳好快——這是病，你得負責！」"],
@@ -450,10 +455,10 @@ Object.assign(PERS, {
  flirtNo:["「……那、那朋友也行！先當朋友！」"],
  intimate:["「說好了啊，這輩子就是你！」","「我等這一天等了好久好久……」"]},
 "瘋批":{giftMul:0.9,chatFav:2,flirtReq:60,loveGain:4,decay:0,rare:4,desc:"瘋起來六親不認",
- greet:["「哈哈哈哈，你來了！今日玩什麼？」","「我剛拆了演武場的靶子。你賠嗎？」"],
- chat:[["「規則是給蠢貨定的。你我不是。」","「別用那種眼神看我……會激起我的破壞欲。」"],
-       ["「全門派都怕我。你怎麼不怕？……有點意思。」","「陪我瘋一場？就一場。流血那種。」"],
-       ["「你是我混亂人生裡唯一的秩序。奇怪。」","「為了你，我可以假裝正常。累死了，但值。」"]],
+ greet:["「哈哈哈哈，你來了！今日玩什麼？」","「我剛拆了演武場的靶子。你賠嗎？」","（歪頭打量你）「嗯……你有點意思。」"],
+ chat:[["「規則是給蠢貨定的。你我不是。」","「別用那種眼神看我……會激起我的破壞欲。」","「離我遠點。……我是好心。真的。」"],
+       ["「全門派都怕我。你怎麼不怕？……有點意思。」","「陪我瘋一場？就一場。流血那種。」","「你不勸我收斂？……哈，果然同類。」"],
+       ["「你是我混亂人生裡唯一的秩序。奇怪。」","「為了你，我可以假裝正常。累死了，但值。」","「世界燒掉也行，你別燒。」"]],
  gift:["「禮物？！拆拆拆——！（碎）哎呀。心意收到了！」","「哼，收買我？……成功了。」"],
  giftBad:["「垃圾。（燒了）下次送好點的——我心情值錢。」"],
  flirt:[["「撩我？你知道我在乎的人都是什麼下場嗎？哈哈，開玩笑。也許。」","「危險哦。我這種人，沾了就甩不掉。」"],
@@ -464,10 +469,10 @@ Object.assign(PERS, {
 });
 Object.assign(PERS, {
 "醋罈":{giftMul:1,chatFav:2,flirtReq:55,loveGain:4,decay:0,desc:"眼裡揉不得半粒沙",
- greet:["「你昨日去哪了？說清楚。」","「離那個誰遠一點。對，就那個。」"],
- chat:[["「你跟別人走得很近嘛。（盯）」","「我不管，你先跟我解釋。」"],
-       ["「你笑什麼？……想到誰了？說！」","「抱一下。就一下。證明你心裡有我。」"],
-       ["「我知道我管得寬……可我控制不住。」","「你眼裡只能有我。這要求過分嗎？過分也罷。」"]],
+ greet:["「（看了你一眼）……嗯。」","「你來做什麼？……坐吧。」","「今日跟誰說過話了？……別誤會，隨口問。」"],
+ chat:[["「（安靜地看你一會）……你跟誰都這樣熟絡嗎？」","「有事快說。說完……也可以再坐一會。」","「方才那個跟你搭話的是誰？隨口問問。」"],
+       ["「你笑什麼？……想到誰了？」","「別人找你你就去？……好吧，去吧。（明顯不高興）」","「今日你先陪我。就今日。輪也該輪到我了吧。」"],
+       ["「我知道我管得寬……可我控制不住。」","「你眼裡只能有我。這要求過分嗎？過分也罷。」","「全世界我都讓，就你，不讓。」"]],
  gift:["「別人送的你也收過嗎？……算了，這個我收。」","「（滿意）暫且原諒你昨天的事。」"],
  giftBad:["「這是別人幫你挑的吧？！招！」"],
  flirt:[["「你跟我以外的……算了，說正事。」","「想清楚再開口。我當真。」"],
@@ -476,10 +481,10 @@ Object.assign(PERS, {
  flirtNo:["「……心情不好。誰惹我了？你惹我了。」"],
  intimate:["「今晚哪也不許去。」","「做夢也要夢到我。」"]},
 "忠犬":{giftMul:1.3,chatFav:3,flirtReq:45,loveGain:4,decay:0,desc:"認了主，命就是你的",
- greet:["「你來了！（立刻起身）需要什麼？」","「我一直在這裡。一直在。」"],
- chat:[["「有事吩咐就好，別客氣。」","「你的劍我昨晚保養過了。」"],
-       ["「受傷了？誰打的？帶我去。」","「你笑一下，我一天都值了。」"],
-       ["「我的命是你撿回來的。你隨便用。」","「你去哪，我去哪。這不是商量。」"]],
+ greet:["「（起身行禮）道友好。」","「我在這裡當值。有事隨時喚我。」","「你來了。（腰板挺直）今日也請多指教。」"],
+ chat:[["「有事吩咐就好，別客氣。」","「（安靜跟在你身側半步）……我可以跟著嗎？」","「叫我幫忙就是看得起我，別客氣。」"],
+       ["「受傷了？誰打的？帶我去。」","「你笑一下，我一天都值了。」","「你的劍我昨晚保養過了。劍穗也換了新的。」"],
+       ["「我的命是你撿回來的。你隨便用。」","「你去哪，我去哪。這不是商量。」","「守著你這件事，我想做一輩子。」"]],
  gift:["「給、給我的？（捧著手抖）」","「我會用一輩子回報。」"],
  giftBad:["「是我沒用……我去掙。等我。」"],
  flirt:[["「我、我可以嗎？（不敢置信）」","「別耍我……耍我也認。」"],
@@ -488,10 +493,10 @@ Object.assign(PERS, {
  flirtNo:["「我不配……再給我點時間變強。」"],
  intimate:["「今夜換我護著你。」","「輕重……我聽你的。」"]},
 "聖母":{giftMul:1.1,chatFav:3,flirtReq:70,loveGain:2,decay:1,desc:"對誰都好，好得讓人牙癢",
- greet:["「今日也平安，便是福氣。」","「路上見你，心就安了。道友好。」"],
- chat:[["「眾生皆苦，多擔待些。」","「那孩子也有他的難處。」"],
-       ["「你偶爾也該為自己活。」","「我幫你是應當的，別放在心上。」"],
-       ["「我普度眾人，唯獨偏心了你。」","「若你墮魔，我度你；若無人度你，我陪你墮。」"]],
+ greet:["「今日也平安，便是福氣。」","「路上見你，心就安了。道友好。」","（合十）「願你今日順遂。」"],
+ chat:[["「眾生皆苦，多擔待些。」","「那孩子也有他的難處。」","「天涼了，記得添衣。先顧好自己，才好顧人。」"],
+       ["「你偶爾也該為自己活。」","「我幫你是應當的，別放在心上。」","「你心善，日後必有福報。」"],
+       ["「我普度眾人，唯獨偏心了你。」","「若你墮魔，我度你；若無人度你，我陪你墮。」","「眾生我都要救——你，我想留著慢慢救，救一輩子。」"]],
  gift:["「上天有好生之德，你也有。（鄭重收下）」","「這太貴重了……我拿去救濟山下災民可好？」"],
  giftBad:["「無妨，心意到了。」"],
  flirt:[["「罪過罪過……你莫要試探我道心。」","「此等言語，說出去要遭報應的。」"],
@@ -500,10 +505,10 @@ Object.assign(PERS, {
  flirtNo:["「不可不可。萬萬不可。（耳根紅透）」"],
  intimate:["「壞了道心，只此一夜……不，一生。」","「神前懺悔千年，換你一夜，值。」"]},
 "蕩浪":{giftMul:1.1,chatFav:3,flirtReq:35,loveGain:6,decay:3,desc:"合歡宗裡最合歡的人",
- greet:["「喲，身子骨最近練得不錯嘛。」","「來來來，姐姐教你點正經功夫～不正經的那種。」"],
- chat:[["「春宵一刻值千金，練什麼劍。」","「你這身子，不修雙修功可惜了。」"],
-       ["「上月那個小道士……咳，說你了說你了。」","「陪我喝交杯——就當敬天。」"],
-       ["「閱人無數，床上床下，就服你。」","「什麼浪不浪的，對你是真心。摸摸看。」"]],
+ greet:["「喲，身子骨最近練得不錯嘛。」","「來來來，姐姐教你點正經功夫～不正經的那種。」","「生面孔？長得不錯，加分。」"],
+ chat:[["「春宵一刻值千金，練什麼劍。」","「你這身子，不修雙修功可惜了。」","「臉紅什麼？姐姐又不會吃了你。……急什麼，來日方長。」"],
+       ["「上月那個小道士……咳，說你了說你了。」","「陪你喝一盞？交杯就免了——今日正經。」","「你這人怪，別人都躲我，你不躲。」"],
+       ["「閱人無數，床上床下，就服你。」","「什麼浪不浪的，對你是真心。摸摸看。」","「浪子回頭金不換——我回頭了，你負責。」"]],
  gift:["「懂事～今晚記你一功。」","「東西一般，人來了就行。」"],
  giftBad:["「啧，沒誠意。罰你重買。」"],
  flirt:[["「來啦？等這句半天了。」","「口說無憑，手放這兒。」"],
@@ -512,10 +517,10 @@ Object.assign(PERS, {
  flirtNo:["「今日乏了。明日！明日一定。」"],
  intimate:["「門窗都關好了～」","「功夫不用，如隔靴搔癢。來。」"]},
 "藥罐":{giftMul:1.3,chatFav:2,flirtReq:65,loveGain:2,decay:1,desc:"一身藥香，三分是人七分是丹",
- greet:["「噓——藥爐正到火候。」","「你氣色不好。來，把把脈。」"],
- chat:[["「這顆丹，你猜我煉廢了幾爐？」","「別碰那個！有毒。……大概。」"],
-       ["「你的傷我記著呢，換藥了嗎？」","「這爐成了分你一半。」"],
-       ["「我這條命是藥吊著的，心是你暖的。」","「長生不老藥我不煉了——有你，嫌命短才煉。」"]],
+ greet:["「噓——藥爐正到火候。」","「你氣色不好。來，把把脈。」","（一身藥香）「找我？先聞聞這爐丹，正不正。」"],
+ chat:[["「這顆丹，你猜我煉廢了幾爐？」","「別碰那個！有毒。……大概。」","「你脈象還行。少熬夜，少吃生冷。去吧。」"],
+       ["「你的傷我記著呢，換藥了嗎？」","「這爐成了分你一半。」","「路過就來喝碗藥茶。你這身子，得養。」"],
+       ["「我這條命是藥吊著的，心是你暖的。」","「長生不老藥我不煉了——有你，嫌命短才煉。」","「我的藥廬你隨便進。別人？他們不配。」"]],
  gift:["「好料！入藥綽綽有餘！（瞬間收走）」","「藥材？不，我全都要。」"],
  giftBad:["「此物與我藥性相沖。拿走拿走。」"],
  flirt:[["「心悸？心跳快？來，吃顆定心丸。」","「你這是……算了，醫者不自醫。」"],
@@ -524,10 +529,10 @@ Object.assign(PERS, {
  flirtNo:["「先把這碗藥喝了。別的以後再說。」"],
  intimate:["「藥香混著你的味道，絕了。」","「小心肝，字面意思。」"]},
 "財迷":{giftMul:1.5,chatFav:2,flirtReq:70,loveGain:2,decay:1,desc:"靈石開路，童叟無欺",
- greet:["「（撥算盤）進賬幾何？」","「來了？先說好，今日茶水費漲了。」"],
- chat:[["「想打聽消息？先付訂金。」","「談錢不傷感情——我們有感情嗎？」"],
-       ["「給你打了八折，看在老主顧份上。」","「這單生意，算你入夥。」"],
-       ["「賬本第一頁寫的是你，比本錢還靠前。」","「千金散盡還復來，你走了就沒了。」"]],
+ greet:["「（撥算盤）進賬幾何？」","「來了？先說好，今日茶水費漲了。」","（打量你）「新客？隨便看，不買也歡迎。」"],
+ chat:[["「想打聽消息？先付訂金。」","「談錢不傷感情——我們有感情嗎？」","「白看的？……罷了，頭回算我請。就這一回。」"],
+       ["「給你打了八折，看在老主顧份上。」","「這單生意，算你入夥。」","「賺了。分你三成——別聲張，我可是虧本著呢。」"],
+       ["「賬本第一頁寫的是你，比本錢還靠前。」","「千金散盡還復來，你走了就沒了。」","「萬貫家財，抵不過你一句『回來了』。」"]],
  gift:["「（眼睛發光）成色不錯！（飛快入袖）」","「有眼光！這年頭少了！」"],
  giftBad:["「（掂了掂）……就這？打發叫花子呢。」"],
  flirt:[["「撩我不收費，你是第一個。」","「感情事小，先對個賬。」"],
@@ -536,10 +541,10 @@ Object.assign(PERS, {
  flirtNo:["「還不夠。感情這東西，得加錢。」"],
  intimate:["【VIP客戶專屬服務】","「錢是你的，你是我的。完美閉環。」"]},
 "酒鬼":{giftMul:1,chatFav:3,flirtReq:55,loveGain:3,decay:1,desc:"壺不離手，醉裡乾坤大",
- greet:["「（酒嗝）來……來一杯？」","「醉裡挑燈看劍，你說妙不妙？」"],
- chat:[["「酒是糧食精，越喝越年輕。」","「跟我喝？先乾為敬——你随意。」"],
-       ["「上次喝斷片，是你送我回來的吧。謝了。」","「這罈女兒紅，埋了十八年，挖出來跟你分。」"],
-       ["「千杯難遇一知己，你是那知己。」","「戒酒容易，戒你難。那不戒了。」"]],
+ greet:["「（酒嗝）來……來一杯？」","「醉裡挑燈看劍，你說妙不妙？」","（招手）「坐！酒錢各付各的——今日我請。」"],
+ chat:[["「酒是糧食精，越喝越年輕。」","「跟我喝？先乾為敬——你隨意。」","「不喝也坐坐。聽我吹牛，不要錢。」"],
+       ["「上次喝斷片，是你送我回來的吧。謝了。」","「這罈女兒紅，埋了十八年，挖出來跟你分。」","「你的酒量我記著——兩杯就倒，下次給你溫甜的。」"],
+       ["「千杯難遇一知己，你是那知己。」","「戒酒容易，戒你難。那不戒了。」","「往後我這罈酒，只跟你碰。別人？不配。」"]],
  gift:["「好酒！！（拍腿）你懂我！」","「酒？酒！就是酒！」"],
  giftBad:["「（嗅了嗅）……這是給人喝的？」"],
  flirt:[["「喝了嗎就敢說這話？醒著呢？那……那更了不得。」","「酒壯慫人膽，我膽不用壯。」"],
@@ -550,10 +555,10 @@ Object.assign(PERS, {
 });
 Object.assign(PERS, {
 "武癡":{giftMul:1,chatFav:1,flirtReq:60,loveGain:3,decay:0,desc:"眼裡只有劍，勉強有你",
- greet:["「擋路。……哦，是你。打一場？」","「來！正好印證新悟的劍意！」"],
- chat:[["「少囉嗦，出劍。」","「說話費的氣，夠刺三百劍。」"],
-       ["「你這招不錯。再來。」","「今日破例，陪你坐坐。劍也歇歇。」"],
-       ["「一生之敵難尋，一生之友更難。你是後者。」","「劍在，你在。都在就好。」"]],
+ greet:["「擋路。……哦，是你。打一場？」","「來！正好印證新悟的劍意！」","（抱劍點頭）「你。今日��感如何？」"],
+ chat:[["「少囉嗦，出劍。」","「說話費的氣，夠刺三百劍。」","「站樁會嗎？不會就站著看。別吵。」"],
+       ["「你這招不錯。再來。」","「今日破例，陪你坐坐。劍也歇歇。」","「你的劍我看了，下盤虛。明早卯時，來練。」"],
+       ["「一生之敵難尋，一生之友更難。你是後者。」","「劍在，你在。都在就好。」","「我的道，往後有你一半。」"]],
  gift:["「兵器？（眼睛一亮）借我看——好劍！」","「嗯。刀劍類的，下次也送這個。」"],
  giftBad:["「無用。不如一把鐵劍。」"],
  flirt:[["「調情？不如過招。」","「有這閒工夫，多練三百劍。」"],
@@ -562,10 +567,10 @@ Object.assign(PERS, {
  flirtNo:["「比試再輸一次再說。……贏了也不行。」"],
  intimate:["「以劍為聘，以心為盟。」","「過完這輩子，下輩子再打一場。」"]},
 "戲精":{giftMul:1,chatFav:2,flirtReq:55,loveGain:3,decay:1,desc:"人生如戲，全靠演技",
- greet:["「（甩袖）本座等你有半炷香了！」","「鑼鼓點呢？我的出場怎麼能沒鑼鼓！」"],
- chat:[["「你知道嗎，我上一世是條龍。」（認真）","「此事說來話長——長話短說就是：我厲害。」"],
-       ["「昨日跌落懸崖，我抓住了一根藤——戲肉來了——藤斷了！」","「別走！正講到高潮！」"],
-       ["「全世界都是觀眾，只有你是主角。」","「這輩子演過最好的角色，是愛你的人。」"]],
+ greet:["「（甩袖）本座等你有半炷香了！」","「鑼鼓點呢？我的出場怎麼能沒鑼鼓！」","（即刻入戲）「啊，是你。命運的齒輪又轉動了。」"],
+ chat:[["「你知道嗎，我上一世是條龍。」（認真）","「此事說來話長——長話短說就是：我厲害。」","（壓低聲音）「我說真的，別人都不信我。你信嗎？」"],
+       ["「昨日跌落懸崖，我抓住了一根藤——戲肉來了——藤斷了！」","「別走！正講到高潮！」","「你居然每次都捧場。知己！此生知己！」"],
+       ["「全世界都是觀眾，只有你是主角。」","「這輩子演過最好的角色，是愛你的人。」","「謝幕的時候，牽我的手。加演一生那種。」"]],
  gift:["「（單膝跪地，捧心）此恩此情，沒齒難忘！（偷偷）真給啊？」","「幕啟——謝贵人賞！」"],
  giftBad:["「（僵住）……導演，這段能剪嗎？」"],
  flirt:[["「哦～？（繞你走一圈）這齣戲本座接了。」","「台詞不錯。就是感情還欠火候。」"],
@@ -574,10 +579,10 @@ Object.assign(PERS, {
  flirtNo:["「本座今日情緒沒到位。改日，包你滿意。」"],
  intimate:["「今夜，好戲開鑼。」","「叫出來，權當喝彩。」"]},
 "陰鬱":{giftMul:0.9,chatFav:1,flirtReq:70,loveGain:3,decay:0,desc:"雨夜裡讀詩的那個人",
- greet:["「……你來了。光也來了。」","「（從書頁間抬眼）嗯。」"],
- chat:[["「熱鬧是他們的，我什麼也沒有。」","「別靠近。我的運氣會傳染。」"],
-       ["「只有你不問我為何總在陰影裡。」","「這首詩……寫的是你。別問了。」"],
-       ["「你是深淵上方，唯一肯垂下來的繩。」","「若我墜落，請只記得我笑過的樣子。」"]],
+ greet:["「……你來了。光也來了。」","「（從書頁間抬眼）嗯。」","（安靜地合上書）「……坐吧。」"],
+ chat:[["「熱鬧是他們的，我什麼也沒有。��","「別靠近。我的運氣會傳染。」","「……你說什麼？……沒事，你繼續。我聽著。」"],
+       ["「只有你不問我為何總在陰影裡。」","「這首詩……寫的是你。別問了。」","「今日出了太陽。……也許，是好事。」"],
+       ["「你是深淵上方，唯一肯垂下來的繩。」","「若我墜落，請只記得我笑過的樣子。」","「原來被愛是這種感覺——像雪落進滾燙的掌心。」"]],
  gift:["「（怔住）……為何是我？」","「我會在每一個壞日子裡，想起它。」"],
  giftBad:["「（沉默地推回）……我配不上。」"],
  flirt:[["「（退入陰影）……你會後悔的。」","「這種話，留給活得起勁的人。」"],
@@ -586,10 +591,10 @@ Object.assign(PERS, {
  flirtNo:["「……不值得。你值得更好。」"],
  intimate:["「把我從夜裡帶走吧。」","「痛也可以。證明我還活著。」"]},
 "樂天":{giftMul:1.1,chatFav:3,flirtReq:55,loveGain:3,decay:0,desc:"天塌了當被蓋",
- greet:["「嘿嘿，今日運氣爆棚——遇見你了！」","「走走走，後山桃子熟了！」"],
- chat:[["「摔一跤？那是大地想抱你！」","「沒錢了？正好，減肥！」"],
-       ["「你煩惱的樣子也好玩。別打我！」","「有你在，吃糠都是香的！」"],
-       ["「我的運氣，一半是天生的，一半是遇見你。」","「別人求仙問道，我只求天天見你。」"]],
+ greet:["「嘿嘿，今日運氣爆棚——遇見你了！」","「走走走，後山桃子熟了！」","「來啦來啦！正好差個人聽我吹牛！」"],
+ chat:[["「摔一跤？那是大地想抱你！」","「沒錢了？正好，減肥！」","「初次見面？緣分！回頭我請你吃桃！」"],
+       ["「你煩惱的樣子也好玩。別打我！」","「有你在，吃糠都是香的！」","「今天不開心？來來來，笑一個——不笑撓癢了！」"],
+       ["「我的運氣，一半是天生的，一半是遇見你。」","「別人求仙問道，我只求天天見你。」","「往後摔跤也不怕——反正你會扶我。」"]],
  gift:["「哇！！（蹦起來）我有這個了！我有這個了！」","「今天是我的節日！」"],
  giftBad:["「（撓頭）這啥呀……哈哈，謝啦！心意！」"],
  flirt:[["「哎哟喂！（捂心口）被閃到了！」","「你臉這麼紅，發燒了？我看看！」"],
@@ -598,10 +603,10 @@ Object.assign(PERS, {
  flirtNo:["「哈哈哈……哈？（撓頭）先吃飯先吃飯！」"],
  intimate:["【興奮到原地轉圈】","「做夢都得笑醒那種！」"]},
 "話癆":{giftMul:1,chatFav:4,flirtReq:60,loveGain:2,decay:1,desc:"一開口就是一堂課",
- greet:["「你來了你來了！坐！我跟你說——」","「正好正好！我攢了一肚子話！」"],
- chat:[["「這要從三百年前說起——別走啊！」","「哎哎，我還沒說到重點！」"],
-       ["「（終於說完）……你居然聽完了？此生知己，就是你了吧」","「跟你聊天不費勁！再來一段？」"],
-       ["「滿江湖的人躲我，就你捨得聽。」","「往後的話，只說給你一個人聽。」"]],
+ greet:["「你來了你來了！坐！我跟你說——」","「正好正好！我攢了一肚子話！」","（遠遠招手）「來來來！這個事你必須聽！」"],
+ chat:[["「這要從三百年前說起——別走啊！」","「哎哎，我還沒說到重點！」","「你貴姓？哪的人？練什麼劍？別急，一個一個說！」"],
+       ["「（終於說完）……你居然聽完了？此生知己，就是你了吧」","「跟你聊天不費勁！再來一段？」","「跟你說話最省心——你從不打斷我。……好吧，就打斷兩次。」"],
+       ["「滿江湖的人躲我，就你捨得聽。」","「往後的話，只說給你一個人聽。」","「那天沒說完的故事，接著講——講到我們都白了頭。」"]],
  gift:["「這個啊！我知道！來源講你聽——三炷香後——咦，人呢？」","「（一邊講解來歷一邊珍惜收起）」"],
  giftBad:["「這個不好，我跟你說，它有個典故——」"],
  flirt:[["「哎？？說這個？？等我打個腹稿！」","「你先別動，我組織下語言！」"],
@@ -610,10 +615,10 @@ Object.assign(PERS, {
  flirtNo:["「額……話到嘴邊，忘了。明天想起來再說！」"],
  intimate:["【安靜得不可思議的一夜】","「噓——這次換我聽你說。」"]},
 "古板":{giftMul:0.8,chatFav:1,flirtReq:80,loveGain:2,decay:0,desc:"規矩比命重",
- greet:["「（正冠）有事啟稟，無事退朝。」","「晨課了。遲到者，抄劍譜十遍。」"],
- chat:[["「修儀容，正心意，方可論劍。」","「門規第三十七條，不可喧嘩。」"],
-       ["「你的功課，我看過了。尚可。」","「破例同你一叙。莫聲張。」"],
-       ["「門規三千條，不及你一個『安』字。」","「老夫這輩子最不守規矩的事，就是偏愛你。」"]],
+ greet:["「（正冠）有事啟稟，無事退朝。」","「晨課了。遲到者，抄劍譜十遍。」","（拱手）「道友有禮。無事各自用功。」"],
+ chat:[["「修儀容，正心意，方可論劍。」","「門規第三十七條，不可喧嘩。」","「年輕人，戒驕戒躁。」"],
+       ["「你的功課，我看過了。尚可。」","「破例同你一叙。莫聲張。」","「（難得）今日議事，你言之有理。」"],
+       ["「門規三千條，不及你一個『安』字。」","「老夫這輩子最不守規矩的事，就是偏愛你。」","「執手偕老，古禮有云。……我是認真的。」"]],
  gift:["「（雙手接過）合乎禮數。退下……去吧。」","「登記入冊。（私下摩挲很久）」"],
  giftBad:["「於禮不合！拿回去！」"],
  flirt:[["「成何體統！！」","「……自重。（袖中手抖）」"],
@@ -628,14 +633,18 @@ const SECT_PERS = {
  "萬劍山":["傲嬌","武癡","忠犬","高傲","話癆","古板"],
  "藥王谷":["溫柔","藥罐","聖母","陰鬱","財迷","單純"],
  "星機閣":["腹黑","財迷","戲精","潑辣","古板","高傲"],
- "妙音門":["妖媚","戲精","溫柔","樂天","綠茶","醋罈"],
+ "妙音門":["妖媚","戲精","溫柔","樂天","綠茶","醋罈","病嬌"],
  "合歡宗":["風流","蕩浪","妖媚","綠茶","癡纏","瘋批"],
  "大自在殿":["寡言","無情","古板","陰鬱","聖母","溫柔"],
 };
 function rollPers(sect) {
   if (Math.random()<0.06) return "無情";
-  const pool = (sect && SECT_PERS[sect] && Math.random()<0.7) ? SECT_PERS[sect]
-    : PERS_KEYS.filter(k=>!PERS[k].rare);
+  if (sect && SECT_PERS[sect] && Math.random()<0.7) {
+    const pool = SECT_PERS[sect];
+    return pool[rnd(pool.length)];
+  }
+  // 通用池不含門派專屬性格：藥罐（丹爐台詞）只在藥王谷，蕩浪只在合歡宗
+  const pool = PERS_KEYS.filter(k=>!PERS[k].rare && k!=="藥罐" && k!=="蕩浪");
   return pool[rnd(pool.length)];
 }
 
@@ -738,7 +747,7 @@ function mkNpc(sect, rank, ri, gender, ageHint) {
     id: NPC_UID++, name: genName(gender), sect, rank, gender, ri,
     sub: REALMS[ri].layers ? rnd(9) : rnd(3),
     age: ageHint !== undefined ? ageHint : (rank==="弟子" ? 16+rnd(30) : rank==="長老" ? 90+rnd(300) : 280+rnd(400)),
-    pers: rollPers(), special: "",
+    pers: rollPers(sect), special: "",
     met:false, favor:0, love:0, alive:true, deadBy:"",
     spouseId:null, spouse:"", rel:{master:null, friends:[], parents:[], children:[]},
     loc: sect, poison:null, danToxin:0, proposed:false,
@@ -893,7 +902,7 @@ function hallHere(sect) { return G.npcs.filter(n=>n.alive && n.loc===sect); }
 /* 台詞引號：行內已帶「」則不再外包 */
 function q(s){ return s.startsWith("「") ? s : "「"+s+"」"; }
 function gdial(n, s){
-  if (n.gender!=="M") return s;
+  if (n.gender!=="M") return s.replace(/老夫/g,"老身"); // 女性自稱修正
   return s.replace(/老娘/g,"老子").replace(/姑奶奶/g,"大爺").replace(/姐姐/g,"哥哥")
           .replace(/小女子/g,"小生").replace(/女兒家/g,"男兒家");
 }
@@ -977,7 +986,9 @@ function nextDay(n=1) {
   }
   uiRefresh();
 }
-function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月】宗門發布新任務：${G.monthTask.name}`); }
+function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月】宗門發布新任務：${G.monthTask.name}`);
+  if (G.player.autoSave) saveGame(0, true); // 每月自動存檔（槽0，靜默）
+}
 function onYear() { /* NPC 成長在 tickNpcYear 內按年處理 */ }
 function onSummit() {
   msg("五年一度的正道大會召開，各派弟子雲集論劍。");
@@ -999,6 +1010,22 @@ function guestBubble(n){
   const pool = P.chat[st3(n.favor)];
   return gdial(n, pool[rnd(pool.length)]);
 }
+/* 來訪門檻：友情、愛情雙高才上門（只有友情高的普通朋友不會賴來家裡） */
+const GUEST_REQ_FAV = 60, GUEST_REQ_LOVE = 50;
+/* 家中有客仍出門：訪客抱怨（不掉好感，純鬧脾氣） */
+function guestSulk(why){
+  const p = G.player;
+  if (!p.guest) return;
+  const n = npcById(p.guest.id);
+  if (!n || !n.alive) return;
+  const SULK = [
+    `「去吧去吧，誰稀罕你陪。」${n.name}抱著膝蓋坐到牆角，背影寫滿怨念。`,
+    `「……你走你的。」${n.name}把茶杯磕得很響，顯然在鬧脾氣。`,
+    `${n.name}嘟囔著「把我一個人丟在院裡」，賭氣不吃你留的點心。`,
+    `「早去早回……哼，我才沒有等你。」${n.name}彆扭地擺手。`,
+  ];
+  msg(`${SULK[rnd(SULK.length)]}（${why}照常進行，${n.name}有些不高興，但不記仇）`);
+}
 function tickGuest(){
   const p = G.player;
   if (p.guest) {
@@ -1011,9 +1038,9 @@ function tickGuest(){
     g.chatted = false; g.bubble = guestBubble(n); // 每日換一句閒話
     return;
   }
-  const cands = G.npcs.filter(n=>n.alive&&n.met&&(n.favor>=50||n.love>=40));
+  const cands = G.npcs.filter(n=>n.alive&&n.met&&n.favor>=GUEST_REQ_FAV&&n.love>=GUEST_REQ_LOVE);
   if (!cands.length) return;
-  const heat = cands.reduce((s,n)=>s+Math.max(0,n.favor-50)+Math.max(0,n.love-40), 0);
+  const heat = cands.reduce((s,n)=>s+Math.max(0,n.favor-GUEST_REQ_FAV)+Math.max(0,n.love-GUEST_REQ_LOVE), 0);
   if (Math.random() >= 0.05 + heat/6000) return;
   const n = cands[rnd(cands.length)];
   const stayBoth = n.favor>=70 && n.love>=60;
@@ -1044,6 +1071,23 @@ function guestFlirt(){
   g.bubble = line;
   msg(`${n.name}：${q(line)}（愛情+${lg}）`);
 }
+function guestDual(){ // 院中來客雙修：門檻與切磋台一致
+  const p=G.player, g=p.guest; if(!g) return;
+  const n = npcById(g.id), P = PERS[n.pers];
+  if (n.rank==="稚童") return msg("對方還是個孩子。");
+  const openMind = P.flirtReq<=50;
+  const ok = n.love>=70 || (openMind && n.love>=40 && n.favor>=60);
+  if (!ok) return msg(`${n.name}還未與你到那一步（需愛情70${openMind?"，或此性情者 愛情40+友情60":""}；現愛情${n.love}·友情${n.favor}）。`);
+  if (p.spouse!==n.id) msg(`（客居小院，孤男寡女……兩情相悅，何必在乎名分。）`);
+  if (sectUnlocked("合歡宗")) { p.spirit += 800; msg(`一夜雙修，靈氣+800。`); }
+  else { p.spirit += 400; msg(`一夜雙修，靈氣+400。`); }
+  const line = gdial(n,P.intimate[rnd(P.intimate.length)]);
+  g.bubble = line;
+  msg(`${n.name}：${q(line)}（愛情+5，友情+3）`);
+  n.love = clamp(n.love+5,0,P.loveCap||100); n.favor = clamp(n.favor+3,-200,120);
+  if (p.spouse===null && n.love>=85 && Math.random()<0.3) propose(n);
+  uiRefresh();
+}
 function guestLeave(){
   const p=G.player, g=p.guest; if(!g) return;
   const n = npcById(g.id);
@@ -1054,7 +1098,7 @@ function guestLeave(){
 /* ═══ 宗門遊歷：自動推進天數，直到撞上事件點 ═══ */
 function sectTour(){
   const p = G.player, start = p.day;
-  if (p.guest) return msg(`${npcById(p.guest.id).name}還在你院裡賴著，先陪人家吧。`);
+  guestSulk("遊歷"); // 家中有客也照樣出門，只是TA會不高興
   for (let i=0; i<120; i++){
     const mark = G.dayLog.length;
     nextDay(1);
@@ -1100,6 +1144,7 @@ function takeLesson() {
   const ym = year()*12 + (month()-1);
   if (p.lessonYM === ym) return msg("本月大課已上過（每月一次，開課即入下月）。");
   p.lessonYM = ym;
+  guestSulk("閉關聽課"); // 家中有客仍去聽課，TA會抱怨
   const cap = spiritCap();
   const g = Math.round(cap*0.3) + 40 + rnd(30);
   p.spirit = Math.min(cap, p.spirit + g);
@@ -1526,7 +1571,34 @@ function loadGame(slot) {
   const data = JSON.parse(raw).g;
   if (data.ver !== 2) return msg("舊版存檔不相容（世界系統已重做），請開新局。");
   G = data;
+  if (!G.flags) G.flags = {};
+  migratePers(); // 舊檔修正：門派專屬性格錯配（如合歡宗的藥罐整天聊丹爐）
+  migratePersV2(); // 舊檔重洗：早期版本性格池未生效，重擲一次門派性格
   msg(`讀取存檔${slot}。`); uiRefresh();
+}
+const PERS_SECT_ONLY = { "藥罐":"藥王谷", "蕩浪":"合歡宗" }; // 這些台詞設定強綁門派
+function migratePers(){
+  let fixed = 0;
+  G.npcs.forEach(n=>{
+    const home = PERS_SECT_ONLY[n.pers];
+    if (home && n.sect!==home) {
+      const pool = (SECT_PERS[n.sect]||PERS_KEYS).filter(k=>!PERS_SECT_ONLY[k]||PERS_SECT_ONLY[k]===n.sect);
+      n.pers = pool[rnd(pool.length)];
+      fixed++;
+    }
+  });
+  if (fixed) msg(`【修正】${fixed}位修士的性情歸位了（門派專屬性格不再錯配）。`);
+}
+function migratePersV2(){ // 一次性：修復早期「門派性格池從未生效」的世界
+  if (G.flags.persV2) return;
+  G.flags.persV2 = true;
+  let rerolled = 0;
+  G.npcs.forEach(n=>{
+    if (n.special && n.pers==="無情") return; // 大自在殿方丈的無情設定保留
+    n.pers = rollPers(n.sect);
+    rerolled++;
+  });
+  msg(`【性情重洗】山門上下氣象一新：性格按門派風骨重新分派（${rerolled}人）。舊識的性格可能變了。`);
 }
 function listSaves() {
   return [0,1,2].map(s => { const r=localStorage.getItem("wjs_"+s);
@@ -1555,16 +1627,14 @@ function uiRefresh() {
     `<span class="res">⭐聲望${p.reputation}</span>`;
   el("datebar").innerHTML = `<span>${year()}年${month()}月${dayOfMonth()}日 · ${p.age}歲</span><span>靈氣 ${fmt(p.spirit)}/${fmt(spiritCap())}</span>`;
   el("spiritfill").style.width = clamp(p.spirit/spiritCap()*100,0,100)+"%";
+  const bp = el("sb-practice");
+  if (bp) { bp.textContent = `練劍${p.practiceCnt}/5`; bp.disabled = p.practiceCnt>=5 || p.energy<1; }
+  const bt = el("sb-task");
+  if (bt && G.monthTask) { bt.textContent = G.monthTask.name.slice(0,2); bt.title = `宗門任務：${G.monthTask.name}——${G.monthTask.desc}`; }
   renderTab();
 }
-/* ── log ── */
-function pushLog(entry) {
-  const box = el("log");
-  const line = h(`<div class="logline">${entry.t}</div>`);
-  box.appendChild(line);
-  setTimeout(()=>{ line.style.opacity=0; line.style.transition="opacity .8s"; setTimeout(()=>line.remove(),800); }, 7000);
-  while (box.children.length>4) box.firstChild.remove();
-}
+/* ── log（底部彈窗已移除：訊息一律記入修行手札） ── */
+function pushLog(entry) { /* 手札即時區在 renderTab 時刷新 */ }
 /* ── 彈窗 ── */
 function openModal(title, bodyHtml, onMount) {
   el("modal-title").textContent = title;
@@ -1599,22 +1669,12 @@ function xuiLogHtml(){
     <span style="flex:1">${l.t}</span></div>`).join("");
 }
 function pageXiulian(){
-  const p=G.player, cap=spiritCap();
+  const p=G.player;
   const compact = "padding:8px 10px";
   const h3s = "font-size:13px;margin:0 0 4px 0";
   const pg = h(`<div>
     <div class="page-title">修 煉</div>
-    <div class="card" style="${compact}"><h3 style="${h3s}">今日修行</h3>
-      <div class="kv" style="font-size:12px"><span>靈氣</span><span>${fmt(p.spirit)} / ${fmt(cap)}</span></div>
-      <div class="bar" style="height:6px"><div style="width:${clamp(p.spirit/cap*100,0,100)}%"></div></div>
-      <div class="kv" style="font-size:12px"><span>劍意熟練</span><span>${p.swordSense}</span></div>
-    <div class="btnrow" style="margin-top:6px">
-      <button id="btn-practice">練劍（-1精力·日5次）</button>
-      <button id="btn-break" class="gold">嘗試突破</button>
-      <button id="btn-class" class="ghost">上宗門大課（每月·速進下月）</button>
-      <button id="btn-tour" class="ghost">宗門遊歷（自動前進至事件）</button>
-    </div>
-    </div>
+    <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
     ${p.guest && npcById(p.guest.id) ? (()=>{ const n=npcById(p.guest.id), g=p.guest;
       return `<div class="card" style="background:#fdf6ec;border:1px dashed #d8c8a8"><h3>院中來客</h3>
       <div class="list-item"><div>
@@ -1624,26 +1684,19 @@ function pageXiulian(){
       <div class="btnrow">
         <button class="small" id="g-chat">閒聊（每日一次）</button>
         <button class="small ghost" id="g-flirt">調情</button>
+        <button class="small ghost" id="g-dual">雙修</button>
         <button class="small ghost" id="g-leave">送客</button>
       </div></div>`; })() : ""}
-    <div class="card" style="${compact}"><h3 style="${h3s}">宗門任務（每月刷新）</h3>
-      <div class="list-item" style="padding:4px 0"><div><b style="font-size:13px">${G.monthTask.name}</b><div class="desc" style="font-size:11px">${G.monthTask.desc} · 報酬：靈石+貢獻</div></div>
-      <button class="small" id="btn-task">去做</button></div>
-    </div>
     <div class="card" style="${compact}"><h3 style="${h3s}">丹藥</h3><div id="pill-list"></div></div>
     <div class="card"><h3>修行手札（每日記事·不會消失）</h3>
       <div id="xui-log" style="max-height:46vh;overflow-y:auto;font-size:14px;line-height:1.9;color:#4a3b28">${xuiLogHtml()}</div>
     </div>
   </div>`);
   const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
-  pg.querySelector("#btn-practice").onclick = ()=>{ practice(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-break").onclick = ()=>{ tryBreak(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-class").onclick = ()=>{ takeLesson(); flushLog(); refreshLog(); };
-  pg.querySelector("#btn-tour").onclick = ()=>{ sectTour(); flushLog(); renderTab(); };
-  pg.querySelector("#btn-task").onclick = ()=>{ doTask(); flushLog(); refreshLog(); };
   const gc = pg.querySelector("#g-chat");
   if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
     pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
+    pg.querySelector("#g-dual").onclick = ()=>{ guestDual(); flushLog(); renderTab(); };
     pg.querySelector("#g-leave").onclick = ()=>{ guestLeave(); flushLog(); renderTab(); }; }
   const pl = pg.querySelector("#pill-list");
   const keys = Object.keys(p.pills);
@@ -1874,12 +1927,9 @@ function pageSectHub(sect){
   const alive = G.npcs.filter(n=>n.sect===sect&&n.alive);
   const dead = G.npcs.filter(n=>n.sect===sect&&!n.alive);
   const meetCost = p.energy<1?"（精力不足）":"（-1精力）";
-  /* 每日固定洗牌：一天內順序穩定，隔天換位 */
-  const seed = G.player.day*97 + SECT.indexOf(sect)*13 + 7;
-  let sd = seed % 233280 + 1;
-  const roster = [...alive];
-  for (let i=roster.length-1;i>0;i--){ sd = (sd*9301+49297)%233280;
-    const j = Math.floor(sd/233280*(i+1)); [roster[i],roster[j]]=[roster[j],roster[i]]; }
+  /* 名冊固定排序（掌門→長老→弟子→稚童，同階按入門先後）：位置穩定，搭話後不會亂飛 */
+  const RANK_ORDER = {"掌門":0,"長老":1,"弟子":2,"稚童":3};
+  const roster = [...alive].sort((a,b)=> (RANK_ORDER[a.rank]-RANK_ORDER[b.rank]) || (a.id-b.id));
   const pg = h(`<div>
     <div class="btnrow" style="margin-bottom:2px"><button class="small ghost" id="hub-back">← 返回江湖</button></div>
     <div class="page-title">${sect}</div>
@@ -1887,7 +1937,7 @@ function pageSectHub(sect){
       <div class="btnrow"><button class="gold small" id="hub-plaza">廣場偶遇${meetCost}·過天</button></div>
       <div class="desc" style="font-size:11px;margin-top:4px">去廣場轉轉：可能結識生面孔，也可能撞見舊識聊上幾句。</div>
     </div>
-    <div class="card"><h3>山門名冊（${alive.length}人·順序每日變動）</h3><div id="hub-roster"></div></div>
+    <div class="card"><h3>山門名冊（${alive.length}人）</h3><div id="hub-roster"></div></div>
     ${dead.length?`<div class="card"><h3 style="color:#a08080">往生（${dead.length}）</h3><div id="rk-dead"></div></div>`:""}
   </div>`);
   pg.querySelector("#hub-back").onclick=()=>{ SECT_VIEW=null; renderTab(); };
@@ -2034,7 +2084,14 @@ function pageMe(){
       <div class="kv"><span>三生石</span><span>${G.flags.sanshengDone.length?G.flags.sanshengDone.map(i=>G.npcs[i].name).join("、"):"—"}</span></div>
     </div>
     <div class="card"><h3>存檔（SL：行動前手動存）</h3><div id="save-list"></div>
-      <div class="kv" style="margin-top:8px"><span>自動存檔（每日）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div></div>
+      <div class="kv" style="margin-top:8px"><span>自動存檔（每日+每月）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div>
+      <div class="desc" style="margin-top:6px;font-size:11px">換手機／換瀏覽器／清快取都不怕：把存檔碼複製存好，隨時導入回來。</div>
+      <div class="btnrow" style="margin-top:6px">
+        <button class="small ghost" id="btn-export">導出存檔碼</button>
+        <button class="small ghost" id="btn-import">導入存檔碼</button>
+      </div>
+      <textarea id="save-io" placeholder="存檔碼會顯示在這裡；導入時把碼貼進來再按導入" style="display:none;width:100%;box-sizing:border-box;margin-top:6px;height:72px;font-size:11px;padding:6px;border:1px solid #d8c9a8;border-radius:8px;background:#faf6ec;color:#4a3b28"></textarea>
+    </div>
     <div class="card"><h3>冒險日誌</h3><div style="max-height:180px;overflow-y:auto;font-size:12px;line-height:1.7;color:#6b5a48">
       ${G.dayLog.slice(-40).reverse().map(l=>`<div>·${l.t}</div>`).join("")}</div></div>
   </div>`);
@@ -2051,6 +2108,25 @@ function pageMe(){
     sl.appendChild(row);
   });
   pg.querySelector("#btn-auto").onclick=()=>{ p.autoSave=!p.autoSave; uiRefresh(); };
+  const io = pg.querySelector("#save-io");
+  pg.querySelector("#btn-export").onclick=()=>{
+    io.style.display="block";
+    io.value = JSON.stringify({g:G, t:Date.now()}); // 直接導出當前進度
+    io.readOnly = true; io.select();
+    try { navigator.clipboard && navigator.clipboard.writeText(io.value); } catch(e){}
+  };
+  pg.querySelector("#btn-import").onclick=()=>{
+    io.style.display="block"; io.readOnly = false; io.value=""; io.placeholder="把存檔碼貼進這裡，再按一次「導入存檔碼」"; io.focus();
+    const raw = io.value.trim();
+    if (!raw.startsWith("{")) return; // 第一次點＝清空待貼
+    try {
+      const data = JSON.parse(raw).g;
+      if (!data || data.ver!==2) throw 0;
+      G = data; migratePers(); migratePersV2();
+      msg("存檔碼導入成功。"); lastLogLen = G.dayLog.length;
+    } catch(e){ msg("存檔碼無效，請檢查是否複製完整。"); }
+    flushLog(); renderTab();
+  };
   return pg;
 }
 
@@ -2059,7 +2135,6 @@ function showIntro(){
   const app = el("app");
   app.insertAdjacentHTML("beforeend", `
   <div id="intro">
-    <div style="font-size:40px">🗡</div>
     <h1>萬劍山弟子修煉手札</h1>
     <p>你以凡人之軀拜入萬劍山。<br>練劍、鑄劍、斬妖、論劍，<br>山高路遠，道侶同行。<br>——男女皆可攻略，請自便。</p>
     <input id="intro-name" placeholder="道號（2-6字）" maxlength="6" value="">
@@ -2088,6 +2163,11 @@ function restoreTab(){
 function boot(){
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.t));
   restoreTab();
+  el("sb-practice").onclick = ()=>{ practice(); flushLog(); };
+  el("sb-break").onclick   = ()=>{ tryBreak(); flushLog(); };
+  el("sb-class").onclick   = ()=>{ takeLesson(); flushLog(); };
+  el("sb-tour").onclick    = ()=>{ sectTour(); flushLog(); };
+  el("sb-task").onclick    = ()=>{ doTask(); flushLog(); };
   el("modal-close-btn").onclick = closeModal;
   el("modal-mask").onclick = e=>{ if(e.target.id==="modal-mask") closeModal(); };
   showIntro();

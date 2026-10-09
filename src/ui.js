@@ -36,7 +36,7 @@ function openModal(title, bodyHtml, onMount) {
 function closeModal(){ el("modal-mask").classList.remove("show"); }
 
 /* ── Tab 渲染分流 ── */
-function switchTab(t){ TAB=t; if (typeof SECT_VIEW!=="undefined") SECT_VIEW=null; if (typeof JIANGHU_VIEW!=="undefined") JIANGHU_VIEW=null;
+function switchTab(t){ TAB=t; try{localStorage.setItem("wjs_tab", t);}catch(e){} if (typeof SECT_VIEW!=="undefined") SECT_VIEW=null; if (typeof JIANGHU_VIEW!=="undefined") JIANGHU_VIEW=null;
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelector(`.tab[data-t="${t}"]`).classList.add("active"); renderTab(); }
 function renderTab(){

@@ -321,11 +321,17 @@ function showIntro(){
   };
   el("intro-load").onclick = ()=>{
     if (!localStorage.getItem("wjs_1")) return alert("槽位1為空");
-    loadGame(1); el("intro").remove(); lastLogLen = G.dayLog.length; flushLog();
+    loadGame(1); el("intro").remove(); lastLogLen = G.dayLog.length; flushLog(); restoreTab();
   };
+}
+function restoreTab(){
+  let t = null; try{ t = localStorage.getItem("wjs_tab"); }catch(e){}
+  const VALID = ["xiulian","zhujian","chuxing","guanxi","me"];
+  if (t && VALID.includes(t) && typeof G!=="undefined" && G && G.player && G.player.name) switchTab(t);
 }
 function boot(){
   document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.t));
+  restoreTab();
   el("modal-close-btn").onclick = closeModal;
   el("modal-mask").onclick = e=>{ if(e.target.id==="modal-mask") closeModal(); };
   showIntro();

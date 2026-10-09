@@ -1,5 +1,5 @@
 /* 萬劍山手札 Service Worker：頁面 network-first（保更新），其餘 cache-first */
-const CACHE = "wjs-v2";
+const CACHE = "wjs-v3";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-180.png"];
 
 self.addEventListener("install", e => {

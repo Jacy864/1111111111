@@ -386,7 +386,6 @@ function guestDual(){ // 院中來客雙修：門檻與切磋台一致
   g.bubble = line;
   msg(`${n.name}：${q(line)}（愛情+5，友情+3）`);
   n.love = clamp(n.love+5,0,P.loveCap||100); n.favor = clamp(n.favor+3,-200,120);
-  if (p.spouse===null && n.love>=85 && Math.random()<0.3) propose(n);
   uiRefresh();
 }
 function guestLeave(){
@@ -687,7 +686,6 @@ function interact(id, act) {
       else { p.spirit += 400; }
       msg(`${n.name}：${q(gdial(n,P.intimate[rnd(P.intimate.length)]))}`);
       n.love = clamp(n.love+5,0,P.loveCap||100); n.favor = clamp(n.favor+3,-200,120);
-      if (G.player.spouse===null && n.love>=85 && Math.random()<0.3) propose(n);
       break; }
     case "下毒": return uiPickPoison(n);
     case "暗殺": return assassinate(n);

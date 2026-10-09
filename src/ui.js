@@ -8,7 +8,7 @@ function esc(s){ return String(s).replace(/</g,"&lt;"); }
 function uiRefresh() {
   if (!G) return;
   const p = G.player;
-  el("avatar").textContent = "🗡";
+  el("avatar").textContent = "⛩";
   el("pname").innerHTML = `${esc(p.name)} <span class="realm">${realmText(p.ri,p.sub)}</span>`;
   el("statline").innerHTML =
     `<span class="res">⚡精力${p.energy}/${p.energyMax}</span><span class="res">💰${fmt(p.stones)}</span>`+

@@ -275,7 +275,7 @@ function pageMe(){
       <div class="kv"><span>三生石</span><span>${G.flags.sanshengDone.length?G.flags.sanshengDone.map(i=>G.npcs[i].name).join("、"):"—"}</span></div>
     </div>
     <div class="card"><h3>存檔（SL：行動前手動存）</h3><div id="save-list"></div>
-      <div class="kv" style="margin-top:8px"><span>自動存檔（每日+每月）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div>
+      <div class="kv" style="margin-top:8px"><span>自動存檔（每月+切後台時）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div>
       <div class="desc" style="margin-top:6px;font-size:11px">換手機／換瀏覽器／清快取都不怕：把存檔碼複製存好，隨時導入回來。</div>
       <div class="btnrow" style="margin-top:6px">
         <button class="small ghost" id="btn-export">導出存檔碼</button>
@@ -324,16 +324,35 @@ function pageMe(){
 /* ═══ 開場 & 啟動 ═══ */
 function showIntro(){
   const app = el("app");
+  /* 有自動存檔（槽0）就亮出「繼續修行」——刷新/重開後一鍵回到江湖 */
+  let contHtml = "";
+  try {
+    const raw = localStorage.getItem("wjs_0");
+    if (raw) {
+      const d = JSON.parse(raw).g;
+      if (d && d.player && d.player.name)
+        contHtml = `<div class="btnrow" style="justify-content:center;margin-bottom:10px">
+          <button class="gold" id="intro-cont">繼續修行（${esc(d.player.name)}·${realmText(d.player.ri,d.player.sub)}·第${d.player.day}日${d.player.alive===false?"·已身死":""}）</button>
+        </div>`;
+    }
+  } catch(e){}
   app.insertAdjacentHTML("beforeend", `
   <div id="intro">
     <h1>萬劍山弟子修煉手札</h1>
     <p>你以凡人之軀拜入萬劍山。<br>練劍、鑄劍、斬妖、論劍，<br>山高路遠，道侶同行。<br>——男女皆可攻略，請自便。</p>
+    ${contHtml}
     <input id="intro-name" placeholder="道號（2-6字）" maxlength="6" value="">
     <div class="btnrow" style="justify-content:center">
       <button id="intro-go">拜入山門</button>
       <button class="ghost" id="intro-load">讀取存檔1</button>
     </div>
   </div>`);
+  const cont = el("intro-cont");
+  if (cont) cont.onclick = ()=>{
+    try { loadGame(0); } catch(e){ G = null; }
+    if (!G) return alert("自動存檔損壞，請開新局或讀其他槽位。");
+    el("intro").remove(); lastLogLen = G.dayLog.length; flushLog(); restoreTab();
+  };
   el("intro-go").onclick = ()=>{
     const name = el("intro-name").value.trim() || "無名";
     newGame(name);
@@ -343,7 +362,9 @@ function showIntro(){
   };
   el("intro-load").onclick = ()=>{
     if (!localStorage.getItem("wjs_1")) return alert("槽位1為空");
-    loadGame(1); el("intro").remove(); lastLogLen = G.dayLog.length; flushLog(); restoreTab();
+    try { loadGame(1); } catch(e){ G = null; }
+    if (!G) return alert("存檔損壞，請換個槽位。");
+    el("intro").remove(); lastLogLen = G.dayLog.length; flushLog(); restoreTab();
   };
 }
 function restoreTab(){
@@ -361,6 +382,10 @@ function boot(){
   el("sb-task").onclick    = ()=>{ doTask(); flushLog(); };
   el("modal-close-btn").onclick = closeModal;
   el("modal-mask").onclick = e=>{ if(e.target.id==="modal-mask") closeModal(); };
+  /* 切後台/鎖屏/關頁前自動落一枚存檔（槽0），刷新不丟當日進度 */
+  const autosaveNow = ()=>{ if (G && G.player && G.player.name && G.player.autoSave) { try{ saveGame(0,true); }catch(e){} } };
+  window.addEventListener("pagehide", autosaveNow);
+  document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="hidden") autosaveNow(); });
   showIntro();
 }
 document.addEventListener("DOMContentLoaded", boot);

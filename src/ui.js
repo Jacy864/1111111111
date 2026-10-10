@@ -65,6 +65,20 @@ function pageXiulian(){
   const pg = h(`<div>
     <div class="page-title">修 煉</div>
     <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
+    ${p.invite && npcById(p.invite.id) ? (()=>{ const n=npcById(p.invite.id), inv=p.invite, act=DATE_ACTS[inv.key];
+      const line=act.line[0];
+      return `<div class="card" id="invite-card" style="background:#fdf6ec;border:1px dashed #c8a878"><h3>邀約</h3>
+      <div class="list-item"><div>
+        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag">${n.race}</span>`:""}
+        ${inv.from==="pursuer"?'<span class="tag" style="background:#f0c0c0;color:#a04040">有意於你</span>':""}
+        ${inv.from==="spouse"?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':""}
+        <div class="desc">${act.name} · ${inv.until-G.player.day+1}天後過期</div>
+        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${line}</div>
+      </div>
+      <div class="btnrow" style="flex-direction:column">
+        <button class="small gold" id="inv-yes">應約(-1精力)</button>
+        <button class="small ghost" id="inv-no">婉拒</button>
+      </div></div></div>`; })() : ""}
     ${(p.spouse!==null && p.spouse!==undefined && G.npcs[p.spouse] && G.npcs[p.spouse].alive) ? (()=>{ const n=G.npcs[p.spouse], m=p.mate;
       return `<div class="card" style="background:#fdf1ec;border:1px solid #e8c8b8"><h3>道侶同住</h3>
       <div class="list-item"><div>
@@ -97,6 +111,8 @@ function pageXiulian(){
     </div>
   </div>`);
   const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
+  const iy=pg.querySelector("#inv-yes");
+  if(iy){iy.onclick=()=>{acceptInvite();flushLog();renderTab();};pg.querySelector("#inv-no").onclick=()=>{declineInvite();flushLog();renderTab();};}
   const gc = pg.querySelector("#g-chat");
   if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
     pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };

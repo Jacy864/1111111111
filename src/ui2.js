@@ -112,8 +112,9 @@ function pageFriends(){
     const away = n.loc!==n.sect;
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const confessing = p.confess&&p.confess.id===n.id?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">有話想對你說</span>':"";
     const row = h(`<div class="list-item" style="cursor:pointer"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
+      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}${confessing}
       <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""}${away?" · 雲遊中":""}</div></div>
       <span style="color:#b0a08a">›</span></div>`);
     row.onclick=()=>openNpcModal(n.id);
@@ -154,8 +155,9 @@ function pageSectHub(sect){
     const heart = met&&n.love>0?` ❤${n.love}`:"";
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = met&&n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const confessing = met&&p.confess&&p.confess.id===n.id?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">有話想對你說</span>':"";
     const row = h(`<div class="list-item"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${met&&n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
+      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${met&&n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}${confessing}
       <div class="desc">${met?`友${n.favor}${heart}${away?" · 雲遊中":""}`:(away?"面生，雲遊在外":n.demon?"面生的妖修":"面生的"+(n.gender==="M"?"男修":"女修"))}</div></div>
       ${met?'<button class="small ghost" data-open="'+n.id+'">往來</button>'
            :(away?"":'<button class="small gold" data-meet="'+n.id+'">搭話'+meetCost+'</button>')}</div>`);
@@ -209,6 +211,8 @@ function openNpcModal(id){
     ${n.demon&&RACES[n.race]?`<div class="kv"><span style="color:#6a5590">稟賦·${n.race}</span><span style="color:#7a654e">${RACES[n.race].perk}</span></div>`:""}
     <div class="bar favorbar"><div style="width:${clamp(n.favor,0,100)}%"></div></div>
     <div class="bar lovebar"><div style="width:${showLove?clamp(n.love,0,100):0}%"></div></div>
+    ${n.sweet?`<div class="desc" style="font-size:12px;color:#a05a4a;margin-top:6px">你們兩情相悅。</div>`:n.pursue?`<div class="desc" style="font-size:12px;color:#a05a4a;margin-top:6px">${n.name}最近看你的眼神，似乎不太一樣。</div>`:n.gaveUp&&n.love>=30?`<div class="desc" style="font-size:12px;color:#8a6a50;margin-top:6px">TA眼裡有過你，如今已收起了。</div>`:""}
+    ${p.confess&&p.confess.id===n.id?`<div style="font-size:13px;background:#fff4e8;border-radius:8px;padding:8px 10px;margin:6px 0">${gdial(n,DATE_CONFESS[n.pers]||"「我喜歡你。」")}</div><div class="btnrow" style="margin:6px 0"><button class="gold small" data-conf="yes">接受心意</button><button class="ghost small" data-conf="no">婉拒</button></div>`:""}
     ${n.loc!==n.sect?`<div class="desc" style="font-size:11px;color:#9a8a75;margin:6px 0">現在人在${n.loc}</div>`:""}
     ${n.proposed?`<div class="btnrow" style="margin:6px 0"><button class="gold small" data-prop="yes">答應求婚</button><button class="ghost small" data-prop="no">婉拒</button></div>`:""}
     <h3 style="margin-top:12px;font-size:14px;color:#7a5540">師門親友</h3>
@@ -240,6 +244,7 @@ function openNpcModal(id){
     body.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{ const x=npcById(+b.dataset.open);
       if(x&&x.alive){ openNpcModal(x.id); } });
     body.querySelectorAll("[data-prop]").forEach(b=>b.onclick=()=>{ answerProposal(id, b.dataset.prop==="yes"); curLast=lastMsg(); refresh(); flushLog(); });
+    body.querySelectorAll("[data-conf]").forEach(b=>b.onclick=()=>{ answerConfess(id, b.dataset.conf==="yes"); curLast=lastMsg(); refresh(); flushLog(); });
     body.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
       const act = b.dataset.act;
       if (act==="下毒") return uiPickPoison(npcById(id));

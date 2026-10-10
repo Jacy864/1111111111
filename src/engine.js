@@ -125,7 +125,7 @@ function tickWorldDaily() { // NPC 位置流動：少出門、快回家，保證
 function worldTickMonthly() {
   const alive = G.npcs.filter(n=>n.alive);
   // 好感淡忘（龜族記性千年不磨）——朝 0 收斂：好感降到 0 為止，仇怨隨時間沖淡也回到 0，不再無故跌成負數
-  alive.forEach(n=>{ if(n.met && n.love<70 && G.player.spouse!==n.id && G.player.spouse!==undefined){
+  alive.forEach(n=>{ if(n.met && !n.pursue && n.love<70 && G.player.spouse!==n.id){
     if (n.demon && n.race==="龜族") return;
     const dec = Math.round(PERS[n.pers].decay);
     if(dec) n.favor = n.favor>0 ? Math.max(0, n.favor-dec) : Math.min(0, n.favor+dec);
@@ -137,7 +137,7 @@ function worldTickMonthly() {
   if (G.player.spouse===null || G.player.spouse===undefined)
     alive.forEach(n=>{ if(n.met && !n.proposed && n.spouseId===null && n.love>=90 && n.age>=18 && Math.random()<0.15){
       n.proposed=true;
-      msg(`${n.name}紅著耳根遞來一封信——是求婚之意！可到【關係】頁回應。`);
+      msg(`${n.name}紅著耳根遞來一封信——是求婚之意！可到【關係】頁回應。${n.sweet?'（你們早兩情相悅了）':''}`);
       wlog(`聽說${n.name}向你提親了，好事者都在看戲。`, false);
     }});
 }
@@ -154,6 +154,7 @@ function worldEvent(alive) {
     if(solo(a) && a.age>=25 && a.rank!=="稚童" && Math.random()<0.5){
       const cands=alive.filter(b=>solo(b)&&b!==a&&b.gender!==a.gender&&b.age>=25);
       if(cands.length){ const b=cands[rnd(cands.length)]; a.spouseId=b.id; b.spouseId=a.id;
+        [a,b].forEach(x=>{if(x.pursue){x.pursue=false;x.gaveUp=true;}});
         wlog(`${n2t(a)}與${n2t(b)}結為道侶，各派道賀。`, a.met||b.met); } }
   } else if (r<0.48) { // 道侶破裂（偶發情殺）
     const paired=alive.filter(x=>x.spouseId!==null);
@@ -201,6 +202,8 @@ function npcDie(n, cause) { // NPC 死亡公共處理（自然死亡無人遷怒
   n.alive=false; n.deadBy=cause;
   if(n.spouseId!==null){ const s=npcById(n.spouseId); if(s) s.spouseId=null; }
   if(G.player.spouse===n.id){ G.player.spouse=null; G.player.mate=null;
+    if(G.player.confess&&G.player.confess.id===n.id)G.player.confess=null;
+    if(G.player.invite&&G.player.invite.id===n.id)G.player.invite=null;
     msg(`${n.name}走了。院子裡TA常坐的那個位置，空了下來。`); }
 }
 function onNpcKilled(n, cause) // 被玩家所殺：親友反目
@@ -286,6 +289,7 @@ function answerProposal(id, yes) {
     G.player.mate = { chatted:false, bubble:"", ignored:0, sulking:false };
     msg(`${n.name}：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);
     msg(`${n.name}收拾了行囊搬進你的小院。從今往後，修煉的日子裡TA都在。`);
+    clearPursuits(n.id); G.player.confess=null;
     wlog(`你與${n2t(n)}結為道侶。`, true);
   } else { n.love=clamp(n.love-30,0,100); n.favor=clamp(n.favor-20,-200,120);
     msg(`你婉拒了${n.name}。他眼底的光暗了暗。`); }
@@ -311,7 +315,7 @@ function nextDay(n=1) {
     G.player.day++; G.player.age = 16 + Math.floor((G.player.day-1)/360);
     G.player.energy = clamp(G.player.energy+1, 0, G.player.energyMax);
     G.player.practiceCnt = 0;
-    tickPoison(); tickNpcYear(); tickWorldDaily(); tickGuest(); mateTick();
+    tickPoison(); tickNpcYear(); tickWorldDaily(); tickGuest(); mateTick(); tickInvite();
     if (dayOfMonth()===1) { onMonth(); worldTickMonthly(); }
     if (year()%5===0 && month()===5) onSummit();
     if (dayOfMonth()===1 && ((G.player.day-1)%360)===0) onYear();
@@ -325,6 +329,7 @@ function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月�
     const PROP = ["下月月色圓潤，宜閉關突破","血月將至，近期突破需謹慎","東山有妖獸躁動，採集結伴為妙","有貴人將至，近日遊歷易逢知己","妖市進了批新貨，早去早挑","山雨欲來，練劍最宜"];
     msg(`鴉族${crow.name}落在院牆上：「呱——${PROP[rnd(PROP.length)]}。」`);
   }
+  pursueRoll(); pursueGiveUp(); confessRoll();
   if (G.player.autoSave) saveGame(0, true); // 每月自動存檔（槽0，靜默）
 }
 function onYear() { /* NPC 成長在 tickNpcYear 內按年處理 */ }
@@ -389,7 +394,7 @@ function tickGuest(){
 }
 function guestChat(){
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (g.chatted) return msg(`${n.name}今日已同你說了許多話，這會兒安靜地陪著你打坐。`);
   g.chatted = true;
   n.favor = clamp(n.favor+P.chatFav, -200, 120);
@@ -400,7 +405,7 @@ function guestChat(){
 }
 function guestFlirt(){
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (n.favor < P.flirtReq) return msg(`${n.name}：${q(gdial(n,P.flirtNo[rnd(P.flirtNo.length)]))}`);
   const cap = P.loveCap||100, st = st3(n.love);
   const lg = Math.max(0, Math.min(P.loveGain+rnd(3), cap-n.love));
@@ -411,7 +416,7 @@ function guestFlirt(){
 }
 function guestDual(){ // 院中來客雙修：門檻與切磋台一致
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (n.rank==="稚童") return msg("對方還是個孩子。");
   const openMind = P.flirtReq<=50;
   const ok = n.love>=70 || (openMind && n.love>=40 && n.favor>=60);
@@ -506,6 +511,235 @@ function mateDual(){
   msg(`與道侶${n.name}一夜雙修，靈氣+${gain}。${n.name}：${q(line)}（愛情+3，友情+2）`);
   uiRefresh();
 }
+
+/* ═══ v7 NPC自主攻略：心動→邀約→告白→婚後約會 ═══ */
+const P_DATE = {
+  aggressive:["癡纏","病嬌","醋罈","妖媚","風流","蕩浪"],
+  cling:["癡纏","病嬌","醋罈"],
+  fragile:["高傲","古板","無情","陰鬱"],
+  restricted:["無情","古板","高傲","寡言"],
+};
+function touch(n){ n.lastTouch=G.player.day; n.invDeclined=0; }
+function pursueGiveUpLine(n){ return `${n.name}：${gdial(n,DATE_GIVEUP[n.pers]||"「……此後不擾。」")}`; }
+function giveUpPursuit(n, silent){
+  n.pursue=false; n.gaveUp=true;
+  if(!silent) msg(pursueGiveUpLine(n));
+}
+function clearPursuits(exceptId){
+  const ps=G.npcs.filter(n=>n.alive&&n.pursue&&n.id!==exceptId);
+  ps.slice(0,2).forEach(n=>giveUpPursuit(n,true));
+  ps.forEach(n=>{n.pursue=false;n.gaveUp=true;});
+  if(ps.length>2) msg("另有數人默默收起了心事。");
+  else ps.forEach(n=>msg(pursueGiveUpLine(n)));
+}
+function pursueRoll(){
+  const p=G.player;
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.met||n.rank==="稚童"||n.pursue||n.gaveUp) return;
+    if(n.spouseId!==null) return; // 未婚也未嫁玩家
+    const a=P_DATE.aggressive.includes(n.pers), r=P_DATE.restricted.includes(n.pers);
+    const ok=a?(n.favor>=45&&n.love>=25):r?(n.love>=70&&n.favor>=60):(n.favor>=50&&n.love>=30);
+    if(!ok) return;
+    if(Math.random() < (a?0.35:r?0.10:0.20)){
+      n.pursue=true; n.invDeclined=0; n.lastTouch=p.day;
+      if(Math.random()<0.2) msg(`${n.name}近日時常望向你練劍的方向。`);
+    }
+  });
+}
+function pursueGiveUp(){
+  const p=G.player;
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.pursue) return;
+    if(p.day-(n.lastTouch??p.day)>60) return giveUpPursuit(n);
+    if(n.invDeclined===undefined) return;
+    const th=P_DATE.fragile.includes(n.pers)?2:P_DATE.cling.includes(n.pers)?99:3;
+    if(n.invDeclined>=th) giveUpPursuit(n);
+  });
+}
+function confessExpire(){
+  const p=G.player;
+  if(!p.confess) return;
+  const n=npcById(p.confess.id);
+  if(!n||!n.alive){p.confess=null;return;}
+  if(p.day>p.confess.until){ n.love=clamp(n.love-5,0,PERS[n.pers].loveCap||100); p.confess=null;
+    msg(`那句沒等到回應的話，${n.name}再也不提了。`); }
+}
+function confessRoll(){
+  const p=G.player;
+  confessExpire();
+  if(p.confess||p.spouse!==null&&p.spouse!==undefined) return;
+  const cands=G.npcs.filter(n=>n.alive&&n.met&&n.pursue&&!n.confessed&&!n.proposed&&n.love>=70&&n.spouseId===null&&n.rank!=="稚童");
+  if(!cands.length||Math.random()>=0.25) return;
+  const n=cands[rnd(cands.length)];
+  n.confessed=true; p.confess={id:n.id,until:p.day+10};
+  msg(`${n.name}紅著臉攔住你，說了句憋了很久的心裡話——這是一場告白。可到【關係】頁回應。`);
+  wlog(`聽說${n.name}攔住你說了很長一段話，旁人只聽清最後三個字。`,false);
+}
+function dateActFor(n, spouse){
+  const keys=Object.keys(DATE_ACTS);
+  if(spouse){
+    if(Math.random()<0.5){const ss=keys.filter(k=>DATE_ACTS[k].who==="spouse");if(ss.length)return ss[rnd(ss.length)];}
+    const sects=keys.filter(k=>DATE_ACTS[k].who==="sect:"+n.sect);
+    if(sects.length) return sects[rnd(sects.length)];
+  }
+  if(n.demon){
+    const races=keys.filter(k=>DATE_ACTS[k].who==="race:"+n.race);
+    if(races.length&&Math.random()<0.35) return races[rnd(races.length)];
+  }
+  const pers=keys.filter(k=>DATE_ACTS[k].who==="pers:"+n.pers);
+  if(pers.length) return pers[rnd(pers.length)];
+  const sects=keys.filter(k=>DATE_ACTS[k].who==="sect:"+n.sect);
+  if(sects.length) return sects[rnd(sects.length)];
+  return keys[rnd(keys.length)];
+}
+function weightedPick(list, weight){
+  if(!list.length) return null;
+  const ws=list.map(weight), total=ws.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(let i=0;i<list.length;i++){r-=ws[i];if(r<=0)return list[i];}
+  return list[list.length-1];
+}
+function dateGiftToPlayer(n){
+  const p=G.player; n.lastGiftDay=p.day;
+  n.love=clamp(n.love+1,0,PERS[n.pers].loveCap||100);
+  let what="", gain="";
+  if(n.sect==="大自在殿"){p.spirit+=150;what="一盒素齋點心";gain="靈氣+150";}
+  else if(n.pers==="財迷"){const g=200+rnd(400);p.stones+=g;what="一小袋靈石";gain=`靈石+${g}「利息都替你算好了。」`;}
+  else if(n.pers==="藥罐"){p.pills["聚靈散"]=(p.pills["聚靈散"]||0)+1;what="一包藥香";gain="聚靈散×1";}
+  else if(n.pers==="武癡"){p.swordSense+=2;what="一疊拆招筆記";gain="劍意+2「昨夜替你把那招拆了三百遍。」";}
+  else if(["風流","妖媚","蕩浪"].includes(n.pers)){const g=100+rnd(100);p.stones+=g;what="一箋熏香短箋";gain=`內附靈石+${g}`;}
+  else{
+    const r=Math.random();
+    if(r<0.6){const maxG=clamp(2+Math.floor(p.ri/2),1,5);const pool=Object.values(HERBS).filter(m=>m.grade<=maxG);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;what=m.name+"一份";gain=`${m.name}×1`;}
+    else if(r<0.85){const g=100+rnd(200);p.stones+=g;what="一小袋靈石";gain=`靈石+${g}`;}
+    else{p.spirit+=200;what="一個同心結";gain="靈氣+200「不知是誰打的。」";}
+  }
+  msg(`院門口多了一個小包裹——${n.name}托人送來的：${what}（${gain}）`);
+}
+function tickInvite(){
+  const p=G.player;
+  if(!p||!p.alive) return;
+  confessExpire();
+  if(p.confess){const cn=npcById(p.confess.id);if(!cn||!cn.alive)p.confess=null;}
+  if(p.invite){
+    const old=npcById(p.invite.id);
+    if(!old||!old.alive){p.invite=null;}
+    else if(p.day>p.invite.until){ if(p.invite.from==="pursuer") old.favor=clamp(old.favor-1,-200,120);
+      p.invite=null; msg(`你錯過了${old.name}的邀約，紙條在風裡打了個旋。`); }
+  }
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.pursue) return;
+    if(p.day-(n.lastGiftDay??-99)<20) return;
+    if(Math.random()<0.012+n.love*0.0003) dateGiftToPlayer(n);
+  });
+  if(p.invite) return;
+  const base=G.npcs.filter(n=>n.alive&&n.met&&n.rank!=="稚童");
+  const pools=[];
+  const pursuers=base.filter(n=>n.pursue&&n.spouseId===null);
+  if(pursuers.length) pools.push({list:pursuers,prob:1,kind:"pursuer"});
+  const friends=base.filter(n=>!n.pursue&&n.favor>=40&&n.love<30);
+  if(friends.length) pools.push({list:friends,prob:1,kind:"friend"});
+  if(p.spouse!==null&&p.spouse!==undefined){const sp=base.filter(n=>n.id===p.spouse);if(sp.length)pools.push({list:sp,prob:1,kind:"spouse"});}
+  for(const pool of pools){
+    const n=weightedPick(pool.list,x=>pool.kind==="friend"?Math.max(1,x.favor):Math.max(1,x.favor+x.love));
+    if(!n) continue;
+    let prob=pool.kind==="pursuer"?(0.02+n.love*0.0005+n.favor*0.0002)*(P_DATE.aggressive.includes(n.pers)?1.3:1)
+      :pool.kind==="friend"?0.004+n.favor*0.00015:0.03;
+    if(Math.random()>=prob) continue;
+    const key=dateActFor(n,pool.kind==="spouse"), act=DATE_ACTS[key];
+    p.invite={id:n.id,key,until:p.day+5,from:pool.kind};
+    const line=gdial(n,act.line[rnd(act.line.length)]);
+    const arrive=pool.kind==="pursuer"?`【邀約】一隻紙鶴落在你窗台上，翅膀上寫著：${n.name}約你${act.name}。`
+      :pool.kind==="friend"?`【邀約】${n.name}托掃地的雜役帶話：得空嗎？一起去${act.name}。`
+      :`【邀約】${n.name}把一張字條塞進你手心：今日，陪我。${act.name}，就我們倆。`;
+    msg(arrive); msg(`${n.name}：${q(line)}`);
+    break;
+  }
+}
+function runDateDanger(p,n,strong){
+  const base=playerForce(), denom=base+(strong?280:300)+p.ri*100;
+  const win=Math.random()<clamp(base/denom,0.1,0.95);
+  if(win){const g=strong?100:400;p.spirit+=g;if(!strong){const st=100+rnd(200);p.stones+=st;}return DATE_TWIST_LINE.dangerWin.replace(/\$\{name\}/g,n.name)+(strong?"（同行者替你擋了一下，靈氣+100）":"（靈氣+400，得靈石）");}
+  p.spirit=Math.max(0,p.spirit-50);n.favor=clamp(n.favor+2,-200,120);
+  return DATE_TWIST_LINE.dangerLose.replace(/\$\{name\}/g,n.name)+"（靈氣-50，友情+2）";
+}
+function runDateTwist(p,n){
+  const pool=[
+    {w:3,run(){const ids=[...n.rel.friends,...n.rel.parents,...n.rel.children,n.rel.master].filter(x=>x!==null&&x!==undefined&&x!==n.spouseId);const unmet=ids.map(x=>npcById(x)).filter(x=>x&&x.alive&&!x.met);if(!unmet.length)return null;const t=unmet[rnd(unmet.length)];t.met=true;t.favor=10;return DATE_TWIST_LINE.meet.replace(/\$\{name\}/g,n.name).replace(/\$\{target\}/g,t.name)+"（結識新知，友情10）";}},
+    {w:2,run(){return runDateDanger(p,n,true);}},
+    {w:3,run(){const cap=PERS[n.pers].loveCap||100;n.love=clamp(n.love+2,0,cap);return DATE_TWIST_LINE.memory.replace(/\$\{name\}/g,n.name)+"（愛情+2）";}},
+    {w:2,run(){const r=Math.random();if(r<0.3){const g=100+rnd(200);p.stones+=g;return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+`（靈石+${g}）`;}if(r<0.7){const pool2=Object.values(HERBS).filter(m=>m.grade<=clamp(2+Math.floor(p.ri/2),1,5));const m=pool2[rnd(pool2.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+`（${m.name}×1）`;}return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+"（其實撿到的是TA的笑）";}}
+  ];
+  const all=[];pool.forEach(x=>{for(let i=0;i<x.w;i++)all.push(x);});
+  const r=all[rnd(all.length)].run();
+  if(r) msg("約會插曲："+r);
+}
+function jealousyCheck(n){
+  const cands=G.npcs.filter(x=>x.alive&&x.met&&x.pursue&&x.love>=40&&x.id!==n.id);
+  const hit=[];
+  cands.forEach(x=>{const heavy=["醋罈","病嬌","癡纏"].includes(x.pers);if(Math.random()<(heavy?0.5:0.15))hit.push(x);});
+  if(!hit.length)return;
+  const j=hit[rnd(hit.length)];j.favor=clamp(j.favor-3,-200,120);
+  const heavy=["醋罈","病嬌","癡纏"].includes(j.pers);
+  const pool=heavy?DATE_JEALOUSY_HEAVY:DATE_JEALOUSY_LIGHT;
+  msg("【心動】"+pool[rnd(pool.length)].replace(/\$\{name\}/g,j.name)+"（友情-3）");
+}
+function acceptInvite(){
+  const p=G.player, inv=p.invite;
+  if(!inv) return;
+  const n=npcById(inv.id);
+  if(!n||!n.alive){p.invite=null;return msg("邀約的人已不在了。");}
+  if(p.energy<1) return msg("精力不足，改日再說。");
+  const act=DATE_ACTS[inv.key]||Object.values(DATE_ACTS)[0];
+  p.energy--; guestSulk("赴約");
+  const P=PERS[n.pers], cap=P.loveCap||100;
+  let favGain=0,loveGain=0;
+  if(inv.from==="friend"){favGain=P.chatFav+1+act.favAdd;loveGain=act.loveAdd;}
+  else if(inv.from==="pursuer"){favGain=P.chatFav+2+act.favAdd;loveGain=2+rnd(3)+act.loveAdd+(n.sweet?1:0);}
+  else{favGain=2+act.favAdd;loveGain=3+act.loveAdd;if(!p.mate)p.mate={chatted:false,bubble:"",ignored:0,sulking:false};}
+  favGain=Math.max(0,favGain);loveGain=Math.max(0,Math.min(loveGain,cap-n.love));
+  n.favor=clamp(n.favor+favGain,-200,120);n.love=clamp(n.love+loveGain,0,cap);
+  touch(n);
+  msg(`你應了${n.name}的邀約，一同前往${act.name}。${n.name}：${q(gdial(n,act.line[rnd(act.line.length)]))}`);
+  const reward=act.reward(p,n);
+  msg(`約會收穫：${reward}（友情+${favGain}${loveGain?`，愛情+${loveGain}`:""}）`);
+  let spouseDate=false;
+  if(inv.from==="spouse"&&p.mate){spouseDate=true;p.mate.ignored=0;p.mate.sulking=false;}
+  if(Math.random()<0.3) runDateTwist(p,n);
+  if(inv.from==="pursuer") jealousyCheck(n);
+  p.invite=null;
+  nextDay();
+  if(spouseDate&&G.player.mate){G.player.mate.ignored=0;G.player.mate.sulking=false;if(WED[n.pers])msg(`${n.name}：${q(gdial(n,WED[n.pers].care))}`);}uiRefresh();
+}
+function declineInvite(){
+  const p=G.player,inv=p.invite;
+  if(!inv)return;
+  const n=npcById(inv.id);
+  p.invite=null;
+  if(!n||!n.alive)return msg("那張邀約紙條終究沒能送到人手上。");
+  if(inv.from==="spouse"){n.favor=clamp(n.favor-1,-200,120);if(p.mate)p.mate.ignored+=3;msg(`${n.name}收回了字條，輕聲說：「……好，你去忙。」（TA有些失落）`);uiRefresh();return;}
+  if(inv.from==="friend"){n.favor=clamp(n.favor-1,-200,120);msg(`${n.name}：${q(gdial(n,"「好嘛，下次再約。」"))}（友情-1）`);uiRefresh();return;}
+  let dec=["溫柔","聖母","樂天"].includes(n.pers)?1:2+rnd(3);
+  n.favor=clamp(n.favor-dec,-200,120);n.invDeclined=(n.invDeclined||0)+1;
+  const th=P_DATE.fragile.includes(n.pers)?2:P_DATE.cling.includes(n.pers)?99:3;
+  if(n.invDeclined>=th)giveUpPursuit(n);
+  else msg(`${n.name}：${q(gdial(n,DATE_DECLINE[n.pers]||"「……下次再說。」"))}（友情-${dec}）`);
+  uiRefresh();
+}
+function answerConfess(id,yes){
+  const p=G.player,n=npcById(id);
+  if(!p.confess||p.confess.id!==id||!n||!n.alive)return; touch(n);
+  p.confess=null;
+  const cap=PERS[n.pers].loveCap||100;
+  if(yes){n.sweet=true;n.love=clamp(n.love+5,0,cap);n.favor=clamp(n.favor+3,-200,120);
+    msg(`你點了頭。${n.name}眼裡的光，藏都藏不住。（你們兩情相悅了）`);wlog(`有人看見${n.name}從你的院門口跑出去，一路都在笑。`,false);}
+  else{n.love=clamp(n.love-20,0,cap);n.favor=clamp(n.favor-5,-200,120);n.invDeclined=(n.invDeclined||0)+1;
+    if(P_DATE.fragile.includes(n.pers))giveUpPursuit(n);
+    else if(!P_DATE.cling.includes(n.pers)&&Math.random()<0.5)giveUpPursuit(n);
+    else msg(`${n.name}：${q(gdial(n,DATE_DECLINE[n.pers]||"「……我知道了。」"))}（愛情-20，友情-5）`);}
+  uiRefresh();
+}
+
 function mateTogether(){ // 相伴一日：-1精力，靜靜過一天
   const p=G.player; if(!mateOk()) return;
   if (p.energy<1) return msg("精力不足，好好歇一天吧。");
@@ -595,6 +829,7 @@ function tryBreak() {
   if (p.pills["突破丹"]>0) { rate += 0.05; p.pills["突破丹"]--; }
   if (p.pills["妖丹"]>0) { rate += 0.08; p.pills["妖丹"]--; } // 妖市貨，可疊加
   if (sectUnlocked("星機閣")) rate += 0.10;
+  if (p.stargaze) { rate += 0.03; p.stargaze = false; }
   if (p.surviveRisk>0 && p.pills["消業丹"]>0) { p.surviveRisk -= 0.3; p.pills["消業丹"]--; }
   rate = clamp(rate, 0.15, 0.95);
   msg(`氣海鼓盪——本次突破成功率約 ${Math.round(rate*100)}%……`);
@@ -733,7 +968,7 @@ function usePill(name) {
 }
 
 /* ── 社交 ── */
-function npcById(id){ return G.npcs[id]; }
+function npcById(id){ return (id===null||id===undefined||id<0) ? null : G.npcs[id]; }
 function sectFavor(sect) { // 門派好感 = 該派已結識 NPC 平均
   const list = G.npcs.filter(n=>n.sect===sect && n.met && n.alive);
   return list.length ? Math.round(list.reduce((a,n)=>a+n.favor,0)/list.length) : 0;
@@ -744,7 +979,7 @@ function sectUnlocked(sect) {
   return sectFavor(sect) >= u.favor;
 }
 function gift(id, itemName) {
-  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  const n=npcById(id), p=G.player; if(!n)return; const P=PERS[n.pers]; touch(n);
   let fav = 4;
   const rc = RECIPES[itemName]; if (rc && rc.type==="禮物" && rc.gift===n.sect) fav = 16;
   else if (rc) fav = 8; // 送劍
@@ -777,7 +1012,7 @@ function gift(id, itemName) {
 }
 function st3(v){ return v<30?0 : v<70?1 : 2; } // 友情/愛情三階段：陌生/熟絡/心腹(情深)
 function interact(id, act) {
-  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  const n=npcById(id), p=G.player; if(!n)return; const P=PERS[n.pers]; touch(n);
   if (!n.alive) return msg("人已不在了。");
   if (p.energy<1) return msg("精力不足。");
   if (n.rank==="稚童" && (act==="調情"||act==="雙修")) return msg("對方還是個孩子。");
@@ -892,7 +1127,7 @@ function sparNpc(n, toDeath) {
   nextDay(); uiRefresh();
 }
 function propose(n) {
-  const p=G.player;
+  const p=G.player; clearPursuits(n.id); G.player.confess=null;
   if(n.spouseId!==null && n.spouseId>=0){ const ex=npcById(n.spouseId); if(ex) ex.spouseId=null; }
   p.spouse = n.id; n.spouse = p.name; n.spouseId = -1; n.love = 100;
   msg(`${n.name}單膝跪地：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);

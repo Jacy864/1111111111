@@ -1064,6 +1064,123 @@ const RACES = {
  perk:"送禮效果+30%（草木有靈，最識珍寶）"},
 };
 
+/* ═══ v7 NPC自主攻略：邀約／約會／告白台詞與活動矩陣 ═══ */
+const DATE_DECLINE = {
+"高傲":"「……當我沒開過口。」","傲嬌":"「哼、哼！誰稀罕！（袖子攥皺了）」","溫柔":"「沒關係。等你得空，我都在。」",
+"風流":"「可惜。那這壇酒，我再等等。」","綠茶":"「人家就是隨口一說啦……（指甲掐進掌心）」","單純":"「哦、哦好！那下次一定！說定了！」",
+"潑辣":"「行！沒空就直說，磨嘰什麼！（聲音有點大）」","寡言":"「……嗯。（收起笑容）」","無情":"「……與我無關。（轉身即走）」",
+"病嬌":"「沒關係哦。反正……我們時間還長。（笑）」","腹黑":"「明智。還是固執？……我記下了。」","妖媚":"「哎呀，被拒絕了～真罕見。（斂了笑）」",
+"癡纏":"「那明天呢？後天呢？我等你哦！」","瘋批":"「哈？拒絕我？……有點意思，更有意思了。」","醋罈":"「……是不是有人先約你了。說。」",
+"忠犬":"「是我冒昧了。你忙你的，我就在原處。」","聖母":"「無妨。你以修行為重，是對的。」","蕩浪":"「喲，裝正經～行，改日，改日。」",
+"藥罐":"「也好，你這身子確實該多歇……（把準備好的藥膳方子收了回去）」","財迷":"「成交作廢。訂金不退——開玩笑的。（算盤停了）」","酒鬼":"「得。這罈接著埋。（拍拍土）」",
+"武癡":"「……那今日的三百劍，我自己練。」","戲精":"「（踉蹌扶額）這一幕，本座竟被拒了……（偷偷看你反應）」","陰鬱":"「……嗯。應該的。我本來就……沒什麼。」",
+"樂天":"「哈哈哈沒事沒事！那我去別人……不對，那我自己去！」","話癆":"「哦哦好！那我長話短說——不對你都不來了，短說給誰聽！」","古板":"「……是老夫失儀。此事休再提。」"
+};
+const DATE_GIVEUP = {
+"高傲":"「你我到此為止。往後，橋歸橋路歸路。」","傲嬌":"「我、我早就想說了！不追了！愛誰誰！（跑走了，沒回頭）」","溫柔":"「我等過了，也盡力了。往後你一切珍重。」",
+"風流":"「露水情緣，強求不得。後會有期，或者無期。」","綠茶":"「原來一直是人家一廂情願呀……那我演不下去了。」","單純":"「（把刻著你們名字的小木牌埋了）……我要去交新朋友了。」",
+"潑辣":"「姑奶奶不伺候了！你愛咋咋地！（眼眶紅了）」","寡言":"「（把常為你留的位置，讓給了別人。）」","無情":"「塵緣一段，就此斬斷。兩清。」",
+"病嬌":"「好啊……你逼我的。那換我來選地方——開玩笑的。（笑容沒到眼底）」","腹黑":"「止損及時，不失為明智。這局，我認輸。」","妖媚":"「姐姐不陪你玩了～可別後悔哦。（一步三回頭）」",
+"癡纏":"「不追了。……但你躲我一輩子試試？」","瘋批":"「沒意思。你沒意思。……（小聲）騙你的，你最有意思。」","醋罈":"「行。你去跟別人好吧。我不看了。（還是看了）」",
+"忠犬":"「（把你的舊物整整齊齊還了回來，附一張字條：勿念。）」","聖母":"「緣分既盡，我便放你自由。阿彌陀佛。」","蕩浪":"「熱臉貼冷屁股，不幹了～江湖再見，客官。」",
+"藥罐":"「（把為你配了半年的藥，一罐罐送給了師弟師妹。）」","財迷":"「這筆投資，血本無歸。認了。銷賬。」","酒鬼":"「（把那罈埋了十八年的酒，起出來，請了全酒樓。）」",
+"武癡":"「既無緣並肩，那便做對手。來日賽場見。」","戲精":"「（謝幕，鞠躬）感謝觀看。本座……下台了。」","陰鬱":"「（如你所願。我退回陰影裡了。）」",
+"樂天":"「沒事！我難過一天！就一天！（第二天真的又笑了，只是繞開了你的院子）」","話癆":"「最後說一句。就一句。……算了，沒有了。（第一次，沒話說）」","古板":"「禮數已盡，緣分已盡。告辭。」"
+};
+const DATE_CONFESS = {
+"高傲":"「別誤會。我只是……找不到第二個能並肩的人了。就這樣。」","傲嬌":"「我、我數過了，見你第一面起，我心跳快了三七二十一次！不許笑！」","溫柔":"「我不急。等你哪天想回頭，燈一直亮著。」",
+"風流":"「花叢我看遍了，只有你這枝叫我捨不得走。」","綠茶":"「人家演了那麼多場戲……只有這句是真的。你信我一次，好不好？」","單純":"「我知道這叫喜歡！我問過兔子了，牠也這麼說！」",
+"潑辣":"「聽好了！本座……喜歡你！不許反悔，也不許跑！」","寡言":"「……你。（半晌）心，給你。」","無情":"「我斬過萬情。這一縷斬不斷，索性留給你。」",
+"病嬌":"「你只能是我的。若你點頭，我便把你藏得好好的，誰也拿不走。」","腹黑":"「局我布了很久，最後才發現自己也在局裡。這題，你解。」","妖媚":"「迷魂術對你沒用，那我只好用真心了。可疼我一下？」",
+"癡纏":"「從你第一天跟我說話起，我就在心裡刻了你們的名字！現在輪到你刻了！」","瘋批":"「全世界都可以燒。你要不要，跟我一起站在火裡？」","醋罈":"「我醋了太多次，累了。你說句話，把我這罈子砸了吧。」",
+"忠犬":"「（單膝跪地）我的劍、我的命、我的餘生，都請你收下。」","聖母":"「佛前我求了三千遍。今日才敢開口：我願為你破一次戒。」","蕩浪":"「浪子回頭金不換。我回了，就問一句：你收不收？」",
+"藥罐":"「我這身子，本想一個人過完的。……遇見你，忽然想活久一點了。」","財迷":"「我盤過賬了：把心給你，是我這輩子唯一穩賠不賺的買賣。我認。」","酒鬼":"「（酒杯放下，人是清醒的）這句我醒著說：餘生的酒，只想跟你碰杯。」",
+"武癡":"「劍道漫漫，我原打算一個人走到黑。……你，願意並肩嗎？」","戲精":"「（沒有甩袖，沒有鑼鼓，聲音很輕）這句沒有台詞本。我喜歡你。」","陰鬱":"「你是我深淵上方，唯一的光。……請別急著走開。」",
+"樂天":"「我想好了！往後每一天的好運氣，都分你一半！」","話癆":"「我攢了三千句話，見了你全忘了。只剩三個字：喜歡你。」","古板":"「（長揖及地）婚姻大事，父母之命媒妁之言……皆可拋。我心悅你。」"
+};
+const DATE_JEALOUSY_HEAVY = [
+"「${name}站在巷口，看著你們走遠，指尖把袖子捏出了褶。」",
+"「${name}不知何時跟在你們身後三步，眼底那點光冷得像淬了霜。」",
+"「${name}笑著從你們面前走過，回頭那一眼卻把你釘在原地。」"
+];
+const DATE_JEALOUSY_LIGHT = [
+"「${name}遠遠看了一眼，笑得比平日淡了些。」",
+"「${name}本要打招呼，看清你身旁的人，又把斗篷壓低了。」",
+"「${name}把玩著袖口，直到你們轉過街角才收回目光。」"
+];
+const DATE_TWIST_LINE = {
+meet:"你們在岔路口撞見${name}的舊識，經TA引薦，你與${target}攀談了幾句。",
+dangerWin:"半路殺出個不長眼的東西。你與${name}聯手將其斬落，衣角都沒亂。",
+dangerLose:"半路殺出個不長眼的東西。${name}替你擋了一下，你們狼狽卻安然退走。",
+memory:"路過初見的那條山道，${name}忽然放慢了腳步。有些回憶，不必說出口也會發亮。",
+treasure:"你們在草叢裡翻出一個小布包，拆開時兩人都比拆到什麼更開心。"
+};
+const DATE_ACTS = {
+/* 宗門基底 */
+s_spar:{who:"sect:萬劍山",name:"論劍台過招",loveAdd:0,favAdd:0,line:["「劍先行，人後到——看好了！」","「今日論劍台被我包了。你，陪練。」"],reward:(p,n)=>{const g=100+p.ri*30;p.spirit+=g;p.swordSense+=2;return `靈氣+${fmt(g)}，劍意+2`;}},
+s_swords:{who:"sect:萬劍山",name:"藏劍閣觀劍",loveAdd:1,favAdd:0,line:["「這一排劍，每一柄都有名字。你想聽哪一柄的故事？」","「劍氣太重，站我身後些。」"],reward:(p,n)=>{const g=150+p.ri*30;p.spirit+=g;p.swordSense++;return `靈氣+${fmt(g)}，劍意+1`;}},
+s_herbs:{who:"sect:藥王谷",name:"結伴採藥",loveAdd:0,favAdd:0,line:["「這株別碰，那株可以。記住了？」","「跟我走，藥田裡有條近路。」"],reward:(p,n)=>{const got=[];for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map<=1&&m.grade<=2+Math.floor(p.ri/2));const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;got.push(m.name);}return `拾得${got.join("、")}×1`;}},
+s_meal:{who:"sect:藥王谷",name:"藥膳小宴",loveAdd:0,favAdd:1,line:["「先喝湯。你的臉色比藥渣還難看。」","「我守了三個時辰的火，你至少要喝兩碗。」"],reward:(p,n)=>{const g=200+p.ri*150;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
+s_bath:{who:"sect:藥王谷",name:"溫泉藥浴",loveAdd:0,favAdd:0,line:["「藥包我配好了，泡到額頭出汗為止。」","「這口泉被我借了一個時辰。快去。」"],reward:(p,n)=>{const g=300+p.ri*100;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
+s_star:{who:"sect:星機閣",name:"觀星台夜話",loveAdd:1,favAdd:0,line:["「星軌今夜有點亂，像你走路的方式。」","「替你留了東邊那個位置，視野最好。」"],reward:(p,n)=>{p.stargaze=true;return "下次突破率+3%（星機閣觀星）";}},
+s_yan:{who:"sect:星機閣",name:"推演小局",loveAdd:0,favAdd:0,line:["「陪你演一局。輸了不許悔棋。」","「這一局我算了三種未來，都有你。」"],reward:(p,n)=>{const g=200+p.ri*80;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
+s_music:{who:"sect:妙音門",name:"水榭聽曲",loveAdd:2,favAdd:0,line:["「這支曲只彈給你聽，坐好。」","「琴絃斷了一根也無妨，反正你聽的是我。」"],reward:(p,n)=>{const g=300+p.ri*120;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
+s_qin:{who:"sect:妙音門",name:"學琴一課",loveAdd:0,favAdd:2,line:["「手別抖，琴不會咬你。……我只會。」","「學不會也沒關係，我可以多教你幾十年。」"],reward:(p,n)=>{p.swordSense+=2;return "劍意+2";}},
+s_feast:{who:"sect:合歡宗",name:"花宴夜飲",loveAdd:3,favAdd:0,line:["「花開一夜，酒醉三巡。你來，正好。」","「別急著回去，夜色還長。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+s_spring:{who:"sect:合歡宗",name:"溫泉小聚",loveAdd:2,favAdd:0,line:["「水溫剛好。人是不是也剛好？」","「閉眼。剩下的交給水聲。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}},
+s_sutra:{who:"sect:大自在殿",name:"禪房抄經",loveAdd:0,favAdd:2,line:["「筆隨心走，心隨你亂。……罰你再抄一頁。」","「佛說不動。我說，很難。」"],reward:(p,n)=>{const g=400+p.ri*100;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
+s_porridge:{who:"sect:大自在殿",name:"山門施粥",loveAdd:0,favAdd:1,line:["「一碗粥，一份緣。你端那邊，我端這邊。」","「眾生苦。你笑，就不苦了。」"],reward:(p,n)=>{p.reputation+=3;return "聲望+3";}},
+s_market:{who:"sect:十萬大山",name:"妖市閒逛",loveAdd:0,favAdd:0,line:["「妖市攤主都認識我。跟緊，別被坑。」","「這攤有好貨。你先挑，我砍價。」"],reward:(p,n)=>{const r=Math.random();if(r<0.4){const g=200+rnd(500);p.stones+=g;return `靈石+${g}`;}if(r<0.7){const pool=Object.values(HERBS).filter(m=>m.map===4);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;return `拾得${m.name}×1`;}return "什麼都沒買，只聞了滿袖妖市香";}},
+s_night:{who:"sect:十萬大山",name:"山間夜遊",loveAdd:1,favAdd:0,line:["「山裡夜路我熟。手給我。」","「別怕黑。我眼睛會發光。」"],reward:(p,n)=>{const g=250+p.ri*100;p.spirit+=g;if(Math.random()<0.2)return `靈氣+${fmt(g)}；忽然竄出妖獸！${runDateDanger(p,n,true)}`;return `靈氣+${fmt(g)}`;}},
+/* 性格覆蓋 */
+p_武癡:{who:"pers:武癡",name:"演武場過招",loveAdd:1,favAdd:0,line:["「別留手。留下手我生氣。」","「贏我一次，今日就聽你的。」"],reward:(p,n)=>{const g=150+p.ri*30;p.spirit+=g;p.swordSense+=3;return `靈氣+${fmt(g)}，劍意+3`;}},
+p_酒鬼:{who:"pers:酒鬼",name:"月下對酌",loveAdd:2,favAdd:3,line:["「酒在，月在，你在。齊了。」","「醉了也別怕，我認得回家的路——就是你那裡。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_財迷:{who:"pers:財迷",name:"坊市淘寶",loveAdd:0,favAdd:0,line:["「看好了，這叫殺價。」","「你站旁邊就行，老闆見你心軟。」"],reward:(p,n)=>{const g=200+rnd(400);p.stones+=g+100;return `靈石+${g}（財迷又塞你100）`;}},
+p_藥罐:{who:"pers:藥罐",name:"藥廬幫工",loveAdd:0,favAdd:0,line:["「藥爐交你，我瞇一會兒……別燒了。」","「咳，你來了。這藥香都好聞些。」"],reward:(p,n)=>{for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map<=1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;}if(Math.random()<0.2){p.pills["聚靈散"]=(p.pills["聚靈散"]||0)+1;return "材料×2，附贈聚靈散×1";}return "材料×2";}},
+p_話癆:{who:"pers:話癆",name:"聽TA說書",loveAdd:2,favAdd:0,line:["「今日故事很長，你坐穩。」","「中間不許睡。睡了我也講完。」"],reward:(p,n)=>{p.spirit+=100;p.swordSense++;return "靈氣+100，劍意+1";}},
+p_樂天:{who:"pers:樂天",name:"後山探險",loveAdd:1,favAdd:0,line:["「走錯路才好玩！跟著我！」","「前面肯定有好東西。沒有也沒關係，我們也好玩。」"],reward:(p,n)=>{p.spirit+=200;let s="靈氣+200";if(Math.random()<0.2){const g=100+rnd(200);p.stones+=g;s+=`，靈石+${g}`;}return s;}},
+p_陰鬱:{who:"pers:陰鬱",name:"溪邊靜坐",loveAdd:2,favAdd:0,line:["「不用說話。水聲夠了。」","「這裡只有我知道。現在多了你。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
+p_病嬌:{who:"pers:病嬌",name:"只有兩個人的地方",loveAdd:4,favAdd:1,line:["「這裡不會有人打擾我們。誰都不會。」","「我選了很久。只有這裡配得上你。」"],reward:(p,n)=>{return "你們把一個下午藏進了無人知曉的谷地";}},
+p_癡纏:{who:"pers:癡纏",name:"去看TA刻字的老樹",loveAdd:3,favAdd:0,line:["「你猜樹上刻了誰的名字？」","「這棵樹替我守密很久了。今日它失職。」"],reward:(p,n)=>{return "TA把你的名字補刻在旁邊";}},
+p_瘋批:{who:"pers:瘋批",name:"去個危險的地方",loveAdd:0,favAdd:0,line:["「怕嗎？怕就抓緊我。」","「我帶路，規矩我定。」"],reward:(p,n)=>{const r=runDateDanger(p,n,false);p.swordSense+=2;return `${r}，劍意+2`;}},
+p_戲精:{who:"pers:戲精",name:"為你專場演出",loveAdd:2,favAdd:2,line:["「開場！今日只演給一位看客。」","「掌聲可以晚點給，眼淚先收好。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_單純:{who:"pers:單純",name:"後山喂兔子",loveAdd:1,favAdd:3,line:["「噓，兔子認生。先給我抱。」","「牠們記得你！你看牠們耳朵豎起來了！」"],reward:(p,n)=>{p.spirit+=100;return "靈氣+100";}},
+p_聖母:{who:"pers:聖母",name:"下山幫凡人",loveAdd:1,favAdd:0,line:["「救人不多，能幫一個是一個。」","「你來了。山下孩子們念過你。」"],reward:(p,n)=>{p.reputation+=4;p.spirit+=100;return "聲望+4，靈氣+100";}},
+p_古板:{who:"pers:古板",name:"正式茶敘",loveAdd:1,favAdd:2,line:["「茶席已備。請。」","「今日破例，不談門規。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+p_高傲:{who:"pers:高傲",name:"展示TA的珍藏",loveAdd:2,favAdd:0,line:["「能進此室者，不超過三人。」","「看可以，手別抖。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+p_傲嬌:{who:"pers:傲嬌",name:"「順路」同行",loveAdd:2,favAdd:0,line:["「誰特意約你！我只是順路！」","「走快點，不是等你，是風要停了。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_溫柔:{who:"pers:溫柔",name:"野餐煮茶",loveAdd:2,favAdd:2,line:["「坐這邊，有樹蔭。」","「茶剛好，你也是。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
+p_腹黑:{who:"pers:腹黑",name:"一筆「生意」",loveAdd:0,favAdd:0,line:["「這單生意，合夥人只要一個：你。」","「風險我擔，利潤你拿。別問為什麼。」"],reward:(p,n)=>{const r=Math.random();if(r<0.5){const g=300+rnd(500);p.stones+=g;return `靈石+${g}`;}if(r<0.8){p.spirit+=300;return "靈氣+300";}wlog("有人看見你們在坊市同行，還說說笑笑。",false);return "只得到一條江湖情報：坊市說書人今夜把你們編進了同一回書";}},
+p_風流:{who:"pers:風流",name:"月下散步",loveAdd:3,favAdd:0,line:["「月色不喝一杯再走嗎？」","「風都替我把話說了三遍。」"],reward:(p,n)=>{p.spirit+=100;return "靈氣+100";}},
+p_妖媚:{who:"pers:妖媚",name:"湖心夜話",loveAdd:3,favAdd:0,line:["「湖心只有船，船心只有你。」","「別看水，看我。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_蕩浪:{who:"pers:蕩浪",name:"溫泉夜宴",loveAdd:4,favAdd:0,line:["「水溫、酒溫、人也溫，缺你。」","「今晚不談道，談心。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+p_潑辣:{who:"pers:潑辣",name:"大快朵頤",loveAdd:1,favAdd:3,line:["「辣子雞、酸筍、臘肉！都點！」","「不吃辣？那今日學。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_綠茶:{who:"pers:綠茶",name:"首飾鋪閒逛",loveAdd:2,favAdd:2,line:["「這支簪子好配你……人家只是隨口說說。」","「老闆說今日有緣人半價。他看我們兩個。」"],reward:(p,n)=>{let s="";if(Math.random()<0.2){p.stones+=100;s="，TA反送你小禮（靈石+100）";}return "看了一路首飾"+s;}},
+p_醋罈:{who:"pers:醋罈",name:"「只是隨便走走」",loveAdd:2,favAdd:1,line:["「隨便走走。你要去哪都行。……那邊不行。」","「手給我。免得等下人多走散。」"],reward:(p,n)=>{return "全程TA都在數你身邊有幾個人";}},
+p_忠犬:{who:"pers:忠犬",name:"TA帶你巡TA當值的路",loveAdd:2,favAdd:2,line:["「這段路我巡了三年。今晚想讓你看看。」","「跟在我右邊。那邊安全。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+p_寡言:{who:"pers:寡言",name:"並肩垂釣",loveAdd:1,favAdd:0,line:["「……坐。」","「魚不咬也沒關係。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}},
+p_無情:{who:"pers:無情",name:"劍上印證",loveAdd:1,favAdd:0,line:["「破例。」","「此招之後，各自反思。」"],reward:(p,n)=>{p.swordSense+=3;p.spirit+=200;return "劍意+3，靈氣+200";}},
+/* 妖族特色 */
+r_狐族:{who:"race:狐族",name:"月下拾星",loveAdd:3,favAdd:0,line:["「尾巴借你取暖。只借今晚。」","「月光落在水上是星，落在我眼裡是你。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+r_蛇族:{who:"race:蛇族",name:"看TA的舊蛻",loveAdd:3,favAdd:2,line:["「舊蛻留著不是念舊……好吧，是念你。」","「蛻皮很醜，你別嫌我。」"],reward:(p,n)=>{return "TA把一枚舊鱗送給你";}},
+r_貓族:{who:"race:貓族",name:"屋頂曬太陽",loveAdd:0,favAdd:2,line:["「屋頂是我的，那塊瓦是你的。」","「別動。你一動影子就亂了。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
+r_狼族:{who:"race:狼族",name:"月圓巡山",loveAdd:2,favAdd:0,line:["「跟著我的腳印走。」","「今晚月亮圓，山裡的規矩我說了算。」"],reward:(p,n)=>{p.spirit+=300;p.swordSense++;return "靈氣+300，劍意+1";}},
+r_鹿族:{who:"race:鹿族",name:"晨霧看花",loveAdd:2,favAdd:0,line:["「花開只有一瞬。你來，剛好。」","「別踩露水。它們也剛醒。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
+r_鴉族:{who:"race:鴉族",name:"聽風說天機",loveAdd:0,favAdd:0,line:["「風裡有消息。你聽不見，我翻給你。」","「天機不能全說。我只說與你有關的。」"],reward:(p,n)=>{p.reputation+=2;p.spirit+=150;return "聲望+2，靈氣+150";}},
+r_蛛族:{who:"race:蛛族",name:"看TA織的網",loveAdd:3,favAdd:0,line:["「網是陣，也是家。你想先看哪個？」","「絲上有我昨日想你的震動。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
+r_兔族:{who:"race:兔族",name:"蘿蔔田偷蘿蔔",loveAdd:0,favAdd:3,line:["「噓——田主睡著了。快！」","「最大的那根留你，我啃小的。」"],reward:(p,n)=>{p.spirit+=150;let s="靈氣+150";if(Math.random()<0.2){for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map===1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;s+=`，${m.name}×1`;}s+="，草木材料×2";}return s;}},
+r_熊族:{who:"race:熊族",name:"山裡掏蜂蜜",loveAdd:0,favAdd:0,line:["「蜂群聽我的。你負責拿罐。」","「甜的分你。蜂蟄我自己受。」"],reward:(p,n)=>{for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map===1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;}p.spirit+=100;return "草木材料×2，靈氣+100";}},
+r_鶴族:{who:"race:鶴族",name:"雲海觀日出",loveAdd:0,favAdd:0,line:["「雲海今日開。站穩。」","「日出三分時，最像你的劍光。」"],reward:(p,n)=>{p.spirit+=400;p.swordSense++;return "靈氣+400，劍意+1";}},
+r_鯉族:{who:"race:鯉族",name:"溪邊聽水",loveAdd:2,favAdd:0,line:["「水裡有回聲。你說一句試試。」","「我在水裡看你，比岸上更清楚。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
+r_蝶族:{who:"race:蝶族",name:"花海午睡",loveAdd:2,favAdd:0,line:["「翅膀借你當被。小睡一會兒。」","「夢裡別亂走，我認得路。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}},
+r_龜族:{who:"race:龜族",name:"看三百年的老樹",loveAdd:1,favAdd:0,line:["「它三百歲了。我看著它長大。」","「急什麼。故事要從三百年前說起。」"],reward:(p,n)=>{p.spirit+=350;return "靈氣+350";}},
+r_蘭花精:{who:"race:蘭花精",name:"蘭坡賞花",loveAdd:3,favAdd:0,line:["「這坡一朵都不能摘。……我可以。」","「香氣跟著你走吧。就當我同行。」"],reward:(p,n)=>{p.spirit+=200;let s="靈氣+200";if(Math.random()<0.2){const pool=Object.values(HERBS).filter(m=>m.map===1&&m.grade===4);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;s+=`，${m.name}×1`;}return s;}},
+/* 道侶專屬 */
+m_first:{who:"spouse",name:"重遊初識之地",loveAdd:3,favAdd:0,line:["「還記得這裡嗎？你那時可沒多看我一眼。」","「初識的路還在，人也是。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
+m_lantern:{who:"spouse",name:"坊市看燈",loveAdd:2,favAdd:0,line:["「這盞燈像你。遠看亮，近看更亮。」","「燈影裡別亂走。牽著我。」"],reward:(p,n)=>{p.stones+=100;return "靈石+100（TA搶著付了錢）";}},
+m_boat:{who:"spouse",name:"湖上泛舟",loveAdd:3,favAdd:0,line:["「船小，你坐穩，我划。」","「湖水做鏡，正好看看我們並肩的樣子。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}}
+};
+
 </script>
 <script>
 /* ═══════════ 引擎 ═══════════ */
@@ -1193,7 +1310,7 @@ function tickWorldDaily() { // NPC 位置流動：少出門、快回家，保證
 function worldTickMonthly() {
   const alive = G.npcs.filter(n=>n.alive);
   // 好感淡忘（龜族記性千年不磨）——朝 0 收斂：好感降到 0 為止，仇怨隨時間沖淡也回到 0，不再無故跌成負數
-  alive.forEach(n=>{ if(n.met && n.love<70 && G.player.spouse!==n.id && G.player.spouse!==undefined){
+  alive.forEach(n=>{ if(n.met && !n.pursue && n.love<70 && G.player.spouse!==n.id){
     if (n.demon && n.race==="龜族") return;
     const dec = Math.round(PERS[n.pers].decay);
     if(dec) n.favor = n.favor>0 ? Math.max(0, n.favor-dec) : Math.min(0, n.favor+dec);
@@ -1205,7 +1322,7 @@ function worldTickMonthly() {
   if (G.player.spouse===null || G.player.spouse===undefined)
     alive.forEach(n=>{ if(n.met && !n.proposed && n.spouseId===null && n.love>=90 && n.age>=18 && Math.random()<0.15){
       n.proposed=true;
-      msg(`${n.name}紅著耳根遞來一封信——是求婚之意！可到【關係】頁回應。`);
+      msg(`${n.name}紅著耳根遞來一封信——是求婚之意！可到【關係】頁回應。${n.sweet?'（你們早兩情相悅了）':''}`);
       wlog(`聽說${n.name}向你提親了，好事者都在看戲。`, false);
     }});
 }
@@ -1222,6 +1339,7 @@ function worldEvent(alive) {
     if(solo(a) && a.age>=25 && a.rank!=="稚童" && Math.random()<0.5){
       const cands=alive.filter(b=>solo(b)&&b!==a&&b.gender!==a.gender&&b.age>=25);
       if(cands.length){ const b=cands[rnd(cands.length)]; a.spouseId=b.id; b.spouseId=a.id;
+        [a,b].forEach(x=>{if(x.pursue){x.pursue=false;x.gaveUp=true;}});
         wlog(`${n2t(a)}與${n2t(b)}結為道侶，各派道賀。`, a.met||b.met); } }
   } else if (r<0.48) { // 道侶破裂（偶發情殺）
     const paired=alive.filter(x=>x.spouseId!==null);
@@ -1269,6 +1387,8 @@ function npcDie(n, cause) { // NPC 死亡公共處理（自然死亡無人遷怒
   n.alive=false; n.deadBy=cause;
   if(n.spouseId!==null){ const s=npcById(n.spouseId); if(s) s.spouseId=null; }
   if(G.player.spouse===n.id){ G.player.spouse=null; G.player.mate=null;
+    if(G.player.confess&&G.player.confess.id===n.id)G.player.confess=null;
+    if(G.player.invite&&G.player.invite.id===n.id)G.player.invite=null;
     msg(`${n.name}走了。院子裡TA常坐的那個位置，空了下來。`); }
 }
 function onNpcKilled(n, cause) // 被玩家所殺：親友反目
@@ -1354,6 +1474,7 @@ function answerProposal(id, yes) {
     G.player.mate = { chatted:false, bubble:"", ignored:0, sulking:false };
     msg(`${n.name}：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);
     msg(`${n.name}收拾了行囊搬進你的小院。從今往後，修煉的日子裡TA都在。`);
+    clearPursuits(n.id); G.player.confess=null;
     wlog(`你與${n2t(n)}結為道侶。`, true);
   } else { n.love=clamp(n.love-30,0,100); n.favor=clamp(n.favor-20,-200,120);
     msg(`你婉拒了${n.name}。他眼底的光暗了暗。`); }
@@ -1379,7 +1500,7 @@ function nextDay(n=1) {
     G.player.day++; G.player.age = 16 + Math.floor((G.player.day-1)/360);
     G.player.energy = clamp(G.player.energy+1, 0, G.player.energyMax);
     G.player.practiceCnt = 0;
-    tickPoison(); tickNpcYear(); tickWorldDaily(); tickGuest(); mateTick();
+    tickPoison(); tickNpcYear(); tickWorldDaily(); tickGuest(); mateTick(); tickInvite();
     if (dayOfMonth()===1) { onMonth(); worldTickMonthly(); }
     if (year()%5===0 && month()===5) onSummit();
     if (dayOfMonth()===1 && ((G.player.day-1)%360)===0) onYear();
@@ -1393,6 +1514,7 @@ function onMonth() { G.monthTask = genTask(); msg(`【${year()}年${month()}月�
     const PROP = ["下月月色圓潤，宜閉關突破","血月將至，近期突破需謹慎","東山有妖獸躁動，採集結伴為妙","有貴人將至，近日遊歷易逢知己","妖市進了批新貨，早去早挑","山雨欲來，練劍最宜"];
     msg(`鴉族${crow.name}落在院牆上：「呱——${PROP[rnd(PROP.length)]}。」`);
   }
+  pursueRoll(); pursueGiveUp(); confessRoll();
   if (G.player.autoSave) saveGame(0, true); // 每月自動存檔（槽0，靜默）
 }
 function onYear() { /* NPC 成長在 tickNpcYear 內按年處理 */ }
@@ -1457,7 +1579,7 @@ function tickGuest(){
 }
 function guestChat(){
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (g.chatted) return msg(`${n.name}今日已同你說了許多話，這會兒安靜地陪著你打坐。`);
   g.chatted = true;
   n.favor = clamp(n.favor+P.chatFav, -200, 120);
@@ -1468,7 +1590,7 @@ function guestChat(){
 }
 function guestFlirt(){
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (n.favor < P.flirtReq) return msg(`${n.name}：${q(gdial(n,P.flirtNo[rnd(P.flirtNo.length)]))}`);
   const cap = P.loveCap||100, st = st3(n.love);
   const lg = Math.max(0, Math.min(P.loveGain+rnd(3), cap-n.love));
@@ -1479,7 +1601,7 @@ function guestFlirt(){
 }
 function guestDual(){ // 院中來客雙修：門檻與切磋台一致
   const p=G.player, g=p.guest; if(!g) return;
-  const n = npcById(g.id), P = PERS[n.pers];
+  const n = npcById(g.id), P = PERS[n.pers]; touch(n);
   if (n.rank==="稚童") return msg("對方還是個孩子。");
   const openMind = P.flirtReq<=50;
   const ok = n.love>=70 || (openMind && n.love>=40 && n.favor>=60);
@@ -1574,6 +1696,235 @@ function mateDual(){
   msg(`與道侶${n.name}一夜雙修，靈氣+${gain}。${n.name}：${q(line)}（愛情+3，友情+2）`);
   uiRefresh();
 }
+
+/* ═══ v7 NPC自主攻略：心動→邀約→告白→婚後約會 ═══ */
+const P_DATE = {
+  aggressive:["癡纏","病嬌","醋罈","妖媚","風流","蕩浪"],
+  cling:["癡纏","病嬌","醋罈"],
+  fragile:["高傲","古板","無情","陰鬱"],
+  restricted:["無情","古板","高傲","寡言"],
+};
+function touch(n){ n.lastTouch=G.player.day; n.invDeclined=0; }
+function pursueGiveUpLine(n){ return `${n.name}：${gdial(n,DATE_GIVEUP[n.pers]||"「……此後不擾。」")}`; }
+function giveUpPursuit(n, silent){
+  n.pursue=false; n.gaveUp=true;
+  if(!silent) msg(pursueGiveUpLine(n));
+}
+function clearPursuits(exceptId){
+  const ps=G.npcs.filter(n=>n.alive&&n.pursue&&n.id!==exceptId);
+  ps.slice(0,2).forEach(n=>giveUpPursuit(n,true));
+  ps.forEach(n=>{n.pursue=false;n.gaveUp=true;});
+  if(ps.length>2) msg("另有數人默默收起了心事。");
+  else ps.forEach(n=>msg(pursueGiveUpLine(n)));
+}
+function pursueRoll(){
+  const p=G.player;
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.met||n.rank==="稚童"||n.pursue||n.gaveUp) return;
+    if(n.spouseId!==null) return; // 未婚也未嫁玩家
+    const a=P_DATE.aggressive.includes(n.pers), r=P_DATE.restricted.includes(n.pers);
+    const ok=a?(n.favor>=45&&n.love>=25):r?(n.love>=70&&n.favor>=60):(n.favor>=50&&n.love>=30);
+    if(!ok) return;
+    if(Math.random() < (a?0.35:r?0.10:0.20)){
+      n.pursue=true; n.invDeclined=0; n.lastTouch=p.day;
+      if(Math.random()<0.2) msg(`${n.name}近日時常望向你練劍的方向。`);
+    }
+  });
+}
+function pursueGiveUp(){
+  const p=G.player;
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.pursue) return;
+    if(p.day-(n.lastTouch??p.day)>60) return giveUpPursuit(n);
+    if(n.invDeclined===undefined) return;
+    const th=P_DATE.fragile.includes(n.pers)?2:P_DATE.cling.includes(n.pers)?99:3;
+    if(n.invDeclined>=th) giveUpPursuit(n);
+  });
+}
+function confessExpire(){
+  const p=G.player;
+  if(!p.confess) return;
+  const n=npcById(p.confess.id);
+  if(!n||!n.alive){p.confess=null;return;}
+  if(p.day>p.confess.until){ n.love=clamp(n.love-5,0,PERS[n.pers].loveCap||100); p.confess=null;
+    msg(`那句沒等到回應的話，${n.name}再也不提了。`); }
+}
+function confessRoll(){
+  const p=G.player;
+  confessExpire();
+  if(p.confess||p.spouse!==null&&p.spouse!==undefined) return;
+  const cands=G.npcs.filter(n=>n.alive&&n.met&&n.pursue&&!n.confessed&&!n.proposed&&n.love>=70&&n.spouseId===null&&n.rank!=="稚童");
+  if(!cands.length||Math.random()>=0.25) return;
+  const n=cands[rnd(cands.length)];
+  n.confessed=true; p.confess={id:n.id,until:p.day+10};
+  msg(`${n.name}紅著臉攔住你，說了句憋了很久的心裡話——這是一場告白。可到【關係】頁回應。`);
+  wlog(`聽說${n.name}攔住你說了很長一段話，旁人只聽清最後三個字。`,false);
+}
+function dateActFor(n, spouse){
+  const keys=Object.keys(DATE_ACTS);
+  if(spouse){
+    if(Math.random()<0.5){const ss=keys.filter(k=>DATE_ACTS[k].who==="spouse");if(ss.length)return ss[rnd(ss.length)];}
+    const sects=keys.filter(k=>DATE_ACTS[k].who==="sect:"+n.sect);
+    if(sects.length) return sects[rnd(sects.length)];
+  }
+  if(n.demon){
+    const races=keys.filter(k=>DATE_ACTS[k].who==="race:"+n.race);
+    if(races.length&&Math.random()<0.35) return races[rnd(races.length)];
+  }
+  const pers=keys.filter(k=>DATE_ACTS[k].who==="pers:"+n.pers);
+  if(pers.length) return pers[rnd(pers.length)];
+  const sects=keys.filter(k=>DATE_ACTS[k].who==="sect:"+n.sect);
+  if(sects.length) return sects[rnd(sects.length)];
+  return keys[rnd(keys.length)];
+}
+function weightedPick(list, weight){
+  if(!list.length) return null;
+  const ws=list.map(weight), total=ws.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(let i=0;i<list.length;i++){r-=ws[i];if(r<=0)return list[i];}
+  return list[list.length-1];
+}
+function dateGiftToPlayer(n){
+  const p=G.player; n.lastGiftDay=p.day;
+  n.love=clamp(n.love+1,0,PERS[n.pers].loveCap||100);
+  let what="", gain="";
+  if(n.sect==="大自在殿"){p.spirit+=150;what="一盒素齋點心";gain="靈氣+150";}
+  else if(n.pers==="財迷"){const g=200+rnd(400);p.stones+=g;what="一小袋靈石";gain=`靈石+${g}「利息都替你算好了。」`;}
+  else if(n.pers==="藥罐"){p.pills["聚靈散"]=(p.pills["聚靈散"]||0)+1;what="一包藥香";gain="聚靈散×1";}
+  else if(n.pers==="武癡"){p.swordSense+=2;what="一疊拆招筆記";gain="劍意+2「昨夜替你把那招拆了三百遍。」";}
+  else if(["風流","妖媚","蕩浪"].includes(n.pers)){const g=100+rnd(100);p.stones+=g;what="一箋熏香短箋";gain=`內附靈石+${g}`;}
+  else{
+    const r=Math.random();
+    if(r<0.6){const maxG=clamp(2+Math.floor(p.ri/2),1,5);const pool=Object.values(HERBS).filter(m=>m.grade<=maxG);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;what=m.name+"一份";gain=`${m.name}×1`;}
+    else if(r<0.85){const g=100+rnd(200);p.stones+=g;what="一小袋靈石";gain=`靈石+${g}`;}
+    else{p.spirit+=200;what="一個同心結";gain="靈氣+200「不知是誰打的。」";}
+  }
+  msg(`院門口多了一個小包裹——${n.name}托人送來的：${what}（${gain}）`);
+}
+function tickInvite(){
+  const p=G.player;
+  if(!p||!p.alive) return;
+  confessExpire();
+  if(p.confess){const cn=npcById(p.confess.id);if(!cn||!cn.alive)p.confess=null;}
+  if(p.invite){
+    const old=npcById(p.invite.id);
+    if(!old||!old.alive){p.invite=null;}
+    else if(p.day>p.invite.until){ if(p.invite.from==="pursuer") old.favor=clamp(old.favor-1,-200,120);
+      p.invite=null; msg(`你錯過了${old.name}的邀約，紙條在風裡打了個旋。`); }
+  }
+  G.npcs.forEach(n=>{
+    if(!n.alive||!n.pursue) return;
+    if(p.day-(n.lastGiftDay??-99)<20) return;
+    if(Math.random()<0.012+n.love*0.0003) dateGiftToPlayer(n);
+  });
+  if(p.invite) return;
+  const base=G.npcs.filter(n=>n.alive&&n.met&&n.rank!=="稚童");
+  const pools=[];
+  const pursuers=base.filter(n=>n.pursue&&n.spouseId===null);
+  if(pursuers.length) pools.push({list:pursuers,prob:1,kind:"pursuer"});
+  const friends=base.filter(n=>!n.pursue&&n.favor>=40&&n.love<30);
+  if(friends.length) pools.push({list:friends,prob:1,kind:"friend"});
+  if(p.spouse!==null&&p.spouse!==undefined){const sp=base.filter(n=>n.id===p.spouse);if(sp.length)pools.push({list:sp,prob:1,kind:"spouse"});}
+  for(const pool of pools){
+    const n=weightedPick(pool.list,x=>pool.kind==="friend"?Math.max(1,x.favor):Math.max(1,x.favor+x.love));
+    if(!n) continue;
+    let prob=pool.kind==="pursuer"?(0.02+n.love*0.0005+n.favor*0.0002)*(P_DATE.aggressive.includes(n.pers)?1.3:1)
+      :pool.kind==="friend"?0.004+n.favor*0.00015:0.03;
+    if(Math.random()>=prob) continue;
+    const key=dateActFor(n,pool.kind==="spouse"), act=DATE_ACTS[key];
+    p.invite={id:n.id,key,until:p.day+5,from:pool.kind};
+    const line=gdial(n,act.line[rnd(act.line.length)]);
+    const arrive=pool.kind==="pursuer"?`【邀約】一隻紙鶴落在你窗台上，翅膀上寫著：${n.name}約你${act.name}。`
+      :pool.kind==="friend"?`【邀約】${n.name}托掃地的雜役帶話：得空嗎？一起去${act.name}。`
+      :`【邀約】${n.name}把一張字條塞進你手心：今日，陪我。${act.name}，就我們倆。`;
+    msg(arrive); msg(`${n.name}：${q(line)}`);
+    break;
+  }
+}
+function runDateDanger(p,n,strong){
+  const base=playerForce(), denom=base+(strong?280:300)+p.ri*100;
+  const win=Math.random()<clamp(base/denom,0.1,0.95);
+  if(win){const g=strong?100:400;p.spirit+=g;if(!strong){const st=100+rnd(200);p.stones+=st;}return DATE_TWIST_LINE.dangerWin.replace(/\$\{name\}/g,n.name)+(strong?"（同行者替你擋了一下，靈氣+100）":"（靈氣+400，得靈石）");}
+  p.spirit=Math.max(0,p.spirit-50);n.favor=clamp(n.favor+2,-200,120);
+  return DATE_TWIST_LINE.dangerLose.replace(/\$\{name\}/g,n.name)+"（靈氣-50，友情+2）";
+}
+function runDateTwist(p,n){
+  const pool=[
+    {w:3,run(){const ids=[...n.rel.friends,...n.rel.parents,...n.rel.children,n.rel.master].filter(x=>x!==null&&x!==undefined&&x!==n.spouseId);const unmet=ids.map(x=>npcById(x)).filter(x=>x&&x.alive&&!x.met);if(!unmet.length)return null;const t=unmet[rnd(unmet.length)];t.met=true;t.favor=10;return DATE_TWIST_LINE.meet.replace(/\$\{name\}/g,n.name).replace(/\$\{target\}/g,t.name)+"（結識新知，友情10）";}},
+    {w:2,run(){return runDateDanger(p,n,true);}},
+    {w:3,run(){const cap=PERS[n.pers].loveCap||100;n.love=clamp(n.love+2,0,cap);return DATE_TWIST_LINE.memory.replace(/\$\{name\}/g,n.name)+"（愛情+2）";}},
+    {w:2,run(){const r=Math.random();if(r<0.3){const g=100+rnd(200);p.stones+=g;return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+`（靈石+${g}）`;}if(r<0.7){const pool2=Object.values(HERBS).filter(m=>m.grade<=clamp(2+Math.floor(p.ri/2),1,5));const m=pool2[rnd(pool2.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+`（${m.name}×1）`;}return DATE_TWIST_LINE.treasure.replace(/\$\{name\}/g,n.name)+"（其實撿到的是TA的笑）";}}
+  ];
+  const all=[];pool.forEach(x=>{for(let i=0;i<x.w;i++)all.push(x);});
+  const r=all[rnd(all.length)].run();
+  if(r) msg("約會插曲："+r);
+}
+function jealousyCheck(n){
+  const cands=G.npcs.filter(x=>x.alive&&x.met&&x.pursue&&x.love>=40&&x.id!==n.id);
+  const hit=[];
+  cands.forEach(x=>{const heavy=["醋罈","病嬌","癡纏"].includes(x.pers);if(Math.random()<(heavy?0.5:0.15))hit.push(x);});
+  if(!hit.length)return;
+  const j=hit[rnd(hit.length)];j.favor=clamp(j.favor-3,-200,120);
+  const heavy=["醋罈","病嬌","癡纏"].includes(j.pers);
+  const pool=heavy?DATE_JEALOUSY_HEAVY:DATE_JEALOUSY_LIGHT;
+  msg("【心動】"+pool[rnd(pool.length)].replace(/\$\{name\}/g,j.name)+"（友情-3）");
+}
+function acceptInvite(){
+  const p=G.player, inv=p.invite;
+  if(!inv) return;
+  const n=npcById(inv.id);
+  if(!n||!n.alive){p.invite=null;return msg("邀約的人已不在了。");}
+  if(p.energy<1) return msg("精力不足，改日再說。");
+  const act=DATE_ACTS[inv.key]||Object.values(DATE_ACTS)[0];
+  p.energy--; guestSulk("赴約");
+  const P=PERS[n.pers], cap=P.loveCap||100;
+  let favGain=0,loveGain=0;
+  if(inv.from==="friend"){favGain=P.chatFav+1+act.favAdd;loveGain=act.loveAdd;}
+  else if(inv.from==="pursuer"){favGain=P.chatFav+2+act.favAdd;loveGain=2+rnd(3)+act.loveAdd+(n.sweet?1:0);}
+  else{favGain=2+act.favAdd;loveGain=3+act.loveAdd;if(!p.mate)p.mate={chatted:false,bubble:"",ignored:0,sulking:false};}
+  favGain=Math.max(0,favGain);loveGain=Math.max(0,Math.min(loveGain,cap-n.love));
+  n.favor=clamp(n.favor+favGain,-200,120);n.love=clamp(n.love+loveGain,0,cap);
+  touch(n);
+  msg(`你應了${n.name}的邀約，一同前往${act.name}。${n.name}：${q(gdial(n,act.line[rnd(act.line.length)]))}`);
+  const reward=act.reward(p,n);
+  msg(`約會收穫：${reward}（友情+${favGain}${loveGain?`，愛情+${loveGain}`:""}）`);
+  let spouseDate=false;
+  if(inv.from==="spouse"&&p.mate){spouseDate=true;p.mate.ignored=0;p.mate.sulking=false;}
+  if(Math.random()<0.3) runDateTwist(p,n);
+  if(inv.from==="pursuer") jealousyCheck(n);
+  p.invite=null;
+  nextDay();
+  if(spouseDate&&G.player.mate){G.player.mate.ignored=0;G.player.mate.sulking=false;if(WED[n.pers])msg(`${n.name}：${q(gdial(n,WED[n.pers].care))}`);}uiRefresh();
+}
+function declineInvite(){
+  const p=G.player,inv=p.invite;
+  if(!inv)return;
+  const n=npcById(inv.id);
+  p.invite=null;
+  if(!n||!n.alive)return msg("那張邀約紙條終究沒能送到人手上。");
+  if(inv.from==="spouse"){n.favor=clamp(n.favor-1,-200,120);if(p.mate)p.mate.ignored+=3;msg(`${n.name}收回了字條，輕聲說：「……好，你去忙。」（TA有些失落）`);uiRefresh();return;}
+  if(inv.from==="friend"){n.favor=clamp(n.favor-1,-200,120);msg(`${n.name}：${q(gdial(n,"「好嘛，下次再約。」"))}（友情-1）`);uiRefresh();return;}
+  let dec=["溫柔","聖母","樂天"].includes(n.pers)?1:2+rnd(3);
+  n.favor=clamp(n.favor-dec,-200,120);n.invDeclined=(n.invDeclined||0)+1;
+  const th=P_DATE.fragile.includes(n.pers)?2:P_DATE.cling.includes(n.pers)?99:3;
+  if(n.invDeclined>=th)giveUpPursuit(n);
+  else msg(`${n.name}：${q(gdial(n,DATE_DECLINE[n.pers]||"「……下次再說。」"))}（友情-${dec}）`);
+  uiRefresh();
+}
+function answerConfess(id,yes){
+  const p=G.player,n=npcById(id);
+  if(!p.confess||p.confess.id!==id||!n||!n.alive)return; touch(n);
+  p.confess=null;
+  const cap=PERS[n.pers].loveCap||100;
+  if(yes){n.sweet=true;n.love=clamp(n.love+5,0,cap);n.favor=clamp(n.favor+3,-200,120);
+    msg(`你點了頭。${n.name}眼裡的光，藏都藏不住。（你們兩情相悅了）`);wlog(`有人看見${n.name}從你的院門口跑出去，一路都在笑。`,false);}
+  else{n.love=clamp(n.love-20,0,cap);n.favor=clamp(n.favor-5,-200,120);n.invDeclined=(n.invDeclined||0)+1;
+    if(P_DATE.fragile.includes(n.pers))giveUpPursuit(n);
+    else if(!P_DATE.cling.includes(n.pers)&&Math.random()<0.5)giveUpPursuit(n);
+    else msg(`${n.name}：${q(gdial(n,DATE_DECLINE[n.pers]||"「……我知道了。」"))}（愛情-20，友情-5）`);}
+  uiRefresh();
+}
+
 function mateTogether(){ // 相伴一日：-1精力，靜靜過一天
   const p=G.player; if(!mateOk()) return;
   if (p.energy<1) return msg("精力不足，好好歇一天吧。");
@@ -1663,6 +2014,7 @@ function tryBreak() {
   if (p.pills["突破丹"]>0) { rate += 0.05; p.pills["突破丹"]--; }
   if (p.pills["妖丹"]>0) { rate += 0.08; p.pills["妖丹"]--; } // 妖市貨，可疊加
   if (sectUnlocked("星機閣")) rate += 0.10;
+  if (p.stargaze) { rate += 0.03; p.stargaze = false; }
   if (p.surviveRisk>0 && p.pills["消業丹"]>0) { p.surviveRisk -= 0.3; p.pills["消業丹"]--; }
   rate = clamp(rate, 0.15, 0.95);
   msg(`氣海鼓盪——本次突破成功率約 ${Math.round(rate*100)}%……`);
@@ -1801,7 +2153,7 @@ function usePill(name) {
 }
 
 /* ── 社交 ── */
-function npcById(id){ return G.npcs[id]; }
+function npcById(id){ return (id===null||id===undefined||id<0) ? null : G.npcs[id]; }
 function sectFavor(sect) { // 門派好感 = 該派已結識 NPC 平均
   const list = G.npcs.filter(n=>n.sect===sect && n.met && n.alive);
   return list.length ? Math.round(list.reduce((a,n)=>a+n.favor,0)/list.length) : 0;
@@ -1812,7 +2164,7 @@ function sectUnlocked(sect) {
   return sectFavor(sect) >= u.favor;
 }
 function gift(id, itemName) {
-  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  const n=npcById(id), p=G.player; if(!n)return; const P=PERS[n.pers]; touch(n);
   let fav = 4;
   const rc = RECIPES[itemName]; if (rc && rc.type==="禮物" && rc.gift===n.sect) fav = 16;
   else if (rc) fav = 8; // 送劍
@@ -1845,7 +2197,7 @@ function gift(id, itemName) {
 }
 function st3(v){ return v<30?0 : v<70?1 : 2; } // 友情/愛情三階段：陌生/熟絡/心腹(情深)
 function interact(id, act) {
-  const n=G.npcs[id], p=G.player, P=PERS[n.pers];
+  const n=npcById(id), p=G.player; if(!n)return; const P=PERS[n.pers]; touch(n);
   if (!n.alive) return msg("人已不在了。");
   if (p.energy<1) return msg("精力不足。");
   if (n.rank==="稚童" && (act==="調情"||act==="雙修")) return msg("對方還是個孩子。");
@@ -1960,7 +2312,7 @@ function sparNpc(n, toDeath) {
   nextDay(); uiRefresh();
 }
 function propose(n) {
-  const p=G.player;
+  const p=G.player; clearPursuits(n.id); G.player.confess=null;
   if(n.spouseId!==null && n.spouseId>=0){ const ex=npcById(n.spouseId); if(ex) ex.spouseId=null; }
   p.spouse = n.id; n.spouse = p.name; n.spouseId = -1; n.love = 100;
   msg(`${n.name}單膝跪地：「${PERS[n.pers].intimate[0]}」——你們結為道侶！`);
@@ -2288,6 +2640,20 @@ function pageXiulian(){
   const pg = h(`<div>
     <div class="page-title">修 煉</div>
     <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
+    ${p.invite && npcById(p.invite.id) ? (()=>{ const n=npcById(p.invite.id), inv=p.invite, act=DATE_ACTS[inv.key];
+      const line=act.line[0];
+      return `<div class="card" id="invite-card" style="background:#fdf6ec;border:1px dashed #c8a878"><h3>邀約</h3>
+      <div class="list-item"><div>
+        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag">${n.race}</span>`:""}
+        ${inv.from==="pursuer"?'<span class="tag" style="background:#f0c0c0;color:#a04040">有意於你</span>':""}
+        ${inv.from==="spouse"?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':""}
+        <div class="desc">${act.name} · ${inv.until-G.player.day+1}天後過期</div>
+        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${line}</div>
+      </div>
+      <div class="btnrow" style="flex-direction:column">
+        <button class="small gold" id="inv-yes">應約(-1精力)</button>
+        <button class="small ghost" id="inv-no">婉拒</button>
+      </div></div></div>`; })() : ""}
     ${(p.spouse!==null && p.spouse!==undefined && G.npcs[p.spouse] && G.npcs[p.spouse].alive) ? (()=>{ const n=G.npcs[p.spouse], m=p.mate;
       return `<div class="card" style="background:#fdf1ec;border:1px solid #e8c8b8"><h3>道侶同住</h3>
       <div class="list-item"><div>
@@ -2320,6 +2686,8 @@ function pageXiulian(){
     </div>
   </div>`);
   const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
+  const iy=pg.querySelector("#inv-yes");
+  if(iy){iy.onclick=()=>{acceptInvite();flushLog();renderTab();};pg.querySelector("#inv-no").onclick=()=>{declineInvite();flushLog();renderTab();};}
   const gc = pg.querySelector("#g-chat");
   if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
     pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
@@ -2554,8 +2922,9 @@ function pageFriends(){
     const away = n.loc!==n.sect;
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const confessing = p.confess&&p.confess.id===n.id?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">有話想對你說</span>':"";
     const row = h(`<div class="list-item" style="cursor:pointer"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
+      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}${confessing}
       <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""}${away?" · 雲遊中":""}</div></div>
       <span style="color:#b0a08a">›</span></div>`);
     row.onclick=()=>openNpcModal(n.id);
@@ -2596,8 +2965,9 @@ function pageSectHub(sect){
     const heart = met&&n.love>0?` ❤${n.love}`:"";
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = met&&n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
+    const confessing = met&&p.confess&&p.confess.id===n.id?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">有話想對你說</span>':"";
     const row = h(`<div class="list-item"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${met&&n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
+      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${met&&n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}${confessing}
       <div class="desc">${met?`友${n.favor}${heart}${away?" · 雲遊中":""}`:(away?"面生，雲遊在外":n.demon?"面生的妖修":"面生的"+(n.gender==="M"?"男修":"女修"))}</div></div>
       ${met?'<button class="small ghost" data-open="'+n.id+'">往來</button>'
            :(away?"":'<button class="small gold" data-meet="'+n.id+'">搭話'+meetCost+'</button>')}</div>`);
@@ -2651,6 +3021,8 @@ function openNpcModal(id){
     ${n.demon&&RACES[n.race]?`<div class="kv"><span style="color:#6a5590">稟賦·${n.race}</span><span style="color:#7a654e">${RACES[n.race].perk}</span></div>`:""}
     <div class="bar favorbar"><div style="width:${clamp(n.favor,0,100)}%"></div></div>
     <div class="bar lovebar"><div style="width:${showLove?clamp(n.love,0,100):0}%"></div></div>
+    ${n.sweet?`<div class="desc" style="font-size:12px;color:#a05a4a;margin-top:6px">你們兩情相悅。</div>`:n.pursue?`<div class="desc" style="font-size:12px;color:#a05a4a;margin-top:6px">${n.name}最近看你的眼神，似乎不太一樣。</div>`:n.gaveUp&&n.love>=30?`<div class="desc" style="font-size:12px;color:#8a6a50;margin-top:6px">TA眼裡有過你，如今已收起了。</div>`:""}
+    ${p.confess&&p.confess.id===n.id?`<div style="font-size:13px;background:#fff4e8;border-radius:8px;padding:8px 10px;margin:6px 0">${gdial(n,DATE_CONFESS[n.pers]||"「我喜歡你。」")}</div><div class="btnrow" style="margin:6px 0"><button class="gold small" data-conf="yes">接受心意</button><button class="ghost small" data-conf="no">婉拒</button></div>`:""}
     ${n.loc!==n.sect?`<div class="desc" style="font-size:11px;color:#9a8a75;margin:6px 0">現在人在${n.loc}</div>`:""}
     ${n.proposed?`<div class="btnrow" style="margin:6px 0"><button class="gold small" data-prop="yes">答應求婚</button><button class="ghost small" data-prop="no">婉拒</button></div>`:""}
     <h3 style="margin-top:12px;font-size:14px;color:#7a5540">師門親友</h3>
@@ -2682,6 +3054,7 @@ function openNpcModal(id){
     body.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{ const x=npcById(+b.dataset.open);
       if(x&&x.alive){ openNpcModal(x.id); } });
     body.querySelectorAll("[data-prop]").forEach(b=>b.onclick=()=>{ answerProposal(id, b.dataset.prop==="yes"); curLast=lastMsg(); refresh(); flushLog(); });
+    body.querySelectorAll("[data-conf]").forEach(b=>b.onclick=()=>{ answerConfess(id, b.dataset.conf==="yes"); curLast=lastMsg(); refresh(); flushLog(); });
     body.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
       const act = b.dataset.act;
       if (act==="下毒") return uiPickPoison(npcById(id));

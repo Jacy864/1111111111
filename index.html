@@ -1507,12 +1507,12 @@ function mateOk(){
 }
 function mateBubble(n){
   const m = G.player.mate;
-  if (m && m.sulking) return gdial(n, WED[n.pers].sulk[rnd(2)]);
+  if (m && m.sulking) return gdial(n, WED[n.pers].sulk[rnd(WED[n.pers].sulk.length)]);
   if (n.demon && RACES[n.race] && Math.random()<0.25)
     return gdial(n, RACES[n.race].chat[rnd(RACES[n.race].chat.length)]);
   const W = WED[n.pers];
   if (Math.random()<0.55) return W.home[rnd(W.home.length)]; // 動作式閒話（不帶引號）
-  return gdial(n, W.chat[n.love>=70?1:0][rnd(2)]);
+  return gdial(n, W.chat[n.love>=70?1:0][rnd(W.chat[n.love>=70?1:0].length)]);
 }
 function mateTick(){ // 每日：換閒話、計冷落、同修靈氣；冷落7天生悶氣
   const p=G.player;
@@ -1524,10 +1524,10 @@ function mateTick(){ // 每日：換閒話、計冷落、同修靈氣；冷落7�
   m.chatted = false;
   if (m.sulking) {
     n.love = clamp(n.love-1, 0, 100);
-    if (Math.random()<0.3) msg(`${n.name}：${q(gdial(n, WED[n.pers].sulk[rnd(2)]))}`);
+    if (Math.random()<0.3) msg(`${n.name}：${q(gdial(n, WED[n.pers].sulk[rnd(WED[n.pers].sulk.length)]))}`);
   } else if (m.ignored>=7) {
     m.sulking = true;
-    msg(`${n.name}板起了臉：${q(gdial(n, WED[n.pers].sulk[rnd(2)]))}（已連著${m.ignored}日沒人陪TA說話了）`);
+    msg(`${n.name}板起了臉：${q(gdial(n, WED[n.pers].sulk[rnd(WED[n.pers].sulk.length)]))}（已連著${m.ignored}日沒人陪TA說話了）`);
   } else {
     p.spirit += 30; // 同修共枕，日增靈氣
   }
@@ -1556,7 +1556,7 @@ function mateFlirt(){
     return msg(`${n.name}別過頭去：「現在才來說這些……哼。（但耳朵紅了）（愛情+1）`); }
   m.ignored = 0;
   n.love = clamp(n.love+2, 0, 100);
-  const line = gdial(n, WED[n.pers].flirt[rnd(2)]);
+  const line = gdial(n, WED[n.pers].flirt[rnd(WED[n.pers].flirt.length)]);
   m.bubble = line;
   msg(`${n.name}：${q(line)}（愛情+2）`);
 }
@@ -1638,7 +1638,7 @@ function practice() {
 function takeLesson() {
   const p = G.player;
   const ym = year()*12 + (month()-1);
-  if (p.lessonYM === ym) return msg("本月大課已上過（每月一次，開課即入下月）。");
+  if (p.lessonYM === ym) return msg("本月大課已上過（每月一次，一課閉關整月）。");
   p.lessonYM = ym;
   guestSulk("閉關聽課"); // 家中有客仍去聽課，TA會抱怨
   const cap = spiritCap();
@@ -1649,8 +1649,8 @@ function takeLesson() {
     p.mastery[r]=(p.mastery[r]||0)+2; extra=`長老演示《${r}》鍛法，熟練+2。`; }
   msg(`你閉關聽講整月，靈氣+${g}。${extra}`);
   let guard = 0;
-  const targetYM = ym+1;
-  while (year()*12 + (month()-1) < targetYM && guard++ < 40 && G.player.alive) nextDay();
+  const targetDay = p.day + 30; // 從開課日起整整一個月：不再只跳到下月一號（月底開課只跳一天）
+  while (G.player.day < targetDay && guard++ < 40 && G.player.alive) nextDay();
   msg("——大課結束，一個月過去了。");
 }
 function tryBreak() {
@@ -1858,7 +1858,7 @@ function interact(id, act) {
       /* 台詞分流：道侶走婚後庫（再無求婚口）→ 妖精三成走種族腔 → 常規性格庫 */
       let line;
       if (G.player.spouse===n.id && WED[n.pers])
-        line = gdial(n, WED[n.pers].chat[n.love>=70?1:0][rnd(2)]);
+        line = gdial(n, WED[n.pers].chat[n.love>=70?1:0][rnd(WED[n.pers].chat[n.love>=70?1:0].length)]);
       else if (n.demon && RACES[n.race] && Math.random()<0.3)
         line = gdial(n, RACES[n.race].chat[rnd(RACES[n.race].chat.length)]);
       else { const pool = P.chat[st]; line = gdial(n, pool[rnd(pool.length)]); }
@@ -1873,7 +1873,7 @@ function interact(id, act) {
         const cap0 = P.loveCap||100;
         const lg0 = Math.max(0, Math.min(P.loveGain+rnd(3), cap0-n.love));
         n.love = clamp(n.love+lg0, 0, cap0);
-        msg(`${n.name}：${q(gdial(n, WED[n.pers].flirt[rnd(2)]))}（愛情+${lg0}）`);
+        msg(`${n.name}：${q(gdial(n, WED[n.pers].flirt[rnd(WED[n.pers].flirt.length)]))}（愛情+${lg0}）`);
         break; }
       if (n.favor < P.flirtReq) { msg(`${n.name}：${q(gdial(n,P.flirtNo[rnd(P.flirtNo.length)]))}（需友情${P.flirtReq}）`); break; }
       const cap = P.loveCap||100;
@@ -2127,6 +2127,8 @@ function loadGame(slot) {
   migratePers(); // 舊檔修正：門派專屬性格錯配（如合歡宗的藥罐整天聊丹爐）
   migratePersV2(); // 舊檔重洗：早期版本性格池未生效，重擲一次門派性格
   migrateDemons(); // v5：舊檔補生十萬大山妖精
+  migrateIdFix(); // v6：修復v5遺留的妖精撞號（舊檔曾從0重發id，npcById按索引認錯人）
+  migrateFavorFloor(); // v6：舊版淡忘把無仇怨的相識扣成負數，一朝清零
   NPC_UID = G.npcs.length; // 修復：讀檔後新NPC的id接續（舊檔曾從0重發）
   msg(`讀取存檔${slot}。`); uiRefresh();
 }
@@ -2159,6 +2161,7 @@ function migrateDemons(){ // v5 一次性：舊檔補生十萬大山妖精群落
   G.flags.demons = true;
   if (G.npcs.some(n=>n.demon)) return;
   DEMON_USED = {};
+  NPC_UID = G.npcs.length; // 補生妖精的id必須從現有人數接續：npcById按陣列索引取人，從0重發會撞號認錯人
   const w = WORLD_ROSTER.find(x=>x.demon);
   const master = mkNpc(w.sect,"掌門",5+rnd(2),Math.random()<w.mRatio?"M":"F");
   master.special = "一山妖王";
@@ -2167,6 +2170,47 @@ function migrateDemons(){ // v5 一次性：舊檔補生十萬大山妖精群落
   for(let i=0;i<w.discs;i++) G.npcs.push(mkNpc(w.sect,"弟子", w.discRi[0]+rnd(w.discRi[1]-w.discRi[0]+1), Math.random()<w.mRatio?"M":"F"));
   wlog(`十萬大山的妖精們走出深山，各派議論紛紛。`, false);
   msg(`【十萬大山】山那邊的門戶洞開——狐、蛇、貓、狼等十四族妖精現身世間。去【江湖→十萬大山】結識他們吧。`);
+}
+function migrateIdFix(){ // v6 一次性：修復v5補生妖精的id撞號（0~13與舊NPC重複，往來認錯人）
+  if (G.flags.idfix) return;
+  G.flags.idfix = true;
+  const broken = G.npcs.filter(d=>d.demon && d.id!==G.npcs.indexOf(d));
+  if (!broken.length) return;
+  const byOldId = new Map(broken.map(d=>[d.id, d])); // 舊錯id → 妖精本體
+  const spouseAnchor = G.npcs.findIndex(n=>n.spouseId===-1); // 玩家道侶錨點（本體在哪，配偶就指哪）
+  const remap = v => { const d = byOldId.get(v); return d ? G.npcs.indexOf(d) : v; };
+  /* 先全量判定再統一套用：邊改邊查會讓後查者的互指判定用到已換的新id，誤判又誤換 */
+  const moves = [];
+  G.npcs.forEach(x=>{
+    /* 指向妖精的舊指針：妖精本尊回指確認才換（道侶看互指、師承看輩分、父母看反指孩子） */
+    if (x.spouseId!==null && x.spouseId>=0){
+      const d = byOldId.get(x.spouseId);
+      if (d && d!==x && d.spouseId===x.id) moves.push([x, "spouseId", G.npcs.indexOf(d)]); // d!==x：防妖精自己回指自己
+    }
+    if (x.rel.master!==null && x.rel.master!==undefined){
+      const y = G.npcs[x.rel.master];
+      if (!y || (y.rank!=="掌門" && y.rank!=="長老")) moves.push([x, "master", remap(x.rel.master)]);
+    }
+    if (x.rel.parents.length) {
+      const np = x.rel.parents.map(pid=>{
+        const y = G.npcs[pid];
+        return (!y || !y.rel.children.includes(x.id)) ? remap(pid) : pid;
+      });
+      if (np.some((v,i)=>v!==x.rel.parents[i])) moves.push([x, "parents", np]);
+    }
+  });
+  moves.forEach(([o,k,v])=>{ if(k==="spouseId") o.spouseId=v; else if(k==="master") o.rel.master=v; else o.rel.parents=v; });
+  G.npcs.forEach((n,i)=>{ n.id = i; }); // id歸位＝陣列索引
+  if (G.player.spouse!==null && G.player.spouse!==undefined && spouseAnchor>=0) G.player.spouse = spouseAnchor;
+  if (G.player.guest) G.player.guest = null; // 來客若認錯了人，請TA重新上門
+  msg(`【修正】十萬大山名冊歸位：妖精們的身分對上了號，往來從此認對人。`);
+}
+function migrateFavorFloor(){ // v6 一次性：舊版淡忘無條件扣好感，相識無仇怨卻成負數，清零了帳
+  if (G.flags.favorFloor) return;
+  G.flags.favorFloor = true;
+  let fixed = 0;
+  G.npcs.forEach(n=>{ if (n.favor<0){ n.favor=0; fixed++; } });
+  if (fixed) msg(`【修正】${fixed}位故識心頭的隔閡散了——舊年的誤會一筆勾銷，情分從頭再來。`);
 }
 function listSaves() {
   return [0,1,2].map(s => { const r=localStorage.getItem("wjs_"+s);

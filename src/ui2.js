@@ -18,11 +18,12 @@ function pageChuxing(){
     <div class="card"><h3>週期秘境</h3><div id="dg-list"></div>
       <div class="btnrow"><button class="small gold" id="btn-yuehua">兌換月華仙谷（2000萬貢獻）</button></div></div>
     <div class="card"><h3>坊市</h3><div id="shop-list"></div></div>
+    <div class="card"><h3>妖市</h3><div id="dshop-list"></div></div>
   </div>`);
   const ml = pg.querySelector("#map-list");
   MAP_NAMES.forEach((mn,i)=>{
     const ok = p.ri >= MAP_REQ[i];
-    const row = h(`<div class="list-item"><div><b>${mn}</b><span class="tag">${["金鐵","草木","獸材","天材"][i]}</span>
+    const row = h(`<div class="list-item"><div><b>${mn}</b><span class="tag">${["金鐵","草木","獸材","天材","妖材"][i]}</span>
       <div class="desc">${ok?"外緣/內部/核心，可能遇妖獸":"需"+REALMS[MAP_REQ[i]].name+"修為"}</div></div>
       <div class="btnrow">${ok?[0,1,2].map(l=>`<button class="small ghost" data-l="${l}">${LAYER_NAMES[l]}</button>`).join(""):""}</div></div>`);
     if (ok) row.querySelectorAll("button").forEach(b=>b.onclick=()=>{ gather(i,+b.dataset.l); flushLog(); renderTab(); });
@@ -39,7 +40,7 @@ function pageChuxing(){
   });
   pg.querySelector("#btn-yuehua").onclick=()=>{ buyYuehua(); flushLog(); };
   const sl = pg.querySelector("#shop-list");
-  const goods = [...Object.keys(PILLS).map(k=>({...PILLS[k],name:k,bag:"pills"})),
+  const goods = [...Object.keys(PILLS).filter(k=>!PILLS[k].demon).map(k=>({...PILLS[k],name:k,bag:"pills"})),
                  ...(p.poisonUnlocked?Object.keys(POISON_PILLS).map(k=>({...POISON_PILLS[k],name:k,bag:"poisons",poison:true})):[])];
   goods.forEach(g=>{
     const row = h(`<div class="list-item"><div><b>${g.name}${g.poison?"☠":""}</b><div class="desc">${g.desc}</div></div>
@@ -48,6 +49,19 @@ function pageChuxing(){
     sl.appendChild(row);
   });
   if (p.poisonUnlocked===false) sl.appendChild(h(`<div class="desc" style="color:#b07050;font-size:11px;margin-top:6px">☠ 毒丹：與藥王谷眾人交好（平均好感60）後解鎖。</div>`));
+  /* 妖市：十萬大山好感40開放 */
+  const ds = pg.querySelector("#dshop-list");
+  if (demonShopOpen()) {
+    Object.keys(PILLS).filter(k=>PILLS[k].demon).forEach(k=>{
+      const g = PILLS[k];
+      const row = h(`<div class="list-item"><div><b>${g.desc.indexOf("妖市")>=0?k:k+"🦊"}</b><div class="desc">${g.desc}</div></div>
+        <div class="btnrow"><span style="font-size:12px;color:#8a6a40;align-self:center">${fmt(g.price)}石</span><button class="small">買</button></div></div>`);
+      row.querySelector("button").onclick=()=>{ buyPill(k); flushLog(); };
+      ds.appendChild(row);
+    });
+  } else {
+    ds.appendChild(h(`<div class="desc" style="color:#8a6a40;font-size:12px">🦊 妖霧繚繞的市集：與十萬大山的妖精們結交（平均好感40）後，TA們便領你進去。眼下只有霧。</div>`));
+  }
   return pg;
 }
 
@@ -99,7 +113,7 @@ function pageFriends(){
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
     const row = h(`<div class="list-item" style="cursor:pointer"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${spouse}${proposed}
+      <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
       <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""}${away?" · 雲遊中":""}</div></div>
       <span style="color:#b0a08a">›</span></div>`);
     row.onclick=()=>openNpcModal(n.id);
@@ -141,8 +155,8 @@ function pageSectHub(sect){
     const spouse = p.spouse===n.id?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':"";
     const proposed = met&&n.proposed?'<span class="tag" style="background:#f5d7b0;color:#8a5a20">求婚中</span>':"";
     const row = h(`<div class="list-item"><div>
-      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${spouse}${proposed}
-      <div class="desc">${met?`友${n.favor}${heart}${away?" · 雲遊中":""}`:(away?"面生，雲遊在外":"面生的"+(n.gender==="M"?"男修":"女修"))}</div></div>
+      <b>${n.gender==="M"?"♂":"♀"} ${met?n.name:"？？？"}</b>${met&&n.demon?`<span class="tag" style="background:#e8e0f0;color:#6a5590">${n.race}</span>`:""}${spouse}${proposed}
+      <div class="desc">${met?`友${n.favor}${heart}${away?" · 雲遊中":""}`:(away?"面生，雲遊在外":n.demon?"面生的妖修":"面生的"+(n.gender==="M"?"男修":"女修"))}</div></div>
       ${met?'<button class="small ghost" data-open="'+n.id+'">往來</button>'
            :(away?"":'<button class="small gold" data-meet="'+n.id+'">搭話'+meetCost+'</button>')}</div>`);
     box.appendChild(row);
@@ -172,8 +186,9 @@ function openNpcModal(id){
     const n = npcById(id), p=G.player, P = PERS[n.pers];
     const isMonk = n.sect==="大自在殿";
     const showLove = !isMonk; // 佛門愛情隱藏
-    const relOf = rid => { const x = npcById(rid); if(!x) return "";
-      return `${x.met?`<b data-open="${x.id}" style="text-decoration:underline;cursor:pointer">${x.name}</b>`:`<span style="color:#b0a08a">${x.alive?"未結識":"已故"}</span>`}（${x.sect}${x.alive?"":"·已故"}）`; };
+    const relOf = rid => { if(rid===-1) return `<b>你</b>（道侶）`;
+      const x = npcById(rid); if(!x) return "";
+      return `${x.met?`<b data-open="${x.id}" style="text-decoration:underline;cursor:pointer">${x.name}</b>`:`<span style="color:#b0a08a">${x.alive?"未結識":"已故"}</span>`}（${x.sect}${x.demon?"·"+x.race:""}${x.alive?"":"·已故"}）`; };
     let relHtml = "";
     if (n.rel.master!==null) relHtml += `<div class="kv"><span>師尊</span><span>${relOf(n.rel.master)}</span></div>`;
     if (n.spouseId!==null) relHtml += `<div class="kv"><span>道侶</span><span>${relOf(n.spouseId)}</span></div>`;
@@ -191,6 +206,7 @@ function openNpcModal(id){
     <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0;min-height:38px">
       ${curLast || `${n.name}：${q(greetLine(n))}`}</div>
     <div class="kv"><span>友情 ${n.favor}</span><span>${showLove?`愛情 ${n.love}`:"愛情 ???"}</span></div>
+    ${n.demon&&RACES[n.race]?`<div class="kv"><span style="color:#6a5590">稟賦·${n.race}</span><span style="color:#7a654e">${RACES[n.race].perk}</span></div>`:""}
     <div class="bar favorbar"><div style="width:${clamp(n.favor,0,100)}%"></div></div>
     <div class="bar lovebar"><div style="width:${showLove?clamp(n.love,0,100):0}%"></div></div>
     ${n.loc!==n.sect?`<div class="desc" style="font-size:11px;color:#9a8a75;margin:6px 0">現在人在${n.loc}</div>`:""}
@@ -235,7 +251,7 @@ function openNpcModal(id){
       gift(id, b.dataset.g); curLast=lastMsg(); flushLog(); refresh();
     });
     const dv = body.querySelector("#btn-div");
-    if (dv) dv.onclick=()=>{ divorce(npcById(id)); flushLog(); closeModal(); renderTab(); };
+    if (dv) dv.onclick=()=>{ uiDivorceAsk(npcById(id)); };
   };
   const refresh = ()=>{ // 原地刷新彈窗內容（不關閉、不打斷連續操作）
     const body = el("modal-body");
@@ -246,7 +262,30 @@ function openNpcModal(id){
     if (npcById(id) && !npcById(id).alive) closeModal();
   };
   const n0 = npcById(id);
-  openModal(`${n0.gender==="M"?"♂":"♀"} ${n0.name}（${n0.sect}·${n0.rank}·${realmText(n0.ri,n0.sub)}）`, renderBody(), body=>bind(body));
+  openModal(`${n0.gender==="M"?"♂":"♀"} ${n0.name}（${n0.sect}${n0.demon?"·"+n0.race:""}·${n0.rank}·${realmText(n0.ri,n0.sub)}）`, renderBody(), body=>bind(body));
+}
+
+/* 和離挽留：按性格給第一反應，愛情深者更痛切；確認後才走 divorce */
+function uiDivorceAsk(n){
+  const p = G.player;
+  if (!n || !n.alive || p.spouse!==n.id) return;
+  if (realmWeight(p.ri,p.sub) < realmWeight(n.ri,n.sub))
+    return flushLog([[`境界不敵，這份和離書，你提不出手。`]]);
+  const D = DIV[n.pers] || {type:"keep", line:"「……你當真想好了？」"};
+  const typeTxt = D.type==="cling" ? "TA不依不饒，看來不肯輕易放你走。" : D.type==="free" ? "TA答得平靜，倒是體面。" : "TA還想留你。";
+  const deep = n.love>=80 ? `\n      <div style="font-size:12px;color:#8a6a50;margin-top:6px">${DIV_DEEP[rnd(DIV_DEEP.length)]}</div>` : "";
+  openModal(`和離 · ${n.name}`, `
+    <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${gdial(n, D.line)}</div>
+    ${deep}
+    <div style="font-size:12px;color:#9a8a75;margin:8px 0">${typeTxt}（和離後：TA好感大降，江湖皆知。）</div>
+    <div class="btnrow">
+      <button class="warn small" id="div-go">執意和離</button>
+      <button class="ghost small" id="div-no">再想想</button>
+    </div>`,
+  body => {
+    body.querySelector("#div-go").onclick = ()=>{ divorce(n); flushLog(); closeModal(); renderTab(); };
+    body.querySelector("#div-no").onclick = ()=>openNpcModal(n.id);
+  });
 }
 
 function uiPickPoison(n){
@@ -313,7 +352,7 @@ function pageMe(){
     try {
       const data = JSON.parse(raw).g;
       if (!data || data.ver!==2) throw 0;
-      G = data; migratePers(); migratePersV2();
+      G = data; migratePers(); migratePersV2(); migrateDemons(); NPC_UID = G.npcs.length;
       msg("存檔碼導入成功。"); lastLogLen = G.dayLog.length;
     } catch(e){ msg("存檔碼無效，請檢查是否複製完整。"); }
     flushLog(); renderTab();

@@ -60,6 +60,8 @@ button.small { padding:4px 10px; font-size:12px; border-radius:6px; }
 #modal-mask { position:absolute; inset:0; background:rgba(30,20,14,.55); z-index:90;
   display:none; align-items:flex-end; }
 #modal-mask.show { display:flex; }
+/* 彈窗開著時：底層頁面明顯不可點（防「點了沒反應」的錯覺） */
+#app.modal-open #main { filter: blur(1.5px) brightness(.7); pointer-events: none; }
 #modal { background:#fbf5e9; width:100%; max-height:75%; border-radius:16px 16px 0 0;
   padding:16px 16px 30px; overflow-y:auto; animation:slideup .22s; }
 @keyframes slideup { from{transform:translateY(40px); opacity:.4;} to{transform:none; opacity:1;} }

@@ -29,9 +29,10 @@ function openModal(title, bodyHtml, onMount) {
   el("modal-title").textContent = title;
   el("modal-body").innerHTML = bodyHtml;
   el("modal-mask").classList.add("show");
+  el("app").classList.add("modal-open");
   if (onMount) onMount(el("modal-body"));
 }
-function closeModal(){ el("modal-mask").classList.remove("show"); }
+function closeModal(){ el("modal-mask").classList.remove("show"); el("app").classList.remove("modal-open"); }
 
 /* ── Tab 渲染分流 ── */
 function switchTab(t){ TAB=t; try{localStorage.setItem("wjs_tab", t);}catch(e){} if (typeof SECT_VIEW!=="undefined") SECT_VIEW=null; if (typeof JIANGHU_VIEW!=="undefined") JIANGHU_VIEW=null;
@@ -64,6 +65,20 @@ function pageXiulian(){
   const pg = h(`<div>
     <div class="page-title">修 煉</div>
     <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
+    ${(p.spouse!==null && p.spouse!==undefined && G.npcs[p.spouse] && G.npcs[p.spouse].alive) ? (()=>{ const n=G.npcs[p.spouse], m=p.mate;
+      return `<div class="card" style="background:#fdf1ec;border:1px solid #e8c8b8"><h3>道侶同住</h3>
+      <div class="list-item"><div>
+        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>${n.demon?`<span class="tag">${n.race}</span>`:""}
+        ${m&&m.ignored>=3&&!m.sulking?`<span class="tag" style="background:#f5d7b0;color:#8a5a20">已${m.ignored}日未陪</span>`:""}
+        ${m&&m.sulking?`<span class="tag" style="background:#e8b0b0;color:#a03030">生悶氣中</span>`:""}
+        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${m&&m.bubble?m.bubble:"（安靜地陪著你）"}</div>
+        <div class="desc">友${n.favor} · ❤${n.love} · TA就住在院裡${m&&m.sulking?"，等你一句軟話":"，同修共枕日增靈氣+30"}</div></div></div>
+      <div class="btnrow">
+        <button class="small" id="m-chat">閒聊（每日一次）</button>
+        <button class="small ghost" id="m-flirt">調情</button>
+        <button class="small ghost" id="m-dual">雙修</button>
+        <button class="small ghost" id="m-together">相伴一日</button>
+      </div></div>`; })() : ""}
     ${p.guest && npcById(p.guest.id) ? (()=>{ const n=npcById(p.guest.id), g=p.guest;
       return `<div class="card" style="background:#fdf6ec;border:1px dashed #d8c8a8"><h3>院中來客</h3>
       <div class="list-item"><div>
@@ -87,12 +102,18 @@ function pageXiulian(){
     pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
     pg.querySelector("#g-dual").onclick = ()=>{ guestDual(); flushLog(); renderTab(); };
     pg.querySelector("#g-leave").onclick = ()=>{ guestLeave(); flushLog(); renderTab(); }; }
+  const mc = pg.querySelector("#m-chat");
+  if (mc) { mc.onclick = ()=>{ mateChat(); flushLog(); renderTab(); };
+    pg.querySelector("#m-flirt").onclick = ()=>{ mateFlirt(); flushLog(); renderTab(); };
+    pg.querySelector("#m-dual").onclick = ()=>{ mateDual(); flushLog(); renderTab(); };
+    pg.querySelector("#m-together").onclick = ()=>{ mateTogether(); flushLog(); renderTab(); }; }
   const pl = pg.querySelector("#pill-list");
   const keys = Object.keys(p.pills);
   pl.innerHTML = keys.length ? "" : `<div class="desc" style="color:#9a8a75;font-size:12px">背包沒有丹藥。丹藥可在【出行→坊市】購買。</div>`;
   keys.forEach(k => { const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.pills[k]}<div class="desc">${(PILLS[k]||{}).desc||""}</div></div>
     <button class="small ghost">${k==="聚靈散"?"服用":"說明"}</button></div>`);
-    row.querySelector("button").onclick = ()=>{ usePill(k); flushLog(); refreshLog(); }; pl.appendChild(row); });
+    row.querySelector("button").onclick = ()=>{ usePill(k); flushLog(); refreshLog(); };
+    if (k==="月華露飲") row.querySelector("button").textContent = "服用"; });
   return pg;
 }
 

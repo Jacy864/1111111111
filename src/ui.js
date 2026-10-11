@@ -1,231 +1,305 @@
-/* ═══════════ UI 框架 + 修煉/鑄劍頁 ═══════════ */
-let TAB = "xiulian";
-function el(id){ return document.getElementById(id); }
-function h(html){ const d=document.createElement("div"); d.innerHTML=html; return d.firstElementChild; }
-function esc(s){ return String(s).replace(/</g,"&lt;"); }
+/* ============ 村庄文游 · UI 层（第一批） ============ */
 
-/* ── 頂欄刷新 ── */
-function uiRefresh() {
-  if (!G) return;
-  const p = G.player;
-  el("avatar").textContent = "⛩";
-  el("pname").innerHTML = `${esc(p.name)} <span class="realm">${realmText(p.ri,p.sub)}</span>`;
-  el("statline").innerHTML =
-    `<span class="res">⚡精力${p.energy}/${p.energyMax}</span><span class="res">💰${fmt(p.stones)}</span>`+
-    `<span class="res">📜貢獻${fmt(p.contrib)}</span><span class="res">⚔武力${playerForce()}</span>`;
-  el("datebar").innerHTML = `<span>${year()}年${month()}月${dayOfMonth()}日 · ${p.age}歲</span><span>靈氣 ${fmt(p.spirit)}/${fmt(spiritCap())}</span>`;
-  el("spiritfill").style.width = clamp(p.spirit/spiritCap()*100,0,100)+"%";
-  const bp = el("sb-practice");
-  if (bp) { bp.textContent = `練劍${p.practiceCnt}/5`; bp.disabled = p.practiceCnt>=5 || p.energy<1; }
-  const bt = el("sb-task");
-  if (bt && G.monthTask) { bt.textContent = G.monthTask.name.slice(0,2); bt.title = `宗門任務：${G.monthTask.name}——${G.monthTask.desc}`; }
-  renderTab();
-}
-/* ── log（底部彈窗已移除：訊息一律記入修行手札） ── */
-function pushLog(entry) { /* 手札即時區在 renderTab 時刷新 */ }
-/* ── 彈窗 ── */
-function openModal(title, bodyHtml, onMount) {
-  el("modal-title").textContent = title;
-  el("modal-body").innerHTML = bodyHtml;
-  el("modal-mask").classList.add("show");
-  el("app").classList.add("modal-open");
-  if (onMount) onMount(el("modal-body"));
-}
-function closeModal(){ el("modal-mask").classList.remove("show"); el("app").classList.remove("modal-open"); }
+const V = { tab: 'village', place: null, chronDay: null };
 
-/* ── Tab 渲染分流 ── */
-function switchTab(t){ TAB=t; try{localStorage.setItem("wjs_tab", t);}catch(e){} if (typeof SECT_VIEW!=="undefined") SECT_VIEW=null; if (typeof JIANGHU_VIEW!=="undefined") JIANGHU_VIEW=null;
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  document.querySelector(`.tab[data-t="${t}"]`).classList.add("active"); renderTab(); }
-function renderTab(){
-  const m = el("main");
-  const keepScroll = m.scrollTop; // 保留滾動位置，避免重渲染後跳動
-  m.innerHTML = "";
-  if (TAB==="xiulian") m.appendChild(pageXiulian());
-  else if (TAB==="zhujian") m.appendChild(pageZhujian());
-  else if (TAB==="chuxing") m.appendChild(pageChuxing());
-  else if (TAB==="guanxi") m.appendChild(pageGuanxi());
-  else m.appendChild(pageMe());
-  m.scrollTop = keepScroll; // 原地刷新，不跳動
+const $ = s => document.querySelector(s);
+const app = () => $('#main');
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+/* ---------- 顶栏 ---------- */
+function renderStatus() {
+  $('#statline').innerHTML =
+    `<span class="st">第 ${G.day} 天 · ${NODE_NAMES[G.node]}</span>` +
+    `<span class="st">精力 ${G.energy}/${MAX_ENERGY}</span>` +
+    `<span class="st">安娜币 ${G.coins}</span>` +
+    `<span class="st">武力 ${G.force}</span>`;
 }
 
-/* ═══ 修煉頁 ═══ */
-function xuiLogHtml(){
-  const L = G.dayLog;
-  if (!L.length) return `<div style="color:#9a8a75">還沒有記下什麼。</div>`;
-  return L.slice().reverse().map(l=>`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px dotted #e2d5bc">
-    <span style="flex:0 0 52px;color:#a8916e;font-size:12px;align-self:center">第${l.d??""}日</span>
-    <span style="flex:1">${l.t}</span></div>`).join("");
+/* ---------- 播报流 ---------- */
+function feedHtml() {
+  const list = visibleFeed().slice(-30).reverse();
+  if (!Object.keys(G.stars).some(k => G.stars[k])) {
+    const hint = `<div class="feed-hint">在人物界面星标后，这里只显示与TA有关的事。现在显示全部。</div>`;
+    if (!list.length) return hint;
+    return hint + list.map(e => {
+      const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : '';
+      return `<div class="feed ${e.t}"><div class="fmeta">第${e.d}天 ${NODE_NAMES[e.n]}${tag}</div><div class="ftext">${e.html}</div></div>`;
+    }).join('');
+  }
+  if (!list.length) return '<div class="feed-hint">星标的人这段时间没有动静。</div>';
+  return list.map(e => {
+    const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : '';
+    return `<div class="feed ${e.t}"><div class="fmeta">第${e.d}天 ${NODE_NAMES[e.n]}${tag}</div><div class="ftext">${e.html}</div></div>`;
+  }).join('');
 }
-function pageXiulian(){
-  const p=G.player;
-  const compact = "padding:8px 10px";
-  const h3s = "font-size:13px;margin:0 0 4px 0";
-  const pg = h(`<div>
-    <div class="page-title">修 煉</div>
-    <div class="desc" style="font-size:11px;color:#9a8a75;margin-bottom:8px">修行與宗門任務按鈕已移至頂欄；當日記錄見下方手札。</div>
-    ${p.invite && npcById(p.invite.id) ? (()=>{ const n=npcById(p.invite.id), inv=p.invite, act=DATE_ACTS[inv.key];
-      const line=act.line[0];
-      return `<div class="card" id="invite-card" style="background:#fdf6ec;border:1px dashed #c8a878"><h3>邀約</h3>
-      <div class="list-item"><div>
-        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${n.sect}</span>${n.demon?`<span class="tag">${n.race}</span>`:""}
-        ${inv.from==="pursuer"?'<span class="tag" style="background:#f0c0c0;color:#a04040">有意於你</span>':""}
-        ${inv.from==="spouse"?'<span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>':""}
-        <div class="desc">${act.name} · ${inv.until-G.player.day+1}天後過期</div>
-        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${line}</div>
+
+/* ---------- 村庄页 ---------- */
+function villageHtml() {
+  if (V.place) return placeHtml(V.place);
+  const night = G.node >= DAY_NODES;
+  let html = `<div class="sec-title">村庄</div>`;
+  if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
+  html += `<div class="feed-wrap">${feedHtml()}</div>`;
+  html += `<div class="sec-title">去哪</div><div class="grid">`;
+  for (const [pid, p] of Object.entries(PLACES)) {
+    if (pid === 'home') continue;
+    const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
+    const label = who.length ? `<span class="pwho">${who.map(n => n.name).join('·')}</span>` : '';
+    html += `<button class="cell" data-place="${pid}">${p.name}${label}</button>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function placeHtml(pid) {
+  const p = PLACES[pid];
+  const who = NPCS.filter(n => locOf(n, G.node) === pid);
+  let html = `<button class="back" data-place="">← 村庄</button>`;
+  html += `<div class="sec-title">${p.name}</div><div class="place-desc">${p.desc}</div>`;
+  let acts = '';
+  if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
+  if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
+  if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
+  if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+  if (acts) html += `<div class="actrow2">${acts}</div>`;
+  if (!who.length) html += `<div class="dim">这里现在没有人。</div>`;
+  else html += who.map(n => npcCard(n)).join('');
+  return html;
+}
+
+function npcCard(n) {
+  const s = G.npc[n.id];
+  return `<button class="npc-card" data-npc="${n.id}">
+    <span class="nname">${n.name}${G.stars[n.id] ? ' ⭐' : ''}</span>
+    <span class="njob">${n.job}</span>
+    <span class="nrel">${friendWord(n.id)}${s.l >= 15 ? ' · ' + loveWord(n.id) : ''}</span>
+  </button>`;
+}
+
+/* ---------- 家页 ---------- */
+function homeHtml() {
+  const s = G.npc.asher;
+  let html = `<div class="sec-title">家</div>`;
+  html += `<div class="card">
+    <div class="row"><b>Gloria</b><span class="dim">猎户·外来者</span></div>
+    <div class="dim">精力 ${G.energy}/${MAX_ENERGY} · 武力 ${G.force} · 安娜币 ${G.coins}</div>
+    <div class="actrow2">
+      ${G.node === 1 && G.energy < MAX_ENERGY ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      <button class="btn" data-act="rest">休息（结束今天）</button>
+    </div>
+  </div>`;
+  html += `<div class="sec-title">同住</div>`;
+  html += npcCard(npcDef('asher'));
+  html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
+  html += `<div class="sec-title">背包</div><div class="bag">`;
+  for (const [k, v] of Object.entries(G.bag)) {
+    html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}<div class="dim">${(ITEMS[k] || {}).d || ''}</div></div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+/* ---------- 探险页（第二批） ---------- */
+function exploreHtml() {
+  const zones = [
+    ['矿洞', '30%遇怪。铁矿、宝石、黄金玉。近矿安全，远矿富贵。'],
+    ['水体', '20%遇怪。钓鱼、潜水。'],
+    ['森林', '50%遇怪。木材、水果、蘑菇、稀有花。'],
+    ['平原', '绝对安全。打猎、摘花、练剑场。'],
+  ];
+  let html = `<div class="sec-title">探险</div>`;
+  html += `<div class="card"><div class="b">周边还没开放。</div><div class="dim">探险、打猎、采矿、夜战在第二批实装。现在的你能靠广场的花和镇里的买卖过活。</div></div>`;
+  html += zones.map(([n, d]) => `<div class="zone"><b>${n}</b><div class="dim">${d}</div><div class="dim">（第二批开放）</div></div>`).join('');
+  return html;
+}
+
+/* ---------- 设定页 ---------- */
+function settingsHtml() {
+  let html = `<div class="sec-title">设定</div>`;
+  html += `<div class="actrow2">
+    <button class="btn" data-act="save">保存</button>
+    <button class="btn" data-act="reload">读档</button>
+    <button class="btn warn" data-act="newgame">开新档</button>
+  </div><div class="dim" style="margin:4px 2px">每个节点自动存档。单存档位。</div>`;
+  html += `<div class="sec-title">编年史</div>`;
+  if (!G.chronicle.length) html += `<div class="dim">还没有记录。</div>`;
+  else html += G.chronicle.slice().reverse().map(c =>
+    `<div class="chron" data-chron="${c.day}"><b>第 ${c.day} 天</b><div class="dim">${c.log.slice(0, 2).join('；')}${c.log.length > 2 ? '…' : ''}</div></div>`).join('');
+  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 第一批（活的村庄）。批二：经济与探险。批三：骑士与结局。批四：血肉。</div>`;
+  return html;
+}
+
+function chronDetail(day) {
+  const c = G.chronicle.find(x => x.day === day);
+  if (!c) return;
+  let html = `<div class="sec-title">第 ${c.day} 天</div>`;
+  html += `<div class="sec-sub">你做了什么</div>` + c.log.map(l => `<div class="li">· ${l}</div>`).join('');
+  html += `<div class="sec-sub">Asher</div><div class="li">${c.ash}</div>`;
+  html += `<div class="sec-sub">村里发生了什么</div>`;
+  html += c.ev.length ? c.ev.map(e => `<div class="li">${e}</div>`).join('') : `<div class="dim">平静的一天。</div>`;
+  openModal(`第 ${c.day} 天`, html);
+}
+
+/* ---------- NPC 个人界面 ---------- */
+function npcSheet(id) {
+  const n = npcDef(id), s = G.npc[id];
+  if (!G.starTipShown) {
+    G.starTipShown = true;
+    toast('星标后，播报只显示与TA有关的事。星标不影响世界运转。');
+  }
+  const night = G.node >= DAY_NODES;
+  let html = `<div class="sheet-head">
+    <b class="sheet-name">${n.name}</b>
+    <button class="star ${G.stars[id] ? 'on' : ''}" data-act="star" data-id="${id}">${G.stars[id] ? '★ 已星标' : '☆ 星标'}</button>
+  </div>`;
+  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${PLACES[locOf(n, G.node)] ? PLACES[locOf(n, G.node)].name : '前线'}</div>`;
+  html += `<div class="bio">${n.bio}</div>`;
+  if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
+  html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
+  if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
+  if (id === 'knight') html += `<div class="relbar dim">状态：完好。</div>`;
+  /* 互动 */
+  const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
+  html += `<div class="actrow2">`;
+  html += btn('chat', `闲聊（1）`);
+  html += btn('flirt', `暧昧（2）`, s.f < 40);
+  html += btn('tease', `打闹（2）`);
+  if (!n.noAttack) html += btn('hit', '攻击（2）');
+  if (id === 'knight') html += btn('flower', `送花（1）${(G.bag.花 || 0) < 1 ? '·没花' : ''}`, (G.bag.花 || 0) < 1);
+  html += `</div>`;
+  if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  if (n.trade) html += `<div class="actrow2"><button class="btn ib" data-act="trade" data-id="${id}">交易（1）</button></div>`;
+  openModal(n.name, html);
+}
+
+function tradeSheet(id) {
+  const n = npcDef(id), t = n.trade;
+  let html = `<div class="dim">${n.name}的摊子。</div><div class="trade">`;
+  html += `<div class="sec-sub">TA 卖</div>`;
+  for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
+  html += `<div class="sec-sub">TA 收（你有才显示）</div>`;
+  const buys = t.buy.filter(([item]) => (G.bag[item] || 0) > 0);
+  html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;
+  html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
+  openModal(`交易 · ${n.name}`, html);
+}
+
+/* ---------- 结果弹窗 / 结算 ---------- */
+function resultSheet(lines) {
+  openModal('　', lines.map(l => `<div class="line">${l}</div>`).join('') + `<div class="actrow2"><button class="btn" data-act="close-res">继续</button></div>`);
+}
+
+function settlementSheet() {
+  const c = G.chronicle[G.chronicle.length - 1];
+  if (!c) return;
+  let html = `<div class="sec-sub">第 ${c.day} 天过去了</div>`;
+  html += c.log.map(l => `<div class="li">· ${l}</div>`).join('');
+  html += `<div class="sec-sub">夜里</div><div class="li">${c.ash}</div>`;
+  html += `<div class="actrow2"><button class="btn" data-act="close-res">天亮了</button></div>`;
+  openModal('一天结束', html);
+}
+
+/* ---------- 弹窗 / toast ---------- */
+function openModal(title, html) {
+  $('#modal-title').innerHTML = title;
+  $('#modal-body').innerHTML = html;
+  $('#modal-mask').classList.add('show');
+}
+function closeModal() { $('#modal-mask').classList.remove('show'); }
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- 主渲染 ---------- */
+function render() {
+  renderStatus();
+  const map = { village: villageHtml, home: homeHtml, explore: exploreHtml, settings: settingsHtml };
+  app().innerHTML = map[V.tab]();
+  document.querySelectorAll('#tabbar .tab').forEach(el => el.classList.toggle('active', el.dataset.t === V.tab));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 事件委托 ---------- */
+document.addEventListener('click', e => {
+  const tab = e.target.closest('#tabbar .tab');
+  if (tab) { V.tab = tab.dataset.t; V.place = null; closeModal(); render(); return; }
+
+  const nm = e.target.closest('[data-npc]');
+  if (nm && !e.target.closest('[data-act]')) { npcSheet(nm.dataset.npc); return; }
+
+  const pl = e.target.closest('[data-place]');
+  if (pl) { V.place = pl.dataset.place || null; render(); return; }
+
+  const ch = e.target.closest('[data-chron]');
+  if (ch) { chronDetail(+ch.dataset.chron); return; }
+
+  const it = e.target.closest('[data-item]');
+  if (it) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
+
+  const act = e.target.closest('[data-act]');
+  if (!act) {
+    if (e.target.id === 'modal-mask' || e.target.closest('#modal-close-btn')) closeModal();
+    return;
+  }
+  const a = act.dataset.act, id = act.dataset.id;
+  if (a === 'close-res') { closeModal(); render(); return; }
+  if (a === 'star') { G.stars[id] = !G.stars[id]; save(); npcSheet(id); render(); return; }
+  if (a === 'trade') { tradeSheet(id); return; }
+  if (a === 'ia') {
+    if (act.disabled) return;
+    const r = interact(id, act.dataset.ia);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'buy' || a === 'sell') {
+    const r = a === 'buy' ? tradeBuy(id, act.dataset.item, +act.dataset.p) : tradeSell(id, act.dataset.item, +act.dataset.p);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else if (a === 'buy') tradeSheet(id); else { closeModal(); render(); }
+    return;
+  }
+  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {
+    const r = doPlaceAction(V.place, a);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
+  if (a === 'rest') { restNow(); settlementSheet(); render(); return; }
+  if (a === 'save') { save(); toast('已保存。'); return; }
+  if (a === 'reload') { if (load()) { V.place = null; closeModal(); render(); toast('已读档。'); } return; }
+  if (a === 'newgame') {
+    if (confirm('开新档会覆盖现有存档。确定？')) { newGame(); V.place = null; closeModal(); render(); }
+    return;
+  }
+});
+
+/* ---------- 启动 ---------- */
+function boot() {
+  const saved = hasSave();
+  app().innerHTML = `
+    <div class="boot">
+      <div class="boot-title">村 庄</div>
+      <div class="boot-sub">西幻中世纪 · 自由向文游 · 第一批试玩</div>
+      <div class="boot-txt">你是 Gloria，猎户，外来者，把家安在村口以北。<br>
+      村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
+      白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
+      <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span></div>
+      <div class="actrow2" style="justify-content:center">
+        ${saved ? `<button class="btn big" data-boot="continue">继续旅程</button>` : ''}
+        <button class="btn big ${saved ? '' : 'gold'}" data-boot="new">${saved ? '新的旅程' : '开始'}</button>
       </div>
-      <div class="btnrow" style="flex-direction:column">
-        <button class="small gold" id="inv-yes">應約(-1精力)</button>
-        <button class="small ghost" id="inv-no">婉拒</button>
-      </div></div></div>`; })() : ""}
-    ${(p.spouse!==null && p.spouse!==undefined && G.npcs[p.spouse] && G.npcs[p.spouse].alive) ? (()=>{ const n=G.npcs[p.spouse], m=p.mate;
-      return `<div class="card" style="background:#fdf1ec;border:1px solid #e8c8b8"><h3>道侶同住</h3>
-      <div class="list-item"><div>
-        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag" style="background:#f0c0c0;color:#a04040">道侶</span>${n.demon?`<span class="tag">${n.race}</span>`:""}
-        ${m&&m.ignored>=3&&!m.sulking?`<span class="tag" style="background:#f5d7b0;color:#8a5a20">已${m.ignored}日未陪</span>`:""}
-        ${m&&m.sulking?`<span class="tag" style="background:#e8b0b0;color:#a03030">生悶氣中</span>`:""}
-        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${m&&m.bubble?m.bubble:"（安靜地陪著你）"}</div>
-        <div class="desc">友${n.favor} · ❤${n.love} · TA就住在院裡${m&&m.sulking?"，等你一句軟話":"，同修共枕日增靈氣+30"}</div></div></div>
-      <div class="btnrow">
-        <button class="small" id="m-chat">閒聊（每日一次）</button>
-        <button class="small ghost" id="m-flirt">調情</button>
-        <button class="small ghost" id="m-dual">雙修</button>
-        <button class="small ghost" id="m-together">相伴一日</button>
-      </div></div>`; })() : ""}
-    ${p.guest && npcById(p.guest.id) ? (()=>{ const n=npcById(p.guest.id), g=p.guest;
-      return `<div class="card" style="background:#fdf6ec;border:1px dashed #d8c8a8"><h3>院中來客</h3>
-      <div class="list-item"><div>
-        <b>${n.gender==="M"?"♂":"♀"} ${n.name}</b><span class="tag">${g.until-G.player.day+1}天後走</span>
-        <div style="font-size:13px;background:#f7efe0;border-radius:8px;padding:8px 10px;margin:6px 0">${g.bubble?`「${g.bubble}」`:"（安靜地坐著）"}</div>
-        <div class="desc">友${n.favor}${n.love>0?` · ❤${n.love}`:""} · 就在你院中盤桓，你修煉時也不打擾</div></div></div>
-      <div class="btnrow">
-        <button class="small" id="g-chat">閒聊（每日一次）</button>
-        <button class="small ghost" id="g-flirt">調情</button>
-        <button class="small ghost" id="g-dual">雙修</button>
-        <button class="small ghost" id="g-leave">送客</button>
-      </div></div>`; })() : ""}
-    <div class="card" style="${compact}"><h3 style="${h3s}">丹藥</h3><div id="pill-list"></div></div>
-    <div class="card"><h3>修行手札（每日記事·不會消失）</h3>
-      <div id="xui-log" style="max-height:46vh;overflow-y:auto;font-size:14px;line-height:1.9;color:#4a3b28">${xuiLogHtml()}</div>
-    </div>
-  </div>`);
-  const refreshLog = ()=>{ const x = pg.querySelector("#xui-log"); if (x) x.innerHTML = xuiLogHtml(); };
-  const iy=pg.querySelector("#inv-yes");
-  if(iy){iy.onclick=()=>{acceptInvite();flushLog();renderTab();};pg.querySelector("#inv-no").onclick=()=>{declineInvite();flushLog();renderTab();};}
-  const gc = pg.querySelector("#g-chat");
-  if (gc) { gc.onclick = ()=>{ guestChat(); flushLog(); renderTab(); };
-    pg.querySelector("#g-flirt").onclick = ()=>{ guestFlirt(); flushLog(); renderTab(); };
-    pg.querySelector("#g-dual").onclick = ()=>{ guestDual(); flushLog(); renderTab(); };
-    pg.querySelector("#g-leave").onclick = ()=>{ guestLeave(); flushLog(); renderTab(); }; }
-  const mc = pg.querySelector("#m-chat");
-  if (mc) { mc.onclick = ()=>{ mateChat(); flushLog(); renderTab(); };
-    pg.querySelector("#m-flirt").onclick = ()=>{ mateFlirt(); flushLog(); renderTab(); };
-    pg.querySelector("#m-dual").onclick = ()=>{ mateDual(); flushLog(); renderTab(); };
-    pg.querySelector("#m-together").onclick = ()=>{ mateTogether(); flushLog(); renderTab(); }; }
-  const pl = pg.querySelector("#pill-list");
-  const keys = Object.keys(p.pills);
-  pl.innerHTML = keys.length ? "" : `<div class="desc" style="color:#9a8a75;font-size:12px">背包沒有丹藥。丹藥可在【出行→集市】購買。</div>`;
-  keys.forEach(k => { const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.pills[k]}<div class="desc">${(PILLS[k]||{}).desc||""}</div></div>
-    <button class="small ghost">${k==="聚靈散"?"服用":"說明"}</button></div>`);
-    row.querySelector("button").onclick = ()=>{ usePill(k); flushLog(); refreshLog(); };
-    if (k==="月華露飲") row.querySelector("button").textContent = "服用"; });
-  return pg;
-}
-
-/* ═══ 鑄劍頁 ═══ */
-function pageZhujian(){
-  const p=G.player;
-  const pg = h(`<div>
-    <div class="page-title">鑄 劍</div>
-    <div class="card"><h3>佩劍</h3>
-      <div class="kv"><span>當前佩劍</span><span>${p.equip?SWORD_GRADES[p.equip.grade]+"「"+p.equip.name+"」 力+"+p.equip.power:"空手"}</span></div>
-      <div class="kv"><span>鍛造等級</span><span>Lv.${p.forgeLv}${p.ding?" · 神鑄劍爐(+20%)":""}</span></div>
-    </div>
-    <div class="card"><h3>劍譜</h3><div id="recipe-list"></div></div>
-    <div class="card"><h3>劍庫（${p.swords.length}）</h3><div id="sword-list"></div></div>
-    <div class="card"><h3>材料（${Object.values(p.mats).reduce((a,b)=>a+b,0)}）</h3>
-      <div class="btnrow"><button class="ghost small" id="btn-sellall">批量售賣低階</button></div>
-      <div id="mat-list"></div></div>
-  </div>`);
-  const rl = pg.querySelector("#recipe-list");
-  p.recipes.forEach(r => {
-    const rc = RECIPES[r]; if (!rc) return;
-    const needTxt = Object.entries(rc.need).map(([e,v])=>`<span class="e-${{金:"jin",木:"mu",水:"shui",火:"huo",土:"tu"}[e]}">${e}${v}</span>`).join(" ");
-    const row = h(`<div class="list-item"><div><b>${r}</b><span class="tag">${rc.type}</span>
-      <div class="desc">${rc.desc} · 需 ${needTxt} · 熟練${p.mastery[r]||0}</div></div>
-      <button class="small gold">開爐</button></div>`);
-    row.querySelector("button").onclick = ()=>openForgeModal(r);
-    rl.appendChild(row);
-  });
-  const sl = pg.querySelector("#sword-list");
-  if (!p.swords.length) sl.innerHTML = `<div class="desc" style="color:#9a8a75;font-size:12px">還沒有鑄出過劍。</div>`;
-  p.swords.forEach(s => {
-    const row = h(`<div class="list-item"><div><b>${SWORD_GRADES[s.grade]}「${s.name}」</b>${p.equip&&p.equip.id===s.id?'<span class="tag">佩劍中</span>':""}
-      <div class="desc">武力+${s.power} · 值${fmt(s.value)}</div></div>
-      <div class="btnrow"><button class="small ghost">售</button><button class="small ghost">繳</button>${p.equip&&p.equip.id===s.id?"":'<button class="small">佩</button>'}</div></div>`);
-    const [b1,b2,b3] = row.querySelectorAll("button");
-    b1.onclick=()=>{ sellSword(s.id); flushLog(); renderTab(); };
-    b2.onclick=()=>{ contribSword(s.id); flushLog(); renderTab(); };
-    if (b3) b3.onclick=()=>{ p.equip=s; uiRefresh(); };
-    sl.appendChild(row);
-  });
-  const ml = pg.querySelector("#mat-list");
-  const mats = Object.keys(p.mats).sort((a,b)=>HERBS[b].grade-HERBS[a].grade);
-  if (!mats.length) ml.innerHTML = `<div class="desc" style="color:#9a8a75;font-size:12px">去【出行】採集材料吧。</div>`;
-  mats.forEach(k => {
-    const mt = HERBS[k];
-    const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.mats[k]}<span class="tag">${["一","二","三","四","五"][mt.grade-1]}階</span>
-      <div class="desc ele"><b class="e-${{金:"jin",木:"mu",水:"shui",火:"huo",土:"tu"}[mt.ele]}">${mt.ele}${mt.ev[mt.ele]}</b>
-      ${ELES.filter(e=>e!==mt.ele&&mt.ev[e]).map(e=>`${e}${mt.ev[e]}`).join(" ")}</div></div>
-      <div class="btnrow"><button class="small ghost">售</button><button class="small ghost">繳</button></div></div>`);
-    const [b1,b2]=row.querySelectorAll("button");
-    b1.onclick=()=>{ sellMat(k,1); flushLog(); renderTab(); };
-    b2.onclick=()=>{ contribMat(k,1); flushLog(); renderTab(); };
-    ml.appendChild(row);
-  });
-  pg.querySelector("#btn-sellall").onclick = ()=>{
-    let sum=0; Object.keys(p.mats).forEach(k=>{ if(HERBS[k].grade<=2){ sum+=HERBS[k].value*p.mats[k]; delete p.mats[k]; } });
-    p.stones+=sum; flushLog([[`批量售賣一二階材料，得靈石${fmt(sum)}。`]]); renderTab(); };
-  return pg;
-}
-/* 選材開爐彈窗 */
-let forgePicks = [];
-function openForgeModal(recipeName){
-  const rc = RECIPES[recipeName];
-  forgePicks = [];
-  const mats = Object.keys(G.player.mats).sort((a,b)=>HERBS[b].grade-HERBS[a].grade);
-  openModal(`開爐：${recipeName}`, `
-    <div style="font-size:12px;color:#7a654e;margin-bottom:8px">需求：${Object.entries(rc.need).map(([e,v])=>`${e}≥${v}`).join("、")}
-    （屬性總和越全，品質越高：下→中→上→極品）</div>
-    <div id="fp-sum" style="font-size:13px;margin-bottom:8px"></div>
-    <div style="max-height:200px;overflow-y:auto" id="fp-mats"></div>
-    <div class="btnrow"><button id="fp-go" class="gold">開爐！</button><button class="ghost" onclick="closeModal()">算了</button></div>`,
-  body => {
-    const list = body.querySelector("#fp-mats");
-    const render = () => {
-      list.innerHTML = "";
-      mats.forEach(k => {
-        const mt = HERBS[k];
-        const cnt = G.player.mats[k] - forgePicks.filter(x=>x===k).length;
-        if (cnt<=0) return;
-        const row = h(`<div class="list-item"><div><b>${k}</b><div class="desc ele">${ELES.map(e=>`${e}${mt.ev[e]}`).join(" ")}</div></div>
-          <button class="small ghost">+加入</button></div>`);
-        row.querySelector("button").onclick = ()=>{ forgePicks.push(k); render(); updateSum(); };
-        list.appendChild(row);
-      });
-    };
-    const updateSum = () => {
-      const sum={}; ELES.forEach(e=>sum[e]=0); forgePicks.forEach(k=>ELES.forEach(e=>sum[e]+=HERBS[k].ev[e]));
-      const hits = Object.keys(rc.need).filter(e=>sum[e]>=rc.need[e]).length;
-      const total = forgePicks.reduce((a,k)=>a+HERBS[k].value,0);
-      body.querySelector("#fp-sum").innerHTML =
-        `已選${forgePicks.length}件 → ${ELES.map(e=>`${e}:${sum[e]}`).join(" ")} · 達標 ${hits}/${Object.keys(rc.need).length}`;
-    };
-    render(); updateSum();
-    body.querySelector("#fp-go").onclick = ()=>{
-      if (!forgePicks.length) return;
-      forgePicks.forEach(k=>{ G.player.mats[k]--; if(!G.player.mats[k]) delete G.player.mats[k]; });
-      closeModal(); forge(recipeName, forgePicks); flushLog(); renderTab();
-    };
+      ${saved ? '<div class="dim" style="text-align:center">新的旅程会覆盖旧档</div>' : ''}
+    </div>`;
+  document.querySelectorAll('[data-boot]').forEach(b => b.onclick = () => {
+    if (b.dataset.boot === 'continue') { load(); } else { newGame(); }
+    V.tab = 'village'; render();
   });
 }
+document.addEventListener('DOMContentLoaded', boot);

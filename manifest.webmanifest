@@ -1,16 +1,16 @@
 {
-  "name": "萬劍山弟子修煉手札",
-  "short_name": "萬劍山手札",
-  "description": "女劍修的江湖人生：修煉、鑄劍、結緣、遊歷，一個檔案走天下。",
+  "name": "村庄",
+  "short_name": "村庄",
+  "description": "西幻中世纪村庄自由向文游：播报流里的村庄日常，与皇帝送来的骑士。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7efe0",
-  "theme_color": "#8a5a20",
+  "background_color": "#f6efe2",
+  "theme_color": "#3a2f26",
   "icons": [
-    { "src": "icons/icon-192.png?v=4", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png?v=4", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png?v=4", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-192.png?v=1", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png?v=1", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png?v=1", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

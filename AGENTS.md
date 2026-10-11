@@ -1,26 +1,37 @@
-# 萬劍山弟子修煉手札（yaowanggu-game）
+# 村庄（village-game）
 
-## 提交規則（用戶定，2026-10-10）
-- **無論小改動/大改動，改完直接 `git commit` + `git push origin main`，不用再問**
-- commit message 用中文一行式，學 git log 現有風格（「三修：…」「六大項：…」）
+西幻中世纪村庄自由向文游。主控 Gloria，核心：暗恋傀儡骑士。药王谷式模拟器形态。
+
+## 提交规则（沿用用户定，2026-10-10）
+- **改完直接 `git commit` + `git push origin main`，不用再问**
+- commit message 中文一行式
 
 ## 必守流程
-- **改 `src/` 後必須跑 `bash build.sh`** 重建單檔 `index.html`（忘記 = 改動無效）
-- build 前後可 `node --check src/<file>.js` 快速驗語法
+- **改 `src/` 后必须 `bash build.sh`** 重建单档 `index.html`（忘记 = 改动无效）
+- build 内含 `node --check` 语法校验
+- 改动后本地验证：`python3 -m http.server 8931` + playwright 截图（goto 带 timeout 15000，try/finally browser.close，`timeout 60 node` 启动）
+- 交付：构建后把 `index.html` 复制到 `/mnt/c/Users/lenovo/Desktop/小游戲/` 供言双击游玩
 
-## 測試基建（無需 npm install）
-- playwright：`/home/lenovo/dev/claude-test/node_modules/playwright`
-- 瀏覽器：`/home/lenovo/.cache/ms-playwright/chromium_headless_shell-1228/chrome-headless-shell-linux64/chrome-headless-shell`
-- 起服務：項目目錄 `python3 -m http.server 8931`（用完 kill）
-- 範本腳本：`/tmp/opencode/verify_all.js`（若還在；否則照上兩行路徑自寫，goto 一律帶 timeout）
+## 设计文档（唯一真源）
+- **canonical：`/mnt/c/Users/lenovo/Desktop/小游戲/村庄文游-框架讨论.md`**（言在桌面看，直接覆盖更新）
+- `docs/` 里是同步副本；动工/大节点时从桌面 copy 过来
+- §8.6 防八股铁律适用于一切游戏文本（台词/播报/事件/结局/编年史），写前过清单，写完自检
 
-## 架構速覽
-- 單檔 PWA：`index.html` 由 `build.sh` 從 `src/` 合成；`sw.js` 對 index.html 是 network-first（無舊緩存風險）
-- `src/engine.js` 遊戲邏輯（世界事件/婚姻/淡忘都在 worldTickMonthly 一帶）
-- `src/pers.js` 台詞庫：PERS 27 性格、WED 婚後、RACES 妖族、DIV 和離挽留
-- `src/ui.js` modal/框架，`src/ui2.js` 各介面渲染，`src/data.js` 境界/雜項數據
-- 存檔：localStorage，`G.player.spouse` 存玩家道侶 id；NPC 的 `spouseId=-1` 表示配偶是玩家
+## 架构
+- 单档 PWA：`index.html` 由 `build.sh` 从 `src/` 合成；`sw.js` network-first
+- `src/data.js` NPC/地点/台词池/微事件池/交易表
+- `src/engine.js` 状态 G、节点循环（5节点/天）、NPC 并行推演、互动结算、存读档（localStorage 单档 `village_game_save_v1`）
+- `src/ui.js` 四 tab 渲染（村庄/家/探险/设定）+ NPC 档案弹窗 + 播报流（人名可点、星标过滤）
+- 手机竖屏 390 优先验收
 
-## 已知設計定案（勿「修」）
-- 玩家道侶不參與世界婚姻破裂/情殺/誕子事件（`npcById(-1)` 天然排除，未實裝夫妻誕子）
-- 情殺死亡不走 `npcDie()` 但指針已先雙向清，無殘留
+## 分批计划（docs §15）
+- 批一（已完成）：活的村庄——四tab/节点循环/精力/播报流/星标/NPC界面/基础互动（闲聊暧昧打闹攻击交易送花）/存读档/编年史
+- 批二：经济与探险（四区域/采集/打猎/矿洞/黄金玉/礼物制作/砍价）
+- 批三：骑士与结局（修补闭环/骑士战abc/终末之月/E0-E4；E2b 完全隐身无提示——不许加任何游戏内暗示）
+- 批四：血肉（台词池扩容/吃醋全线/夜间突发/秘密线/尸毒救治支线/Lee 谶语/动物NPC清单待言出）
+
+## 铁律
+- E2b 隐藏真结局：游戏内零提示零引导（docs §12 已拍板）
+- 无「翻案线」玩法；剑指走向由骑士三维决定，细节方案需先给言审
+- Asher（15岁）纯情感向，绝不写性内容；其余成人 NPC 成人内容在言定尺度内
+- 攻击按钮对 Asher 隐藏（noAttack）

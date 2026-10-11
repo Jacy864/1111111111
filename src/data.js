@@ -134,7 +134,7 @@ const SECT = ["萬劍山","藥王谷","星機閣","妙音門","合歡宗","大�
 /* ── 妖精：種族池與命名 ── */
 const DEMON_SECT = "十萬大山";
 const DEMON_NAMES = ["素月","烏羽","青蘿","赤煙","白澤","雲箋","松聲","澗月","眠雪","拾星","聽雨","照夜","拂霜","銜燭","浮玉","飲溪","臥霞","枕濤","掬露","懸燈","撕風","傲雪","逐日","踏歌","問天","吮墨","織霧","釣雪","灼灼","離離","湯圓","糯米"];
-const RACE_KEYS = ["狐族","蛇族","貓族","狼族","鹿族","鴉族","蛛族","兔族","熊族","鶴族","鯉族","蝶族","龜族","蘭花精"];
+const RACE_KEYS = ["狐族","蛇族","貓族","狼族","鴉族","鶴族","龜族"]; // 14族合併為7族：兔/鹿→貓，熊→狼，蝶→鶴，蘭花精→龜，蛛→蛇
 const SECT_UNLOCK = { // 好感閾值 → 門派功能
   "藥王谷": {favor:60, fn:"毒方", desc:"好感60解鎖：可購毒丹"},
   "星機閣": {favor:60, fn:"避雷符", desc:"好感60解鎖：吉日突破+10%、避雷符禮"},
@@ -146,13 +146,9 @@ const SECT_UNLOCK = { // 好感閾值 → 門派功能
 /* ── 秘境（週期沿用原作年表，獎勵劍修化）── */
 const DUNGEONS = [
  {id:"jianzhong", name:"萬劍冢", cycle:0, start:0, req:[0,7], layers:9, desc:"常駐。歷代劍修埋劍之地，拾劍/劍意"},
- {id:"yunyin", name:"雲隱秘境", cycle:4, start:4, req:[1,4], layers:9, drop:{item:"神鑄劍爐", chance:0.35}, desc:"每4年。九層或得神鑄劍爐(鍛造成功率+20%)"},
  {id:"yishou", name:"異獸谷", cycle:4, start:2, req:[0,7], layers:6, drop:{item:"劍靈蛋", chance:0.25}, desc:"每4年。可獲劍靈蛋(本命劍用)"},
- {id:"huanshai", name:"幻蜃海", cycle:12, start:12, req:[2,4], layers:9, drop:{item:"鮫人淚", chance:0.5}, firstReward:"rc_名劍「聽雨」", event:"共度一生", desc:"每12年，金丹~出竅"},
- {id:"wusuo", name:"霧鎖迷島", cycle:20, start:20, req:[3,5], layers:9, firstReward:"rc_龍紋古劍", event:"情毒", desc:"每20年，元嬰~分神"},
+ {id:"huanshai", name:"幻蜃海", cycle:12, start:12, req:[2,4], layers:9, drop:{item:"鮫人淚", chance:0.5}, event:"共度一生", desc:"每12年。與深情者共歷幻境"},
  {id:"sansheng", name:"三生石台", cycle:25, start:23, req:[5,7], layers:5, event:"刻字", desc:"每25年。與滿愛情者刻名，來世重逢"},
- {id:"xuanming", name:"玄冥古窟", cycle:33, start:33, req:[4,6], layers:9, firstReward:"rc_太初劍", desc:"每33年，出竅~合體"},
- {id:"yuehua", name:"月華仙谷", cycle:100, start:100, req:[6,7], layers:9, own:true, desc:"2000萬貢獻可提前兌換，全材料自由"},
 ];
 
 /* ── 文案池 ── */

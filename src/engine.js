@@ -1110,20 +1110,15 @@ function interact(id, act) {
   }
   nextDay(); uiRefresh();
 }
-function sparNpc(n, toDeath) {
+function sparNpc(n) {
   const f = playerForce(), nf = npcForce(n);
   const win = Math.random() < clamp(f/(f+nf), 0.05, 0.95);
   const p = G.player;
   p.spirit += win ? 120 : 40; p.swordSense += 2;
   if (win) { msg(`你與${n.name}在論劍台切磋——${LINES.sparWin[rnd(3)]}。劍意+2，友情+2。`);
-    n.favor = clamp(n.favor+2,-200,120); p.reputation += toDeath?-10:3; }
+    n.favor = clamp(n.favor+2,-200,120); }
   else { msg(`你與${n.name}在論劍台切磋——${LINES.sparLose[rnd(3)]}。劍意+2。`);
     n.favor = clamp(n.favor+1,-200,120); }
-  if (toDeath) {
-    if (win) { onNpcKilled(n,"決鬥"); p.reputation-=10;
-      msg(`死鬥！${n.name}飲恨劍下。聲望-10，其親友對你敵視。`); }
-    else if (Math.random()<0.3) { gameOver(`死鬥敗北，你倒在${n.name}劍下。`); return; }
-  }
   nextDay(); uiRefresh();
 }
 function propose(n) {
@@ -1192,13 +1187,13 @@ function assassinate(n) {
       msg(`夜探${n.sect}，${LINES.assassinateOk[rnd(2)]}——${n.name}死了，無人懷疑到你。`);
     } else {
       p.reputation -= 40;
-      msg(`${LINES.assassinateSeen[rnd(1)]}你仍一劍得手，但${n.name}死前認出了你！聲望-40，其門派敵視。`);
+      msg(`${LINES.assassinateSeen[rnd(1)]}你仍一劍得手，但${n.name}死前認出了你！其門派敵視。`);
       G.npcs.filter(o=>o.sect===n.sect&&o.alive&&o.met).forEach(o=>o.favor=clamp(o.favor-40,-200,120));
     }
   } else {
     p.reputation -= 15;
     const hurt = Math.random()<0.35;
-    msg(`你潛入${n.name}洞府，被護體劍氣逼退——${hurt?"你受了傷，勉強逃脫（靈氣-300）":"僥倖全身而退"}。事情瞞不住，聲望-15。`);
+    msg(`你潛入${n.name}洞府，被護體劍氣逼退——${hurt?"你受了傷，勉強逃脫（靈氣-300）":"僥倖全身而退"}。事情瞞不住，江湖傳言四起。`);
     if (hurt) p.spirit=Math.max(0,p.spirit-300);
     n.favor -= 40;
   }
@@ -1214,7 +1209,6 @@ function checkSectUnlock(sect) {
 
 /* ── 秘境 ── */
 function dgOpen(d) {
-  if (d.own && G.player.yuehuaOwned) return true;
   if (d.cycle===0) return true;
   const y = year();
   return d.cycle>0 && y>=d.start && (y-d.start)%d.cycle===0;
@@ -1256,19 +1250,10 @@ function exploreDungeon(d) {
       story.push(`你將與${n.name}的名字刻上三生石。縱使輪迴，來世重逢。`); }
     else story.push(n ? "名字已刻。" : "三生石前空無一人——你需要一份滿值的愛情（99，無情道除外）。");
   }
-  if (d.own) story.push("月華仙谷的材料任你取用。");
   p.spirit += 200 + p.ri*150; p.swordSense += 3;
   nextDay();
   msg(story.join("")); uiRefresh();
 }
-function buyYuehua() {
-  const p=G.player;
-  if (p.yuehuaOwned) return msg("月華仙谷已歸你所有。");
-  if (p.contrib < 20000000) return msg(`貢獻不足（${fmt(p.contrib)}/2000萬）。`);
-  p.contrib -= 20000000; p.yuehuaOwned = true;
-  msg("你以兩千萬貢獻換得月華仙谷！從此材料自由。"); uiRefresh();
-}
-
 /* ── 任務 ── */
 function doTask() {
   const t = G.monthTask, p=G.player;
@@ -1380,8 +1365,8 @@ function migrateFavorFloor(){ // v6 一次性：舊版淡忘無條件扣好感�
   if (fixed) msg(`【修正】${fixed}位故識心頭的隔閡散了——舊年的誤會一筆勾銷，情分從頭再來。`);
 }
 function listSaves() {
-  return [0,1,2].map(s => { const r=localStorage.getItem("wjs_"+s);
-    return {slot:s, empty:!r, time:r?new Date(JSON.parse(r).t).toLocaleString():"—", name:r?JSON.parse(r).g.player.name+"·"+realmText(JSON.parse(r).g.player.ri,JSON.parse(r).g.player.sub):""}; });
+  const r=localStorage.getItem("wjs_0");
+  return [{slot:0, empty:!r, time:r?new Date(JSON.parse(r).t).toLocaleString():"—", name:r?JSON.parse(r).g.player.name+"·"+realmText(JSON.parse(r).g.player.ri,JSON.parse(r).g.player.sub):""}];
 }
 /* ── log ── */
 function msg(t) { G.dayLog.push({d:G?G.player.day:0, t}); if (G && G.dayLog.length>200) G.dayLog.shift(); }

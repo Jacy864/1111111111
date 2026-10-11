@@ -12,8 +12,7 @@ function uiRefresh() {
   el("pname").innerHTML = `${esc(p.name)} <span class="realm">${realmText(p.ri,p.sub)}</span>`;
   el("statline").innerHTML =
     `<span class="res">⚡精力${p.energy}/${p.energyMax}</span><span class="res">💰${fmt(p.stones)}</span>`+
-    `<span class="res">📜貢獻${fmt(p.contrib)}</span><span class="res">⚔武力${playerForce()}</span>`+
-    `<span class="res">⭐聲望${p.reputation}</span>`;
+    `<span class="res">📜貢獻${fmt(p.contrib)}</span><span class="res">⚔武力${playerForce()}</span>`;
   el("datebar").innerHTML = `<span>${year()}年${month()}月${dayOfMonth()}日 · ${p.age}歲</span><span>靈氣 ${fmt(p.spirit)}/${fmt(spiritCap())}</span>`;
   el("spiritfill").style.width = clamp(p.spirit/spiritCap()*100,0,100)+"%";
   const bp = el("sb-practice");
@@ -125,7 +124,7 @@ function pageXiulian(){
     pg.querySelector("#m-together").onclick = ()=>{ mateTogether(); flushLog(); renderTab(); }; }
   const pl = pg.querySelector("#pill-list");
   const keys = Object.keys(p.pills);
-  pl.innerHTML = keys.length ? "" : `<div class="desc" style="color:#9a8a75;font-size:12px">背包沒有丹藥。丹藥可在【出行→坊市】購買。</div>`;
+  pl.innerHTML = keys.length ? "" : `<div class="desc" style="color:#9a8a75;font-size:12px">背包沒有丹藥。丹藥可在【出行→集市】購買。</div>`;
   keys.forEach(k => { const row = h(`<div class="list-item"><div><b>${k}</b> ×${p.pills[k]}<div class="desc">${(PILLS[k]||{}).desc||""}</div></div>
     <button class="small ghost">${k==="聚靈散"?"服用":"說明"}</button></div>`);
     row.querySelector("button").onclick = ()=>{ usePill(k); flushLog(); refreshLog(); };

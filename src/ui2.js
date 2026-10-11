@@ -15,10 +15,8 @@ function pageChuxing(){
   const pg = h(`<div>
     <div class="page-title">出 行</div>
     <div class="card"><h3>採集之地</h3><div id="map-list"></div></div>
-    <div class="card"><h3>週期秘境</h3><div id="dg-list"></div>
-      <div class="btnrow"><button class="small gold" id="btn-yuehua">兌換月華仙谷（2000萬貢獻）</button></div></div>
-    <div class="card"><h3>坊市</h3><div id="shop-list"></div></div>
-    <div class="card"><h3>妖市</h3><div id="dshop-list"></div></div>
+    <div class="card"><h3>秘境</h3><div id="dg-list"></div></div>
+    <div class="card"><h3>集市</h3><div id="shop-list"></div></div>
   </div>`);
   const ml = pg.querySelector("#map-list");
   MAP_NAMES.forEach((mn,i)=>{
@@ -38,30 +36,23 @@ function pageChuxing(){
     if (open) row.querySelector("button").onclick=()=>{ exploreDungeon(d); flushLog(); renderTab(); };
     dl.appendChild(row);
   });
-  pg.querySelector("#btn-yuehua").onclick=()=>{ buyYuehua(); flushLog(); };
   const sl = pg.querySelector("#shop-list");
-  const goods = [...Object.keys(PILLS).filter(k=>!PILLS[k].demon).map(k=>({...PILLS[k],name:k,bag:"pills"})),
-                 ...(p.poisonUnlocked?Object.keys(POISON_PILLS).map(k=>({...POISON_PILLS[k],name:k,bag:"poisons",poison:true})):[])];
+  const goods = [
+    ...Object.keys(PILLS).filter(k=>!PILLS[k].demon).map(k=>({...PILLS[k],name:k,bag:"pills",group:"基礎丹藥"})),
+    ...(p.poisonUnlocked?Object.keys(POISON_PILLS).map(k=>({...POISON_PILLS[k],name:k,bag:"poisons",poison:true,group:"藥王谷毒丹"})):[]),
+    ...(demonShopOpen()?Object.keys(PILLS).filter(k=>PILLS[k].demon).map(k=>({...PILLS[k],name:k,bag:"pills",group:"妖市珍品"})):[]),
+  ];
+  let group="";
   goods.forEach(g=>{
+    if(g.group!==group){ group=g.group;
+      sl.appendChild(h(`<div class="desc" style="font-size:11px;color:#8a6a40;margin:8px 0 4px">${group}</div>`)); }
     const row = h(`<div class="list-item"><div><b>${g.name}${g.poison?"☠":""}</b><div class="desc">${g.desc}</div></div>
       <div class="btnrow"><span style="font-size:12px;color:#8a6a40;align-self:center">${fmt(g.price)}石</span><button class="small">買</button></div></div>`);
     row.querySelector("button").onclick=()=>{ buyPill(g.name); flushLog(); };
     sl.appendChild(row);
   });
   if (p.poisonUnlocked===false) sl.appendChild(h(`<div class="desc" style="color:#b07050;font-size:11px;margin-top:6px">☠ 毒丹：與藥王谷眾人交好（平均好感60）後解鎖。</div>`));
-  /* 妖市：十萬大山好感40開放 */
-  const ds = pg.querySelector("#dshop-list");
-  if (demonShopOpen()) {
-    Object.keys(PILLS).filter(k=>PILLS[k].demon).forEach(k=>{
-      const g = PILLS[k];
-      const row = h(`<div class="list-item"><div><b>${g.desc.indexOf("妖市")>=0?k:k+"🦊"}</b><div class="desc">${g.desc}</div></div>
-        <div class="btnrow"><span style="font-size:12px;color:#8a6a40;align-self:center">${fmt(g.price)}石</span><button class="small">買</button></div></div>`);
-      row.querySelector("button").onclick=()=>{ buyPill(k); flushLog(); };
-      ds.appendChild(row);
-    });
-  } else {
-    ds.appendChild(h(`<div class="desc" style="color:#8a6a40;font-size:12px">🦊 妖霧繚繞的市集：與十萬大山的妖精們結交（平均好感40）後，TA們便領你進去。眼下只有霧。</div>`));
-  }
+  if (!demonShopOpen()) sl.appendChild(h(`<div class="desc" style="color:#8a5590;font-size:11px;margin-top:6px">妖市珍品：與十萬大山妖精交好（平均好感40）後解鎖。</div>`));
   return pg;
 }
 
@@ -236,7 +227,6 @@ function openNpcModal(id){
       <button class="warn small" data-act="下毒">下毒</button>
       <button class="warn small" data-act="暗殺">暗殺</button>
       ${p.spouse===n.id?'<button class="warn small" id="btn-div">和離</button>':""}
-      <button class="warn small" data-act="死鬥">死鬥</button>
     </div>`;
   };
   const bind = body=>{
@@ -248,7 +238,6 @@ function openNpcModal(id){
     body.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{
       const act = b.dataset.act;
       if (act==="下毒") return uiPickPoison(npcById(id));
-      if (act==="死鬥") { sparNpc(npcById(id),true); flushLog(); closeModal(); renderTab(); return; }
       if (act==="引薦") { introduce(id); curLast=lastMsg(); flushLog(); return refresh(); }
       interact(id, act); curLast=lastMsg(); flushLog(); refresh();
     });
@@ -295,7 +284,7 @@ function uiDivorceAsk(n){
 
 function uiPickPoison(n){
   const p=G.player, ps=Object.keys(p.poisons);
-  if (!ps.length) { closeModal(); return flushLog([["你沒有毒丹。（坊市·藥王谷解鎖後可購）"]]); }
+  if (!ps.length) { closeModal(); return flushLog([["你沒有毒丹。（集市·藥王谷解鎖後可購）"]]); }
   openModal(`對 ${n.name} 下毒`, `<div id="pp-list"></div><div class="btnrow"><button class="ghost" onclick="closeModal()">罷手</button></div>`, body=>{
     const list = body.querySelector("#pp-list");
     ps.forEach(k=>{ const row = h(`<div class="list-item"><div><b>☠${k}</b> ×${p.poisons[k]}<div class="desc">${POISON_PILLS[k].desc}</div></div><button class="small warn">下</button></div>`);
@@ -313,14 +302,13 @@ function pageMe(){
       <div class="kv"><span>姓名/年齡</span><span>${esc(p.name)} · ${p.age}歲</span></div>
       <div class="kv"><span>境界</span><span>${realmText(p.ri,p.sub)}</span></div>
       <div class="kv"><span>武力構成</span><span>基礎${p.ri*40+p.sub*8+5} + 劍意${Math.round((p.ri*40+p.sub*8+5)*p.swordSense*0.003)} + 劍${p.equip?p.equip.power:0}</span></div>
-      <div class="kv"><span>聲望</span><span>${p.reputation} ${p.reputation<-50?"（正道通緝中！）":""}</span></div>
       <div class="kv"><span>佩劍</span><span>${p.equip?SWORD_GRADES[p.equip.grade]+"「"+p.equip.name+"」":"空手"}</span></div>
       <div class="kv"><span>道侶</span><span>${p.spouse!==null&&p.spouse!==undefined&&G.npcs[p.spouse]?G.npcs[p.spouse].name:"—"}</span></div>
       <div class="kv"><span>三生石</span><span>${G.flags.sanshengDone.length?G.flags.sanshengDone.map(i=>G.npcs[i].name).join("、"):"—"}</span></div>
     </div>
-    <div class="card"><h3>存檔（SL：行動前手動存）</h3><div id="save-list"></div>
+    <div class="card"><h3>存檔</h3><div id="save-list"></div>
       <div class="kv" style="margin-top:8px"><span>自動存檔（每月+切後台時）</span><button class="small ${p.autoSave?"":"ghost"}" id="btn-auto">${p.autoSave?"開":"關"}</button></div>
-      <div class="desc" style="margin-top:6px;font-size:11px">換手機／換瀏覽器／清快取都不怕：把存檔碼複製存好，隨時導入回來。</div>
+      <div class="desc" style="margin-top:6px;font-size:11px">單存檔制：每月與切後台自動保存。換手機／換瀏覽器／清快取都不怕，存檔碼可隨時導入回來。</div>
       <div class="btnrow" style="margin-top:6px">
         <button class="small ghost" id="btn-export">導出存檔碼</button>
         <button class="small ghost" id="btn-import">導入存檔碼</button>
@@ -388,7 +376,6 @@ function showIntro(){
     <input id="intro-name" placeholder="道號（2-6字）" maxlength="6" value="">
     <div class="btnrow" style="justify-content:center">
       <button id="intro-go">拜入山門</button>
-      <button class="ghost" id="intro-load">讀取存檔1</button>
     </div>
   </div>`);
   const cont = el("intro-cont");
@@ -403,12 +390,6 @@ function showIntro(){
     el("intro").remove();
     lastLogLen = 0; flushLog();
     saveGame(0,true);
-  };
-  el("intro-load").onclick = ()=>{
-    if (!localStorage.getItem("wjs_1")) return alert("槽位1為空");
-    try { loadGame(1); } catch(e){ G = null; }
-    if (!G) return alert("存檔損壞，請換個槽位。");
-    el("intro").remove(); lastLogLen = G.dayLog.length; flushLog(); restoreTab();
   };
 }
 function restoreTab(){

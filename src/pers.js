@@ -16,7 +16,7 @@ const PERS = {
 "傲嬌":{giftMul:0.8,chatFav:2,flirtReq:70,loveGain:4,decay:1,desc:"嘴上嫌棄，身體老實",
  greet:["「哼，才不是在等你。」","「……又來了。真拿你沒辦法。」","「哦，是你啊。（假裝繼續擦劍）」"],
  chat:[["「別自作多情，我只是剛好路過。」","「跟你講話？我寧願擦劍。」","「……有事？沒事讓讓，你擋著光了。」"],
-       ["「今、今天的你……也就那樣吧。」（偷瞄）","「這個給你。不是我買的，是撿的。」","「陪你去坊市？……我是剛好順路！」"],
+       ["「今、今天的你……也就那樣吧。」（偷瞄）","「這個給你。不是我買的，是撿的。」","「陪你去集市？……我是剛好順路！」"],
        ["「你要是敢跟別人這樣說笑，我就……我就……哼。」","「笨蛋。我最喜歡的笨蛋。」","「別誤會，我只是……只是想天天見到你，不行嗎！」"]],
  gift:["「誰、誰要你的東西！（收下）唔……謝了。」","「正好缺這個，別誤會，是順便。」"],
  giftBad:["「什麼破爛。拿回去！」"],
@@ -343,14 +343,14 @@ const SECT_PERS = {
  "大自在殿":["寡言","無情","古板","陰鬱","聖母","溫柔"],
  "十萬大山":["妖媚","癡纏","瘋批","陰鬱","溫柔","樂天","單純","話癆"],
 };
+const CORE_PERSONALITIES = ["溫柔","傲嬌","風流","癡纏","醋罈","陰鬱","無情","寡言","妖媚","瘋批","單純","潑辣","話癆","忠犬"];
+/* 第一批簡化：新生成NPC只走14核心性格；舊檔原性格暫保留，下一批一次性遷移合併 */
 function rollPers(sect) {
-  if (Math.random()<0.06) return "無情";
-  if (sect && SECT_PERS[sect] && Math.random()<0.7) {
-    const pool = SECT_PERS[sect];
-    return pool[rnd(pool.length)];
+  const pool = CORE_PERSONALITIES.filter(k=>k!=="無情" || Math.random()<0.08);
+  if (sect && SECT_PERS[sect]) {
+    const local = SECT_PERS[sect].filter(k=>CORE_PERSONALITIES.includes(k));
+    if (local.length && Math.random()<0.7) return local[rnd(local.length)];
   }
-  // 通用池不含門派專屬性格：藥罐（丹爐台詞）只在藥王谷，蕩浪只在合歡宗
-  const pool = PERS_KEYS.filter(k=>!PERS[k].rare && k!=="藥罐" && k!=="蕩浪");
   return pool[rnd(pool.length)];
 }
 
@@ -814,13 +814,13 @@ s_qin:{who:"sect:妙音門",name:"學琴一課",loveAdd:0,favAdd:2,line:["「手
 s_feast:{who:"sect:合歡宗",name:"花宴夜飲",loveAdd:3,favAdd:0,line:["「花開一夜，酒醉三巡。你來，正好。」","「別急著回去，夜色還長。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
 s_spring:{who:"sect:合歡宗",name:"溫泉小聚",loveAdd:2,favAdd:0,line:["「水溫剛好。人是不是也剛好？」","「閉眼。剩下的交給水聲。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}},
 s_sutra:{who:"sect:大自在殿",name:"禪房抄經",loveAdd:0,favAdd:2,line:["「筆隨心走，心隨你亂。……罰你再抄一頁。」","「佛說不動。我說，很難。」"],reward:(p,n)=>{const g=400+p.ri*100;p.spirit+=g;return `靈氣+${fmt(g)}`;}},
-s_porridge:{who:"sect:大自在殿",name:"山門施粥",loveAdd:0,favAdd:1,line:["「一碗粥，一份緣。你端那邊，我端這邊。」","「眾生苦。你笑，就不苦了。」"],reward:(p,n)=>{p.reputation+=3;return "聲望+3";}},
+s_porridge:{who:"sect:大自在殿",name:"山門施粥",loveAdd:0,favAdd:1,line:["「一碗粥，一份緣。你端那邊，我端這邊。」","「眾生苦。你笑，就不苦了。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
 s_market:{who:"sect:十萬大山",name:"妖市閒逛",loveAdd:0,favAdd:0,line:["「妖市攤主都認識我。跟緊，別被坑。」","「這攤有好貨。你先挑，我砍價。」"],reward:(p,n)=>{const r=Math.random();if(r<0.4){const g=200+rnd(500);p.stones+=g;return `靈石+${g}`;}if(r<0.7){const pool=Object.values(HERBS).filter(m=>m.map===4);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;return `拾得${m.name}×1`;}return "什麼都沒買，只聞了滿袖妖市香";}},
 s_night:{who:"sect:十萬大山",name:"山間夜遊",loveAdd:1,favAdd:0,line:["「山裡夜路我熟。手給我。」","「別怕黑。我眼睛會發光。」"],reward:(p,n)=>{const g=250+p.ri*100;p.spirit+=g;if(Math.random()<0.2)return `靈氣+${fmt(g)}；忽然竄出妖獸！${runDateDanger(p,n,true)}`;return `靈氣+${fmt(g)}`;}},
 /* 性格覆蓋 */
 p_武癡:{who:"pers:武癡",name:"演武場過招",loveAdd:1,favAdd:0,line:["「別留手。留下手我生氣。」","「贏我一次，今日就聽你的。」"],reward:(p,n)=>{const g=150+p.ri*30;p.spirit+=g;p.swordSense+=3;return `靈氣+${fmt(g)}，劍意+3`;}},
 p_酒鬼:{who:"pers:酒鬼",name:"月下對酌",loveAdd:2,favAdd:3,line:["「酒在，月在，你在。齊了。」","「醉了也別怕，我認得回家的路——就是你那裡。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
-p_財迷:{who:"pers:財迷",name:"坊市淘寶",loveAdd:0,favAdd:0,line:["「看好了，這叫殺價。」","「你站旁邊就行，老闆見你心軟。」"],reward:(p,n)=>{const g=200+rnd(400);p.stones+=g+100;return `靈石+${g}（財迷又塞你100）`;}},
+p_財迷:{who:"pers:財迷",name:"集市淘寶",loveAdd:0,favAdd:0,line:["「看好了，這叫殺價。」","「你站旁邊就行，老闆見你心軟。」"],reward:(p,n)=>{const g=200+rnd(400);p.stones+=g+100;return `靈石+${g}（財迷又塞你100）`;}},
 p_藥罐:{who:"pers:藥罐",name:"藥廬幫工",loveAdd:0,favAdd:0,line:["「藥爐交你，我瞇一會兒……別燒了。」","「咳，你來了。這藥香都好聞些。」"],reward:(p,n)=>{for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map<=1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;}if(Math.random()<0.2){p.pills["聚靈散"]=(p.pills["聚靈散"]||0)+1;return "材料×2，附贈聚靈散×1";}return "材料×2";}},
 p_話癆:{who:"pers:話癆",name:"聽TA說書",loveAdd:2,favAdd:0,line:["「今日故事很長，你坐穩。」","「中間不許睡。睡了我也講完。」"],reward:(p,n)=>{p.spirit+=100;p.swordSense++;return "靈氣+100，劍意+1";}},
 p_樂天:{who:"pers:樂天",name:"後山探險",loveAdd:1,favAdd:0,line:["「走錯路才好玩！跟著我！」","「前面肯定有好東西。沒有也沒關係，我們也好玩。」"],reward:(p,n)=>{p.spirit+=200;let s="靈氣+200";if(Math.random()<0.2){const g=100+rnd(200);p.stones+=g;s+=`，靈石+${g}`;}return s;}},
@@ -830,12 +830,12 @@ p_癡纏:{who:"pers:癡纏",name:"去看TA刻字的老樹",loveAdd:3,favAdd:0,li
 p_瘋批:{who:"pers:瘋批",name:"去個危險的地方",loveAdd:0,favAdd:0,line:["「怕嗎？怕就抓緊我。」","「我帶路，規矩我定。」"],reward:(p,n)=>{const r=runDateDanger(p,n,false);p.swordSense+=2;return `${r}，劍意+2`;}},
 p_戲精:{who:"pers:戲精",name:"為你專場演出",loveAdd:2,favAdd:2,line:["「開場！今日只演給一位看客。」","「掌聲可以晚點給，眼淚先收好。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
 p_單純:{who:"pers:單純",name:"後山喂兔子",loveAdd:1,favAdd:3,line:["「噓，兔子認生。先給我抱。」","「牠們記得你！你看牠們耳朵豎起來了！」"],reward:(p,n)=>{p.spirit+=100;return "靈氣+100";}},
-p_聖母:{who:"pers:聖母",name:"下山幫凡人",loveAdd:1,favAdd:0,line:["「救人不多，能幫一個是一個。」","「你來了。山下孩子們念過你。」"],reward:(p,n)=>{p.reputation+=4;p.spirit+=100;return "聲望+4，靈氣+100";}},
+p_聖母:{who:"pers:聖母",name:"下山幫凡人",loveAdd:1,favAdd:0,line:["「救人不多，能幫一個是一個。」","「你來了。山下孩子們念過你。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
 p_古板:{who:"pers:古板",name:"正式茶敘",loveAdd:1,favAdd:2,line:["「茶席已備。請。」","「今日破例，不談門規。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
 p_高傲:{who:"pers:高傲",name:"展示TA的珍藏",loveAdd:2,favAdd:0,line:["「能進此室者，不超過三人。」","「看可以，手別抖。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
 p_傲嬌:{who:"pers:傲嬌",name:"「順路」同行",loveAdd:2,favAdd:0,line:["「誰特意約你！我只是順路！」","「走快點，不是等你，是風要停了。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
 p_溫柔:{who:"pers:溫柔",name:"野餐煮茶",loveAdd:2,favAdd:2,line:["「坐這邊，有樹蔭。」","「茶剛好，你也是。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
-p_腹黑:{who:"pers:腹黑",name:"一筆「生意」",loveAdd:0,favAdd:0,line:["「這單生意，合夥人只要一個：你。」","「風險我擔，利潤你拿。別問為什麼。」"],reward:(p,n)=>{const r=Math.random();if(r<0.5){const g=300+rnd(500);p.stones+=g;return `靈石+${g}`;}if(r<0.8){p.spirit+=300;return "靈氣+300";}wlog("有人看見你們在坊市同行，還說說笑笑。",false);return "只得到一條江湖情報：坊市說書人今夜把你們編進了同一回書";}},
+p_腹黑:{who:"pers:腹黑",name:"一筆「生意」",loveAdd:0,favAdd:0,line:["「這單生意，合夥人只要一個：你。」","「風險我擔，利潤你拿。別問為什麼。」"],reward:(p,n)=>{const r=Math.random();if(r<0.5){const g=300+rnd(500);p.stones+=g;return `靈石+${g}`;}if(r<0.8){p.spirit+=300;return "靈氣+300";}wlog("有人看見你們在集市同行，還說說笑笑。",false);return "只得到一條江湖情報：坊市說書人今夜把你們編進了同一回書";}},
 p_風流:{who:"pers:風流",name:"月下散步",loveAdd:3,favAdd:0,line:["「月色不喝一杯再走嗎？」","「風都替我把話說了三遍。」"],reward:(p,n)=>{p.spirit+=100;return "靈氣+100";}},
 p_妖媚:{who:"pers:妖媚",name:"湖心夜話",loveAdd:3,favAdd:0,line:["「湖心只有船，船心只有你。」","「別看水，看我。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
 p_蕩浪:{who:"pers:蕩浪",name:"溫泉夜宴",loveAdd:4,favAdd:0,line:["「水溫、酒溫、人也溫，缺你。」","「今晚不談道，談心。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
@@ -851,7 +851,7 @@ r_蛇族:{who:"race:蛇族",name:"看TA的舊蛻",loveAdd:3,favAdd:2,line:["「�
 r_貓族:{who:"race:貓族",name:"屋頂曬太陽",loveAdd:0,favAdd:2,line:["「屋頂是我的，那塊瓦是你的。」","「別動。你一動影子就亂了。」"],reward:(p,n)=>{p.spirit+=200;return "靈氣+200";}},
 r_狼族:{who:"race:狼族",name:"月圓巡山",loveAdd:2,favAdd:0,line:["「跟著我的腳印走。」","「今晚月亮圓，山裡的規矩我說了算。」"],reward:(p,n)=>{p.spirit+=300;p.swordSense++;return "靈氣+300，劍意+1";}},
 r_鹿族:{who:"race:鹿族",name:"晨霧看花",loveAdd:2,favAdd:0,line:["「花開只有一瞬。你來，剛好。」","「別踩露水。它們也剛醒。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
-r_鴉族:{who:"race:鴉族",name:"聽風說天機",loveAdd:0,favAdd:0,line:["「風裡有消息。你聽不見，我翻給你。」","「天機不能全說。我只說與你有關的。」"],reward:(p,n)=>{p.reputation+=2;p.spirit+=150;return "聲望+2，靈氣+150";}},
+r_鴉族:{who:"race:鴉族",name:"聽風說天機",loveAdd:0,favAdd:0,line:["「風裡有消息。你聽不見，我翻給你。」","「天機不能全說。我只說與你有關的。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}},
 r_蛛族:{who:"race:蛛族",name:"看TA織的網",loveAdd:3,favAdd:0,line:["「網是陣，也是家。你想先看哪個？」","「絲上有我昨日想你的震動。」"],reward:(p,n)=>{p.spirit+=150;return "靈氣+150";}},
 r_兔族:{who:"race:兔族",name:"蘿蔔田偷蘿蔔",loveAdd:0,favAdd:3,line:["「噓——田主睡著了。快！」","「最大的那根留你，我啃小的。」"],reward:(p,n)=>{p.spirit+=150;let s="靈氣+150";if(Math.random()<0.2){for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map===1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;s+=`，${m.name}×1`;}s+="，草木材料×2";}return s;}},
 r_熊族:{who:"race:熊族",name:"山裡掏蜂蜜",loveAdd:0,favAdd:0,line:["「蜂群聽我的。你負責拿罐。」","「甜的分你。蜂蟄我自己受。」"],reward:(p,n)=>{for(let i=0;i<2;i++){const pool=Object.values(HERBS).filter(m=>m.map===1);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;}p.spirit+=100;return "草木材料×2，靈氣+100";}},
@@ -862,6 +862,6 @@ r_龜族:{who:"race:龜族",name:"看三百年的老樹",loveAdd:1,favAdd:0,line
 r_蘭花精:{who:"race:蘭花精",name:"蘭坡賞花",loveAdd:3,favAdd:0,line:["「這坡一朵都不能摘。……我可以。」","「香氣跟著你走吧。就當我同行。」"],reward:(p,n)=>{p.spirit+=200;let s="靈氣+200";if(Math.random()<0.2){const pool=Object.values(HERBS).filter(m=>m.map===1&&m.grade===4);const m=pool[rnd(pool.length)];p.mats[m.name]=(p.mats[m.name]||0)+1;s+=`，${m.name}×1`;}return s;}},
 /* 道侶專屬 */
 m_first:{who:"spouse",name:"重遊初識之地",loveAdd:3,favAdd:0,line:["「還記得這裡嗎？你那時可沒多看我一眼。」","「初識的路還在，人也是。」"],reward:(p,n)=>{p.spirit+=250;return "靈氣+250";}},
-m_lantern:{who:"spouse",name:"坊市看燈",loveAdd:2,favAdd:0,line:["「這盞燈像你。遠看亮，近看更亮。」","「燈影裡別亂走。牽著我。」"],reward:(p,n)=>{p.stones+=100;return "靈石+100（TA搶著付了錢）";}},
+m_lantern:{who:"spouse",name:"集市看燈",loveAdd:2,favAdd:0,line:["「這盞燈像你。遠看亮，近看更亮。」","「燈影裡別亂走。牽著我。」"],reward:(p,n)=>{p.stones+=100;return "靈石+100（TA搶著付了錢）";}},
 m_boat:{who:"spouse",name:"湖上泛舟",loveAdd:3,favAdd:0,line:["「船小，你坐穩，我划。」","「湖水做鏡，正好看看我們並肩的樣子。」"],reward:(p,n)=>{p.spirit+=300;return "靈氣+300";}}
 };

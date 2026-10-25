@@ -198,6 +198,21 @@ function knightStressRoll(place, aggressive) {
   return null;
 }
 
+/* 台词池取值：支持平铺数组（旧格式）与分档对象（v2 台词库）
+   chat 按友情分档（0-30/30-60/60+），flirt 按爱意分档（低<40/中40-75/高75+）；缺档回退 low */
+function poolArr(def, type, st) {
+  const p = def[type];
+  if (Array.isArray(p)) return p;
+  if (p && typeof p === 'object') {
+    const v = type === 'flirt' ? st.l : st.f;
+    const hi = type === 'flirt' ? 75 : 60, mid = type === 'flirt' ? 40 : 30;
+    const t = v >= hi ? 'high' : v >= mid ? 'mid' : 'low';
+    const arr = (p[t] && p[t].length) ? p[t] : (p.low && p.low.length ? p.low : (p.mid || p.high || []));
+    return Array.isArray(arr) ? arr : [];
+  }
+  return [];
+}
+
 function interact(id, type) {
   const def = npcDef(id), st = G.npc[id];
   const err = canDo(type);
@@ -215,7 +230,7 @@ function interact(id, type) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.jealous)}」`);
   }
 
-  const pool = def[type] || [];
+  const pool = poolArr(def, type, st);
   if (!pool.length) return { lines: ['现在不适合。'], blocked: true };
   const line = rnd(pool);
   lines.push(`<b>${def.name}</b>：「${line}」`);

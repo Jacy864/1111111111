@@ -877,6 +877,11 @@ const EXP_TEXT = {
     '你对著草人劈了一百下。最后一百下用了腰。',
     '弓拉空了四十次。肩胛发热。',
   ],
+  shoot: [
+    '你在钟楼上放了一夜的箭。村口方向。',
+    '你伏在钟楼栏杆后面，箭一支一支往村口送。',
+    '钟楼的射击位上只有你。弦声和坡下的动静对着拍。',
+  ],
   hurtHeavy: ['你拖着腿回到村里。每走一步，肋下都扯着疼。'],
 };
 
@@ -916,6 +921,19 @@ const KNIGHT_ESCORT = [
   '怪物不过来。它们认得我。',
   '这里的石头和我一样，缺了都要靠人来补。',
 ];
+/* 钟楼射击：夜里从钟楼放箭辅助前线（§11 弓=辅助骑士） */
+const KNIGHT_SHOOT = {
+  note: [
+    '钟楼那边的箭我看到了。第二只偏了半尺。',
+    '你今晚的箭比昨晚快。',
+    '东边那只不用你管。我在这。',
+    '箭别省。村库里还有。',
+  ],
+  doomNote: [
+    '你守着，我就不用出去。这笔账我记着。',
+    '村口的动静我都听得见。你的箭也在。',
+  ],
+};
 
 /* ---------- 夜猎 / 怪物潮 / 终末之月 / 骑士战（批三） ---------- */
 const NIGHT_TEXT = {
@@ -1053,7 +1071,7 @@ const ENDINGS = {
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）
@@ -1110,4 +1128,5 @@ const YOU_FEED = {
   fish: ['你在水边坐了半天。', '你的鱼线动了一下午。'],
   dive: ['你下水摸了一阵。', '你从河底摸上来点东西。'],
   train: ['你在平原上练剑。', '你在平原上放了一上午的箭。'],
+  shoot: ['你在钟楼上放了一夜箭。', '钟楼夜里的射击位上是你。'],
 };

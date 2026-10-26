@@ -64,6 +64,7 @@ function placeHtml(pid) {
   let acts = '';
   if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
+  if (pid === 'belltower' && G.node >= DAY_NODES) acts += `<button class="btn" data-act="shoot">射击（精力2·${G.knight.core ? '守村' : '援护骑士'}）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
   if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
   if (acts) html += `<div class="actrow2">${acts}</div>`;
@@ -372,6 +373,14 @@ document.addEventListener('click', e => {
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {
     const r = doPlaceAction(V.place, a);
     resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'shoot') {
+    const r = towerShoot();
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;

@@ -36,6 +36,7 @@ function newGame() {
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
     nightHunted: false,    // 昨夜是否夜猎守村（终末之月判定用，界面不显示）
+    helpedKnight: false,   // 昨夜是否在钟楼放箭辅助骑士（当晚磨损减半）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
@@ -62,6 +63,7 @@ function load() {
     G.stats.gy = G.stats.gy || 0;
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
+    G.helpedKnight = !!G.helpedKnight;
     G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
     if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
     return true;
@@ -185,6 +187,7 @@ function settleDay() {
   genMorning();
   knightWear();
   G.nightHunted = false;
+  G.helpedKnight = false;
   save();
 }
 
@@ -237,6 +240,7 @@ function knightWear() {
   const tide = Math.random() < 0.04;
   if (tide) dmg += 20 + Math.floor(Math.random() * 16);
   for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
+  if (G.helpedKnight) dmg = Math.floor(dmg / 2);     // 钟楼的箭替他分掉一波怪
   if (dmg > 0) {
     kn.cond -= dmg;
     if (tide) addFeed('major', rnd(TIDE_TEXT));
@@ -708,6 +712,37 @@ function duelMove(m) {
     addFeed('major', '你跟[[knight]]对了一剑，输了。');
   }
   save();
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
+/* ---------- 钟楼射击（批三）：夜里从射击位放箭，辅助前线骑士/终末之月守村 ---------- */
+function towerShoot() {
+  if (G.node < DAY_NODES) return { lines: ['射击位是夜里用的。白天这里是 Jacob 的工坊。'], blocked: true };
+  const err = canDo('shoot');
+  if (err) return { lines: [err], blocked: true };
+
+  const lines = [rnd(EXP_TEXT.shoot)];
+  if (Math.random() < 0.5) { G.force++; lines.push(`武力 +1（现在 ${G.force}）`); }
+
+  const kn = G.knight;
+  if (kn.core) {
+    /* 终末之月：他不出战，你的箭就是村口的守卫 */
+    G.nightHunted = true;
+    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.doomNote)}」`);
+    rel('knight', 'f', 1);
+    addFeed('you', '你在钟楼射了一夜的箭，替[[knight]]守着村口。', ['knight']);
+  } else {
+    /* 他在前线：你的箭帮他分掉一波怪 */
+    G.helpedKnight = true;
+    rel('knight', 'f', 1);
+    if (Math.random() < 0.3) rel('knight', 'l', 1);
+    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.note)}」`);
+    addFeed('sim', '钟楼的箭声和[[knight]]在前线的剑声，一夜没停。', ['knight']);
+  }
+  youFeed('shoot');
+  G.energy -= COST.shoot + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push('上钟楼射击');
   const adv = advanceNode();
   return { lines, settled: adv === 'settled' };
 }

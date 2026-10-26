@@ -1245,6 +1245,11 @@ const EXP_TEXT = {
     '你对著草人劈了一百下。最后一百下用了腰。',
     '弓拉空了四十次。肩胛发热。',
   ],
+  shoot: [
+    '你在钟楼上放了一夜的箭。村口方向。',
+    '你伏在钟楼栏杆后面，箭一支一支往村口送。',
+    '钟楼的射击位上只有你。弦声和坡下的动静对着拍。',
+  ],
   hurtHeavy: ['你拖着腿回到村里。每走一步，肋下都扯着疼。'],
 };
 
@@ -1284,6 +1289,19 @@ const KNIGHT_ESCORT = [
   '怪物不过来。它们认得我。',
   '这里的石头和我一样，缺了都要靠人来补。',
 ];
+/* 钟楼射击：夜里从钟楼放箭辅助前线（§11 弓=辅助骑士） */
+const KNIGHT_SHOOT = {
+  note: [
+    '钟楼那边的箭我看到了。第二只偏了半尺。',
+    '你今晚的箭比昨晚快。',
+    '东边那只不用你管。我在这。',
+    '箭别省。村库里还有。',
+  ],
+  doomNote: [
+    '你守着，我就不用出去。这笔账我记着。',
+    '村口的动静我都听得见。你的箭也在。',
+  ],
+};
 
 /* ---------- 夜猎 / 怪物潮 / 终末之月 / 骑士战（批三） ---------- */
 const NIGHT_TEXT = {
@@ -1421,7 +1439,7 @@ const ENDINGS = {
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）
@@ -1478,6 +1496,7 @@ const YOU_FEED = {
   fish: ['你在水边坐了半天。', '你的鱼线动了一下午。'],
   dive: ['你下水摸了一阵。', '你从河底摸上来点东西。'],
   train: ['你在平原上练剑。', '你在平原上放了一上午的箭。'],
+  shoot: ['你在钟楼上放了一夜箭。', '钟楼夜里的射击位上是你。'],
 };
 
 </script>
@@ -1520,6 +1539,7 @@ function newGame() {
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
     nightHunted: false,    // 昨夜是否夜猎守村（终末之月判定用，界面不显示）
+    helpedKnight: false,   // 昨夜是否在钟楼放箭辅助骑士（当晚磨损减半）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
@@ -1546,6 +1566,7 @@ function load() {
     G.stats.gy = G.stats.gy || 0;
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
+    G.helpedKnight = !!G.helpedKnight;
     G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
     if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
     return true;
@@ -1669,6 +1690,7 @@ function settleDay() {
   genMorning();
   knightWear();
   G.nightHunted = false;
+  G.helpedKnight = false;
   save();
 }
 
@@ -1721,6 +1743,7 @@ function knightWear() {
   const tide = Math.random() < 0.04;
   if (tide) dmg += 20 + Math.floor(Math.random() * 16);
   for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
+  if (G.helpedKnight) dmg = Math.floor(dmg / 2);     // 钟楼的箭替他分掉一波怪
   if (dmg > 0) {
     kn.cond -= dmg;
     if (tide) addFeed('major', rnd(TIDE_TEXT));
@@ -2196,6 +2219,37 @@ function duelMove(m) {
   return { lines, settled: adv === 'settled' };
 }
 
+/* ---------- 钟楼射击（批三）：夜里从射击位放箭，辅助前线骑士/终末之月守村 ---------- */
+function towerShoot() {
+  if (G.node < DAY_NODES) return { lines: ['射击位是夜里用的。白天这里是 Jacob 的工坊。'], blocked: true };
+  const err = canDo('shoot');
+  if (err) return { lines: [err], blocked: true };
+
+  const lines = [rnd(EXP_TEXT.shoot)];
+  if (Math.random() < 0.5) { G.force++; lines.push(`武力 +1（现在 ${G.force}）`); }
+
+  const kn = G.knight;
+  if (kn.core) {
+    /* 终末之月：他不出战，你的箭就是村口的守卫 */
+    G.nightHunted = true;
+    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.doomNote)}」`);
+    rel('knight', 'f', 1);
+    addFeed('you', '你在钟楼射了一夜的箭，替[[knight]]守着村口。', ['knight']);
+  } else {
+    /* 他在前线：你的箭帮他分掉一波怪 */
+    G.helpedKnight = true;
+    rel('knight', 'f', 1);
+    if (Math.random() < 0.3) rel('knight', 'l', 1);
+    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.note)}」`);
+    addFeed('sim', '钟楼的箭声和[[knight]]在前线的剑声，一夜没停。', ['knight']);
+  }
+  youFeed('shoot');
+  G.energy -= COST.shoot + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push('上钟楼射击');
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
 /* ---------- 治疗药水 ---------- */
 function healPotion() {
   if (!G.hurt) return { lines: ['身上没有伤。'], blocked: true };
@@ -2300,6 +2354,7 @@ function placeHtml(pid) {
   let acts = '';
   if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
+  if (pid === 'belltower' && G.node >= DAY_NODES) acts += `<button class="btn" data-act="shoot">射击（精力2·${G.knight.core ? '守村' : '援护骑士'}）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
   if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
   if (acts) html += `<div class="actrow2">${acts}</div>`;
@@ -2608,6 +2663,14 @@ document.addEventListener('click', e => {
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {
     const r = doPlaceAction(V.place, a);
     resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'shoot') {
+    const r = towerShoot();
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;

@@ -1879,6 +1879,7 @@ function poolArr(def, type, st) {
 function doFun(id) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
+  if (st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
   if (G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
   if (st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
   const err = canDo('fun');
@@ -2537,12 +2538,15 @@ function npcSheet(id) {
       extras += `<button class="btn line ib ${noGy ? 'dis' : ''}" data-act="repair" ${noGy ? 'disabled' : ''}>修补（2·黄金玉）${noGy ? '·没有黄金玉' : ''}</button>`;
     }
   }
-  /* 寻欢：有台词池 + 爱情≥50 才出现（偷尝轨·感情线条件待告白系统实装后补） */
+  /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
   const fp = funPools(n, s);
-  if (fp && s.l >= 50) {
-    extras += G.node >= DAY_NODES
-      ? `<button class="btn line ib" data-act="ia" data-id="${id}" data-ia="fun">寻欢（${COST.fun}·度过今晚）</button>`
-      : `<button class="btn line ib dis" disabled>寻欢（夜里来）</button>`;
+  if (fp) {
+    if (s.l >= 50 && G.node >= DAY_NODES)
+      extras += `<button class="btn line ib" data-act="ia" data-id="${id}" data-ia="fun">寻欢（${COST.fun}·度过今晚）</button>`;
+    else if (s.l >= 50)
+      extras += `<button class="btn line ib dis" disabled>寻欢（夜里来）</button>`;
+    else
+      extras += `<button class="btn line ib dis" disabled>寻欢（还不到那一步）</button>`;
   }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;

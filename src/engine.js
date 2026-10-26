@@ -376,6 +376,7 @@ function poolArr(def, type, st) {
 function doFun(id) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
+  if (st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
   if (G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
   if (st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
   const err = canDo('fun');

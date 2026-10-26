@@ -1298,8 +1298,8 @@ const KNIGHT_SHOOT = {
     '箭别省。村库里还有。',
   ],
   doomNote: [
-    '你守着，我就不用出去。这笔账我记着。',
     '村口的动静我都听得见。你的箭也在。',
+    '箭声我数了。十三支。都在坡下。',
   ],
 };
 
@@ -1782,7 +1782,7 @@ function repairKnight() {
     `<b>骑士</b>：「${rnd(tier)}」`,
   ];
   if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
-  if (kn.core) lines.push('缝吃住了金粉。他的手指在你手背上碰了一下，又收回去。');
+  if (kn.core) lines.push('裂缝合上了大半。剩下的缝，不够今天的金粉填。');
   addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
   G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
   G.dayLog.push('给骑士做了修补');

@@ -279,7 +279,7 @@ function repairKnight() {
     `<b>骑士</b>：「${rnd(tier)}」`,
   ];
   if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
-  if (kn.core) lines.push('缝吃住了金粉。他的手指在你手背上碰了一下，又收回去。');
+  if (kn.core) lines.push('裂缝合上了大半。剩下的缝，不够今天的金粉填。');
   addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
   G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
   G.dayLog.push('给骑士做了修补');

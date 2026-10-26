@@ -304,7 +304,11 @@ function giveFlower() {
   G.bag.花--;
   const kn = G.npc.knight, def = npcDef('knight');
   const l = kn.l;
-  const line = l >= 60 ? '「胸甲这里还有位置。下一朵留着。」' : l >= 30 ? '「又是花。你都送了几次了。我数着。」' : '「花。谢谢。为什么给我。」';
+  /* 送花反应读台词池 flower 三档（爱≥60高/≥30中/其余低）；旧硬编码仅作无池回退 */
+  const fp = def.flower || {};
+  const ftier = l >= 60 ? 'high' : l >= 30 ? 'mid' : 'low';
+  const farr = (fp[ftier] && fp[ftier].length) ? fp[ftier] : (fp.low && fp.low.length ? fp.low : null);
+  const line = farr ? `「${rnd(farr)}」` : (l >= 60 ? '「胸甲这里还有位置。下一朵留着。」' : l >= 30 ? '「又是花。你都送了几次了。我数着。」' : '「花。谢谢。为什么给我。」');
   G.stats.flowers++;
   rel('knight', 'l', 3); rel('knight', 'f', 1); rel('knight', 'p', 1);
   kn.last = G.day;

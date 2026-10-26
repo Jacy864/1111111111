@@ -11,6 +11,7 @@
 - build 内含 `node --check` 语法校验
 - 改动后本地验证：`python3 -m http.server 8931` + playwright 截图（goto 带 timeout 15000，try/finally browser.close，`timeout 60 node` 启动）
 - 交付：构建后把 `index.html` 复制到 `/mnt/c/Users/lenovo/Desktop/小游戲/` 供言双击游玩
+- 台词库/设定文档（docs/*.md）改动后同步复制到桌面 `小游戲/` ——言在桌面那份看，只改 docs/ 不推送 = 言看不到
 
 ## 设计文档（唯一真源）
 - **《村庄文游-拍板记录.md》为最高权威**（2026-10-16 起）：设定文件与拍板记录冲突时，以日期最新的拍板为准并回写同步；未拍板事项只列在其「待拍板」区

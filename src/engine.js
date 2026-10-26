@@ -12,6 +12,10 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 function npcDef(id) { return NPCS.find(n => n.id === id); }
 function npcName(id) { const d = npcDef(id); return d ? d.name : id; }
 
+/* ---------- 伤势（§11：完好→轻伤→重伤） ---------- */
+function hurtWord() { return G.hurt === 2 ? '重伤' : G.hurt === 1 ? '轻伤' : '完好'; }
+function maxE() { return MAX_ENERGY - (G.hurt === 2 ? 8 : G.hurt === 1 ? 3 : 0); }
+
 /* NPC 当前节点位置（含动态：Jacob 夜宿钟楼、骑士夜在前线） */
 function locOf(def, node) {
   let l = def.loc[node];
@@ -30,7 +34,8 @@ function newGame() {
     dayLog: [],            // 今天玩家的行动记录
     flowersPickedDay: 0,
     nightJacobAtTower: false,
-    stats: { flowers: 0, chats: 0, teases: 0 },
+    hurt: 0,               // 伤势：0完好 1轻伤 2重伤
+    stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
   };
   for (const n of NPCS) G.npc[n.id] = { f: n.initF, l: 0, p: 0, last: 1, coldPending: false };
@@ -45,7 +50,16 @@ function hasSave() { return !!localStorage.getItem(SAVE_KEY); }
 function load() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return false;
-  try { G = JSON.parse(raw); return true; } catch (e) { return false; }
+  try {
+    G = JSON.parse(raw);
+    /* 批二字段迁移（旧档兜底） */
+    G.hurt = G.hurt || 0;
+    G.stats = G.stats || {};
+    G.stats.hunts = G.stats.hunts || 0;
+    G.stats.kills = G.stats.kills || 0;
+    G.stats.gy = G.stats.gy || 0;
+    return true;
+  } catch (e) { return false; }
 }
 
 /* ---------- 播报流 ---------- */
@@ -159,7 +173,8 @@ function settleDay() {
   });
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
-  G.day++; G.node = 0; G.energy = MAX_ENERGY;
+  if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
+  G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
   save();
@@ -194,7 +209,7 @@ function friendWord(id) {
 /* ---------- 互动结算 ---------- */
 /* 返回 {lines:[html], feedType} 供 UI 展示；内部处理节点/精力/关系/应激 */
 function canDo(costKey) {
-  const c = COST[costKey] || 0;
+  const c = (COST[costKey] || 0) + (G.hurt === 2 ? 1 : 0);   // 重伤所有行动 +1 耗
   if (G.energy < c) return '精力不够了。今天先到这。';
   return null;
 }
@@ -383,6 +398,121 @@ function tradeSell(id, item, price) {
   return { lines: [`卖出了${item}（+${p} 安娜币${p > price ? '，熟人价' : ''}）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
 
+/* ---------- 探险（批二） ---------- */
+/* 战斗：武力决定胜率；胜涨武力+战利品，败挂彩。平原绝对安全 */
+function winChance() { return clamp(0.5 + G.force * 0.035, 0.15, 0.95); }
+
+function dropLoot() {
+  const got = [];
+  if (Math.random() < 0.6) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
+  if (Math.random() < 0.5) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
+  if (Math.random() < 0.15) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
+  return got;
+}
+
+function monsterFight() {
+  const lines = [];
+  if (Math.random() < winChance()) {
+    const nick = Math.random() < 0.3;
+    lines.push(rnd(nick ? EXP_TEXT.mobHurt : EXP_TEXT.mobWin));
+    if (nick) G.hurt = Math.min(2, G.hurt + 1);
+    const got = dropLoot();
+    G.stats.kills++;
+    if (Math.random() < 0.5) G.force++;
+    if (got.length) lines.push('拾获：' + got.join('、'));
+  } else {
+    lines.push(rnd(EXP_TEXT.mobLose));
+    G.hurt = Math.min(2, G.hurt + 1);
+    if (G.hurt === 2) lines.push(rnd(EXP_TEXT.hurtHeavy));
+  }
+  youFeed('fight');
+  return lines;
+}
+
+const EXP_ACT_NAME = { gather: '采集', hunt: '打猎', fish: '钓鱼', dive: '潜水', minenear: '挖了近矿', minefar: '摸进了深矿', train: '练剑' };
+
+function doExplore(zone, act) {
+  const z = EXPLORE[zone];
+  const err = canDo(act);
+  if (err) return { lines: [err], blocked: true };
+
+  const lines = [];
+  const night = G.node >= DAY_NODES;
+  let rate = act === 'minefar' ? z.farRate : z.rate;
+  if (night && zone !== 'plain') rate = 1;                 // 夜里遇怪拉满（平原除外）
+
+  /* 遇怪：这个节点改成战斗 */
+  if (zone !== 'plain' && act !== 'train' && Math.random() < rate) {
+    lines.push(...monsterFight());
+  } else if (act === 'gather') {
+    if (Math.random() < 0.08) {
+      G.bag.稀有花 = (G.bag.稀有花 || 0) + 1;
+      lines.push(rnd(EXP_TEXT.gatherRare), '拾获：稀有花×1');
+    } else {
+      const got = ['蘑菇×2', '水果×1'];
+      G.bag.蘑菇 = (G.bag.蘑菇 || 0) + 2;
+      G.bag.水果 = (G.bag.水果 || 0) + 1;
+      if (Math.random() < 0.5) { G.bag.木材 = (G.bag.木材 || 0) + 1; got.push('木材×1'); }
+      lines.push(rnd(EXP_TEXT.gather), '拾获：' + got.join('、'));
+    }
+    youFeed('gather');
+  } else if (act === 'hunt') {
+    if (Math.random() < winChance()) {
+      const meat = 2 + Math.floor(Math.random() * 3);
+      G.bag.生肉 = (G.bag.生肉 || 0) + meat;
+      const got = [`生肉×${meat}`];
+      if (Math.random() < 0.4) { G.bag.兔皮 = (G.bag.兔皮 || 0) + 1; got.push('兔皮×1'); }
+      lines.push(rnd(EXP_TEXT.huntWin), '拾获：' + got.join('、'));
+      G.stats.hunts++;
+      if (Math.random() < 0.4) G.force++;
+    } else {
+      if ((G.bag.箭矢 || 0) > 0) { G.bag.箭矢--; if (G.bag.箭矢 <= 0) delete G.bag.箭矢; }
+      lines.push(rnd(EXP_TEXT.huntLose));
+    }
+    youFeed('hunt', { place: z.name });
+  } else if (act === 'fish') {
+    const n = 1 + (Math.random() < 0.4 ? 1 : 0);
+    G.bag.鱼 = (G.bag.鱼 || 0) + n;
+    lines.push(rnd(EXP_TEXT.fish), `拾获：鱼×${n}`);
+    youFeed('fish');
+  } else if (act === 'dive') {
+    const coins = 3 + Math.floor(Math.random() * 4);
+    G.coins += coins;
+    lines.push(rnd(EXP_TEXT.dive), `河底的旧硬币：+${coins} 安娜币`);
+    youFeed('dive');
+  } else if (act === 'minenear') {
+    const n = 1 + (Math.random() < 0.5 ? 1 : 0);
+    G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
+    lines.push(rnd(EXP_TEXT.mineNear), `拾获：铁矿×${n}`);
+    youFeed('mine');
+  } else if (act === 'minefar') {
+    const n = 2 + Math.floor(Math.random() * 2);
+    G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
+    const got = [`铁矿×${n}`];
+    if (Math.random() < 0.12) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));
+    youFeed('mine');
+  } else if (act === 'train') {
+    G.force++;
+    lines.push(rnd(EXP_TEXT.train), `武力 +1（现在 ${G.force}）`);
+    youFeed('train');
+  }
+
+  G.energy -= (COST[act] || 0) + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push(`去${z.name}${EXP_ACT_NAME[act] || act}`);
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
+/* ---------- 治疗药水 ---------- */
+function healPotion() {
+  if (!G.hurt) return { lines: ['身上没有伤。'], blocked: true };
+  if ((G.bag.治疗药水 || 0) < 1) return { lines: ['手里没有治疗药水。Isabel 那有卖。'], blocked: true };
+  G.bag.治疗药水--; if (G.bag.治疗药水 <= 0) delete G.bag.治疗药水;
+  G.hurt = 0;
+  return { lines: ['你喝下治疗药水。伤处当天收口，力气回来了。'] };
+}
+
 /* ---------- 冷落计时（每天结算时检查） ---------- */
 /* 在 settleDay 里调用于 day++ 之前的数据更新 */
 function coldCheck() {
@@ -404,7 +534,7 @@ function restNow() {
 function nap() {
   if (G.node !== 1) return { lines: ['只有中午能午休。'], blocked: true };
   if (G.energy >= MAX_ENERGY) return { lines: ['精力是满的。'], blocked: true };
-  G.energy = Math.min(MAX_ENERGY, G.energy + 5);
+  G.energy = Math.min(maxE(), G.energy + 5);
   G.dayLog.push('午休了一会儿');
   youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };

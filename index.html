@@ -70,6 +70,7 @@ button { font-family: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .statline .st:first-child { color: var(--ink); font-weight: 700; }
+.statline .warn-st { color: var(--red); font-weight: 700; }
 .statline .st:first-child::before {
   content: ""; display: inline-block; width: 6px; height: 6px;
   background: var(--red); margin-right: 7px; vertical-align: 1px;
@@ -652,7 +653,7 @@ const NPCS = [
     bio: '冷峻，话少，常年把自己锁在锻造室。兵器打得好，脸色不好。',
     secretHint: '她夜里有时从后门搬东西进去。',
     loc: ['forge', 'forge', 'forge', 'home', 'home'],
-    trade: { sell: [['箭矢', 5], ['剑', 35]], buy: [['铁矿', 5]], hard: true },
+    trade: { sell: [['箭矢', 5], ['剑', 35]], buy: [['铁矿', 5], ['怪躯壳', 8]], hard: true },
     chat: [
       '兵器看好了就走。锻造室热。',
       '矿有力气自己挖。我只收成品。',
@@ -845,7 +846,7 @@ const NPCS = [
     bio: '温柔，稳重，耐心。炉子从早烧到晚，蛋糕给全村人吃。',
     secretHint: '后厨有个袋子，谁也不许碰。',
     loc: ['bakery', 'bakery', 'bakery', 'home', 'home'],
-    trade: { sell: [['蛋糕', 3], ['熟食', 2]], buy: [['生肉', 3], ['奶酪', 3]] },
+    trade: { sell: [['蛋糕', 3], ['熟食', 2]], buy: [['生肉', 3], ['奶酪', 3], ['鱼', 3], ['腐肉', 4]] },
     chat: [
       '新出炉的，拿一个尝。不算钱。',
       '火候这东西急不来。人也一样。',
@@ -865,7 +866,7 @@ const NPCS = [
     bio: '温柔，善良，手巧。白天驻钟楼修表，什么坏了都能修。',
     secretHint: '他的首饰材料，村里没人说得清来路。',
     loc: ['belltower', 'belltower', 'belltower', 'home', 'home'],
-    trade: { sell: [['钟表', 20], ['指南针', 12], ['银钉', 3]], buy: [['木板', 2]], easy: true },
+    trade: { sell: [['钟表', 20], ['指南针', 12], ['银钉', 3]], buy: [['木板', 2], ['木材', 1], ['骨头', 3]], easy: true },
     chat: [
       '钟今天慢了半秒。调好了。',
       '零件这种东西，越旧越合用。人也差不多。',
@@ -1152,10 +1153,88 @@ const ITEMS = {
   水: { d: '井里打的，凉。' },
   旧地图: { d: '你带来的物件之一。边角磨白了。' },
   铜哨: { d: '你带来的物件之一。吹起来很响。' },
+  鱼: { d: '水里的。Olivia 收。' },
+  水果: { d: '林子里的野果。垫肚子。' },
+  木材: { d: '捡的枯木。烧火打家具都行。' },
+  兔皮: { d: '猎户的手艺。' },
+  腐肉: { d: '怪物身上割的。居然有人收。' },
+  骨头: { d: '怪物的骨头，比牲口的沉。' },
+  怪躯壳: { d: '没烂的躯壳。Bess 说她要研究。' },
+  黄金玉: { d: '矿洞深处才有。比钻石韧。谁用得着，你还不知道。' },
+};
+
+/* ---------- 探险区域（批二） ---------- */
+/* rate=白天遇怪率；夜晚除平原外一律 100% */
+const EXPLORE = {
+  forest: { name: '森林', rate: 0.5, desc: '木材、蘑菇、稀有花。怪物比别处多，白天也待得住。' },
+  water:  { name: '水体', rate: 0.2, desc: '钓鱼、潜水。水底下有旧东西。' },
+  mine:   { name: '矿洞', rate: 0.3, farRate: 0.5, desc: '铁矿、宝石、黄金玉。近矿薄，远矿厚，远矿有怪物守着。' },
+  plain:  { name: '平原', rate: 0, desc: '打猎、练剑。怪物不进平原。' },
+};
+
+/* 探险文案池（§8.6：极简事件句，无神态无心理无比喻） */
+const EXP_TEXT = {
+  huntWin: [
+    '你放了一箭。鹿倒在溪边，没跑出十步。',
+    '兔子钻进草窠。你的第二支箭比它快。',
+    '野猪冲过来。你侧身让过，箭进了它脖子。',
+    '羊群边上掉了队的一只。一箭，收工。',
+  ],
+  huntLose: [
+    '猎物跑光了。你空手回来，箭少了一支。',
+    '风向变了。林子那头什么都没再出来。',
+    '你追了半里地，脚印进了溪水就断了。',
+  ],
+  mobWin: [
+    '东西从林子里扑出来。两箭。它不动了。',
+    '你退着放箭，把它钉在原地。',
+    '它贴着地冲过来。你等它近了才放箭。',
+  ],
+  mobHurt: [
+    '它爪子扫中你肩膀。你的最后一箭进了它喉咙。',
+    '你被撞倒在石头上。爬起来的时候，它已经不动了。',
+  ],
+  mobLose: [
+    '你且战且退，跑回了村里。胳膊淌血。',
+    '箭射完了。你抄起石头砸开一条路，跑。',
+    '它比你快。你滚下山坡才甩掉它，浑身是伤。',
+  ],
+  gather: [
+    '你沿林子边走了一圈。蘑菇装满了手帕。',
+    '枯树底下翻出一窝蘑菇。木头也捡了一捆。',
+    '你爬上坡摘野果，兜里装满了才下来。',
+  ],
+  gatherRare: ['林子最深处的一片背阴里，蓝花开着三朵。你只采了一朵。'],
+  mineNear: [
+    '近矿的脉薄。你敲下两块铁矿就收工。',
+    '洞口的矿被人采光过。你又敲了一遍，敲出两块。',
+  ],
+  mineFar: [
+    '你摸到矿洞深处。整块整块地敲下来，装满了袋。',
+    '深处的矿脉厚。你干到灯芯烧短才往回走。',
+  ],
+  gy: ['矿壁上露出一截黄茬。你把它整块凿了下来。', '石头缝里嵌着一小块黄金玉。你用钎子撬了出来。'],
+  fish: [
+    '鱼咬钩了。你拉上来一条巴掌长的。',
+    '浮标沉了三次。你拎上来两条鱼。',
+    '水清的地方看得见鱼背。你换了三次饵，钓上一条。',
+  ],
+  dive: [
+    '你扎进水里三次。摸上来一枚旧硬币。',
+    '河底的沙里硌手。你捞上来一枚磨平的硬币。',
+    '你顺着沉木摸下去，摸上来一把铜钱。',
+  ],
+  train: [
+    '你在平原上练了一个上午的剑。手心磨红了。',
+    '你对著草人劈了一百下。最后一百下用了腰。',
+    '弓拉空了四十次。肩胛发热。',
+  ],
+  hurtHeavy: ['你拖着腿回到村里。每走一步，肋下都扯着疼。'],
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1 };
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1,
+  gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）
    [[id]] 会替换成当前互动对象 → 可点人名 + 星标过滤 + 未来吃醋扫描的数据钩子 */
@@ -1204,6 +1283,13 @@ const YOU_FEED = {
     '你在图书馆翻完了大半本书。',
   ],
   nap: ['你回家睡了半个中午。'],
+  hunt: ['你在{place}放倒了猎物，拖回村里。', '你的箭囊轻了两支，肩上多了只兔子。'],
+  fight: ['你在外面跟怪物打了一场。', '你带着一身怪物的味回村，先去了井边。'],
+  gather: ['你从林子里捎回一把东西。', '你在林子边转了半天。'],
+  mine: ['你从矿洞背回一袋矿石。', '你在矿洞里敲了一天。'],
+  fish: ['你在水边坐了半天。', '你的鱼线动了一下午。'],
+  dive: ['你下水摸了一阵。', '你从河底摸上来点东西。'],
+  train: ['你在平原上练剑。', '你在平原上放了一上午的箭。'],
 };
 
 </script>
@@ -1221,6 +1307,10 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 function npcDef(id) { return NPCS.find(n => n.id === id); }
 function npcName(id) { const d = npcDef(id); return d ? d.name : id; }
+
+/* ---------- 伤势（§11：完好→轻伤→重伤） ---------- */
+function hurtWord() { return G.hurt === 2 ? '重伤' : G.hurt === 1 ? '轻伤' : '完好'; }
+function maxE() { return MAX_ENERGY - (G.hurt === 2 ? 8 : G.hurt === 1 ? 3 : 0); }
 
 /* NPC 当前节点位置（含动态：Jacob 夜宿钟楼、骑士夜在前线） */
 function locOf(def, node) {
@@ -1240,7 +1330,8 @@ function newGame() {
     dayLog: [],            // 今天玩家的行动记录
     flowersPickedDay: 0,
     nightJacobAtTower: false,
-    stats: { flowers: 0, chats: 0, teases: 0 },
+    hurt: 0,               // 伤势：0完好 1轻伤 2重伤
+    stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
   };
   for (const n of NPCS) G.npc[n.id] = { f: n.initF, l: 0, p: 0, last: 1, coldPending: false };
@@ -1255,7 +1346,16 @@ function hasSave() { return !!localStorage.getItem(SAVE_KEY); }
 function load() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return false;
-  try { G = JSON.parse(raw); return true; } catch (e) { return false; }
+  try {
+    G = JSON.parse(raw);
+    /* 批二字段迁移（旧档兜底） */
+    G.hurt = G.hurt || 0;
+    G.stats = G.stats || {};
+    G.stats.hunts = G.stats.hunts || 0;
+    G.stats.kills = G.stats.kills || 0;
+    G.stats.gy = G.stats.gy || 0;
+    return true;
+  } catch (e) { return false; }
 }
 
 /* ---------- 播报流 ---------- */
@@ -1369,7 +1469,8 @@ function settleDay() {
   });
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
-  G.day++; G.node = 0; G.energy = MAX_ENERGY;
+  if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
+  G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
   save();
@@ -1404,7 +1505,7 @@ function friendWord(id) {
 /* ---------- 互动结算 ---------- */
 /* 返回 {lines:[html], feedType} 供 UI 展示；内部处理节点/精力/关系/应激 */
 function canDo(costKey) {
-  const c = COST[costKey] || 0;
+  const c = (COST[costKey] || 0) + (G.hurt === 2 ? 1 : 0);   // 重伤所有行动 +1 耗
   if (G.energy < c) return '精力不够了。今天先到这。';
   return null;
 }
@@ -1593,6 +1694,121 @@ function tradeSell(id, item, price) {
   return { lines: [`卖出了${item}（+${p} 安娜币${p > price ? '，熟人价' : ''}）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
 
+/* ---------- 探险（批二） ---------- */
+/* 战斗：武力决定胜率；胜涨武力+战利品，败挂彩。平原绝对安全 */
+function winChance() { return clamp(0.5 + G.force * 0.035, 0.15, 0.95); }
+
+function dropLoot() {
+  const got = [];
+  if (Math.random() < 0.6) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
+  if (Math.random() < 0.5) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
+  if (Math.random() < 0.15) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
+  return got;
+}
+
+function monsterFight() {
+  const lines = [];
+  if (Math.random() < winChance()) {
+    const nick = Math.random() < 0.3;
+    lines.push(rnd(nick ? EXP_TEXT.mobHurt : EXP_TEXT.mobWin));
+    if (nick) G.hurt = Math.min(2, G.hurt + 1);
+    const got = dropLoot();
+    G.stats.kills++;
+    if (Math.random() < 0.5) G.force++;
+    if (got.length) lines.push('拾获：' + got.join('、'));
+  } else {
+    lines.push(rnd(EXP_TEXT.mobLose));
+    G.hurt = Math.min(2, G.hurt + 1);
+    if (G.hurt === 2) lines.push(rnd(EXP_TEXT.hurtHeavy));
+  }
+  youFeed('fight');
+  return lines;
+}
+
+const EXP_ACT_NAME = { gather: '采集', hunt: '打猎', fish: '钓鱼', dive: '潜水', minenear: '挖了近矿', minefar: '摸进了深矿', train: '练剑' };
+
+function doExplore(zone, act) {
+  const z = EXPLORE[zone];
+  const err = canDo(act);
+  if (err) return { lines: [err], blocked: true };
+
+  const lines = [];
+  const night = G.node >= DAY_NODES;
+  let rate = act === 'minefar' ? z.farRate : z.rate;
+  if (night && zone !== 'plain') rate = 1;                 // 夜里遇怪拉满（平原除外）
+
+  /* 遇怪：这个节点改成战斗 */
+  if (zone !== 'plain' && act !== 'train' && Math.random() < rate) {
+    lines.push(...monsterFight());
+  } else if (act === 'gather') {
+    if (Math.random() < 0.08) {
+      G.bag.稀有花 = (G.bag.稀有花 || 0) + 1;
+      lines.push(rnd(EXP_TEXT.gatherRare), '拾获：稀有花×1');
+    } else {
+      const got = ['蘑菇×2', '水果×1'];
+      G.bag.蘑菇 = (G.bag.蘑菇 || 0) + 2;
+      G.bag.水果 = (G.bag.水果 || 0) + 1;
+      if (Math.random() < 0.5) { G.bag.木材 = (G.bag.木材 || 0) + 1; got.push('木材×1'); }
+      lines.push(rnd(EXP_TEXT.gather), '拾获：' + got.join('、'));
+    }
+    youFeed('gather');
+  } else if (act === 'hunt') {
+    if (Math.random() < winChance()) {
+      const meat = 2 + Math.floor(Math.random() * 3);
+      G.bag.生肉 = (G.bag.生肉 || 0) + meat;
+      const got = [`生肉×${meat}`];
+      if (Math.random() < 0.4) { G.bag.兔皮 = (G.bag.兔皮 || 0) + 1; got.push('兔皮×1'); }
+      lines.push(rnd(EXP_TEXT.huntWin), '拾获：' + got.join('、'));
+      G.stats.hunts++;
+      if (Math.random() < 0.4) G.force++;
+    } else {
+      if ((G.bag.箭矢 || 0) > 0) { G.bag.箭矢--; if (G.bag.箭矢 <= 0) delete G.bag.箭矢; }
+      lines.push(rnd(EXP_TEXT.huntLose));
+    }
+    youFeed('hunt', { place: z.name });
+  } else if (act === 'fish') {
+    const n = 1 + (Math.random() < 0.4 ? 1 : 0);
+    G.bag.鱼 = (G.bag.鱼 || 0) + n;
+    lines.push(rnd(EXP_TEXT.fish), `拾获：鱼×${n}`);
+    youFeed('fish');
+  } else if (act === 'dive') {
+    const coins = 3 + Math.floor(Math.random() * 4);
+    G.coins += coins;
+    lines.push(rnd(EXP_TEXT.dive), `河底的旧硬币：+${coins} 安娜币`);
+    youFeed('dive');
+  } else if (act === 'minenear') {
+    const n = 1 + (Math.random() < 0.5 ? 1 : 0);
+    G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
+    lines.push(rnd(EXP_TEXT.mineNear), `拾获：铁矿×${n}`);
+    youFeed('mine');
+  } else if (act === 'minefar') {
+    const n = 2 + Math.floor(Math.random() * 2);
+    G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
+    const got = [`铁矿×${n}`];
+    if (Math.random() < 0.12) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));
+    youFeed('mine');
+  } else if (act === 'train') {
+    G.force++;
+    lines.push(rnd(EXP_TEXT.train), `武力 +1（现在 ${G.force}）`);
+    youFeed('train');
+  }
+
+  G.energy -= (COST[act] || 0) + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push(`去${z.name}${EXP_ACT_NAME[act] || act}`);
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
+/* ---------- 治疗药水 ---------- */
+function healPotion() {
+  if (!G.hurt) return { lines: ['身上没有伤。'], blocked: true };
+  if ((G.bag.治疗药水 || 0) < 1) return { lines: ['手里没有治疗药水。Isabel 那有卖。'], blocked: true };
+  G.bag.治疗药水--; if (G.bag.治疗药水 <= 0) delete G.bag.治疗药水;
+  G.hurt = 0;
+  return { lines: ['你喝下治疗药水。伤处当天收口，力气回来了。'] };
+}
+
 /* ---------- 冷落计时（每天结算时检查） ---------- */
 /* 在 settleDay 里调用于 day++ 之前的数据更新 */
 function coldCheck() {
@@ -1614,7 +1830,7 @@ function restNow() {
 function nap() {
   if (G.node !== 1) return { lines: ['只有中午能午休。'], blocked: true };
   if (G.energy >= MAX_ENERGY) return { lines: ['精力是满的。'], blocked: true };
-  G.energy = Math.min(MAX_ENERGY, G.energy + 5);
+  G.energy = Math.min(maxE(), G.energy + 5);
   G.dayLog.push('午休了一会儿');
   youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
@@ -1635,9 +1851,10 @@ function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 function renderStatus() {
   $('#statline').innerHTML =
     `<span class="st">第 ${G.day} 天 · ${NODE_NAMES[G.node]}</span>` +
-    `<span class="st">精力 ${G.energy}/${MAX_ENERGY}</span>` +
+    `<span class="st">精力 ${G.energy}/${maxE()}</span>` +
     `<span class="st">安娜币 ${G.coins}</span>` +
-    `<span class="st">武力 ${G.force}</span>`;
+    `<span class="st">武力 ${G.force}</span>` +
+    (G.hurt ? `<span class="st warn-st">${hurtWord()}</span>` : '');
 }
 
 /* ---------- 播报流 ---------- */
@@ -1706,9 +1923,10 @@ function homeHtml() {
   let html = `<div class="sec-title">家</div>`;
   html += `<div class="card">
     <div class="row"><b>Gloria</b><span class="dim">猎户·外来者</span></div>
-    <div class="dim">精力 ${G.energy}/${MAX_ENERGY} · 武力 ${G.force} · 安娜币 ${G.coins}</div>
+    <div class="dim">精力 ${G.energy}/${maxE()} · 武力 ${G.force} · 安娜币 ${G.coins}${G.hurt ? ` · ${hurtWord()}` : ''}</div>
     <div class="actrow2">
-      ${G.node === 1 && G.energy < MAX_ENERGY ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      ${G.node === 1 && G.energy < maxE() ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      ${G.hurt ? `<button class="btn" data-act="heal">治疗药水</button>` : ''}
       <button class="btn" data-act="rest">休息（结束今天）</button>
     </div>
   </div>`;
@@ -1723,17 +1941,24 @@ function homeHtml() {
   return html;
 }
 
-/* ---------- 探险页（第二批） ---------- */
+/* ---------- 探险页（批二实装） ---------- */
+const EXP_BTNS = {
+  forest: [['gather', '采集（精力2）'], ['hunt', '打猎（精力3）']],
+  water:  [['fish', '钓鱼（精力2）'], ['dive', '潜水（精力3）']],
+  mine:   [['minenear', '近矿（精力4）'], ['minefar', '深矿（精力4·险）']],
+  plain:  [['hunt', '打猎（精力3）'], ['train', '练剑（精力2·武力+）']],
+};
+
 function exploreHtml() {
-  const zones = [
-    ['矿洞', '30%遇怪。铁矿、宝石、黄金玉。近矿安全，远矿富贵。'],
-    ['水体', '20%遇怪。钓鱼、潜水。'],
-    ['森林', '50%遇怪。木材、水果、蘑菇、稀有花。'],
-    ['平原', '绝对安全。打猎、摘花、练剑场。'],
-  ];
+  const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">探险</div>`;
-  html += `<div class="card"><div class="b">周边还没开放。</div><div class="dim">探险、打猎、采矿、夜战在第二批实装。现在的你能靠广场的花和镇里的买卖过活。</div></div>`;
-  html += zones.map(([n, d]) => `<div class="zone"><b>${n}</b><div class="dim">${d}</div><div class="dim">（第二批开放）</div></div>`).join('');
+  html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面。除了平原，走到哪都会撞上。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
+  for (const [zid, z] of Object.entries(EXPLORE)) {
+    const rateTxt = zid === 'plain' ? '绝对安全'
+      : night ? '夜里必遇怪'
+      : zid === 'mine' ? '遇怪：近矿30% · 深矿50%' : `遇怪 ${Math.round(z.rate * 100)}%`;
+    html += `<div class="zone"><b>${z.name}</b><div class="dim">${z.desc}</div><div class="dim">${rateTxt}</div><div class="actrow2">${EXP_BTNS[zid].map(([a, t]) => `<button class="btn" data-exp="${zid}:${a}">${t}</button>`).join('')}</div></div>`;
+  }
   return html;
 }
 
@@ -1749,7 +1974,7 @@ function settingsHtml() {
   if (!G.chronicle.length) html += `<div class="dim">还没有记录。</div>`;
   else html += G.chronicle.slice().reverse().map(c =>
     `<div class="chron" data-chron="${c.day}"><b>第 ${c.day} 天</b><div class="dim">${c.log.slice(0, 2).join('；')}${c.log.length > 2 ? '…' : ''}</div></div>`).join('');
-  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 第一批（活的村庄）。批二：经济与探险。批三：骑士与结局。批四：血肉。</div>`;
+  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）+ 批二（经济与探险）已实装。批三：骑士与结局。批四：血肉。</div>`;
   return html;
 }
 
@@ -1870,6 +2095,16 @@ document.addEventListener('click', e => {
   const it = e.target.closest('[data-item]');
   if (it) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
 
+  const ex = e.target.closest('[data-exp]');
+  if (ex) {
+    const [z, a] = ex.dataset.exp.split(':');
+    const r = doExplore(z, a);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+
   const act = e.target.closest('[data-act]');
   if (!act) {
     if (e.target.id === 'modal-mask' || e.target.closest('#modal-close-btn')) closeModal();
@@ -1908,6 +2143,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
+  if (a === 'heal') { const r = healPotion(); resultSheet(r.lines); if (!r.blocked) render(); return; }
   if (a === 'rest') { restNow(); settlementSheet(); render(); return; }
   if (a === 'save') { save(); toast('已保存。'); return; }
   if (a === 'reload') { if (load()) { V.place = null; closeModal(); render(); toast('已读档。'); } return; }

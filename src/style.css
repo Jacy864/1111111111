@@ -53,6 +53,7 @@ button { font-family: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .statline .st:first-child { color: var(--ink); font-weight: 700; }
+.statline .warn-st { color: var(--red); font-weight: 700; }
 .statline .st:first-child::before {
   content: ""; display: inline-block; width: 6px; height: 6px;
   background: var(--red); margin-right: 7px; vertical-align: 1px;

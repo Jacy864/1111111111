@@ -11,9 +11,10 @@ function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 function renderStatus() {
   $('#statline').innerHTML =
     `<span class="st">第 ${G.day} 天 · ${NODE_NAMES[G.node]}</span>` +
-    `<span class="st">精力 ${G.energy}/${MAX_ENERGY}</span>` +
+    `<span class="st">精力 ${G.energy}/${maxE()}</span>` +
     `<span class="st">安娜币 ${G.coins}</span>` +
-    `<span class="st">武力 ${G.force}</span>`;
+    `<span class="st">武力 ${G.force}</span>` +
+    (G.hurt ? `<span class="st warn-st">${hurtWord()}</span>` : '');
 }
 
 /* ---------- 播报流 ---------- */
@@ -82,9 +83,10 @@ function homeHtml() {
   let html = `<div class="sec-title">家</div>`;
   html += `<div class="card">
     <div class="row"><b>Gloria</b><span class="dim">猎户·外来者</span></div>
-    <div class="dim">精力 ${G.energy}/${MAX_ENERGY} · 武力 ${G.force} · 安娜币 ${G.coins}</div>
+    <div class="dim">精力 ${G.energy}/${maxE()} · 武力 ${G.force} · 安娜币 ${G.coins}${G.hurt ? ` · ${hurtWord()}` : ''}</div>
     <div class="actrow2">
-      ${G.node === 1 && G.energy < MAX_ENERGY ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      ${G.node === 1 && G.energy < maxE() ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      ${G.hurt ? `<button class="btn" data-act="heal">治疗药水</button>` : ''}
       <button class="btn" data-act="rest">休息（结束今天）</button>
     </div>
   </div>`;
@@ -99,17 +101,24 @@ function homeHtml() {
   return html;
 }
 
-/* ---------- 探险页（第二批） ---------- */
+/* ---------- 探险页（批二实装） ---------- */
+const EXP_BTNS = {
+  forest: [['gather', '采集（精力2）'], ['hunt', '打猎（精力3）']],
+  water:  [['fish', '钓鱼（精力2）'], ['dive', '潜水（精力3）']],
+  mine:   [['minenear', '近矿（精力4）'], ['minefar', '深矿（精力4·险）']],
+  plain:  [['hunt', '打猎（精力3）'], ['train', '练剑（精力2·武力+）']],
+};
+
 function exploreHtml() {
-  const zones = [
-    ['矿洞', '30%遇怪。铁矿、宝石、黄金玉。近矿安全，远矿富贵。'],
-    ['水体', '20%遇怪。钓鱼、潜水。'],
-    ['森林', '50%遇怪。木材、水果、蘑菇、稀有花。'],
-    ['平原', '绝对安全。打猎、摘花、练剑场。'],
-  ];
+  const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">探险</div>`;
-  html += `<div class="card"><div class="b">周边还没开放。</div><div class="dim">探险、打猎、采矿、夜战在第二批实装。现在的你能靠广场的花和镇里的买卖过活。</div></div>`;
-  html += zones.map(([n, d]) => `<div class="zone"><b>${n}</b><div class="dim">${d}</div><div class="dim">（第二批开放）</div></div>`).join('');
+  html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面。除了平原，走到哪都会撞上。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
+  for (const [zid, z] of Object.entries(EXPLORE)) {
+    const rateTxt = zid === 'plain' ? '绝对安全'
+      : night ? '夜里必遇怪'
+      : zid === 'mine' ? '遇怪：近矿30% · 深矿50%' : `遇怪 ${Math.round(z.rate * 100)}%`;
+    html += `<div class="zone"><b>${z.name}</b><div class="dim">${z.desc}</div><div class="dim">${rateTxt}</div><div class="actrow2">${EXP_BTNS[zid].map(([a, t]) => `<button class="btn" data-exp="${zid}:${a}">${t}</button>`).join('')}</div></div>`;
+  }
   return html;
 }
 
@@ -125,7 +134,7 @@ function settingsHtml() {
   if (!G.chronicle.length) html += `<div class="dim">还没有记录。</div>`;
   else html += G.chronicle.slice().reverse().map(c =>
     `<div class="chron" data-chron="${c.day}"><b>第 ${c.day} 天</b><div class="dim">${c.log.slice(0, 2).join('；')}${c.log.length > 2 ? '…' : ''}</div></div>`).join('');
-  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 第一批（活的村庄）。批二：经济与探险。批三：骑士与结局。批四：血肉。</div>`;
+  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）+ 批二（经济与探险）已实装。批三：骑士与结局。批四：血肉。</div>`;
   return html;
 }
 
@@ -246,6 +255,16 @@ document.addEventListener('click', e => {
   const it = e.target.closest('[data-item]');
   if (it) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
 
+  const ex = e.target.closest('[data-exp]');
+  if (ex) {
+    const [z, a] = ex.dataset.exp.split(':');
+    const r = doExplore(z, a);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+
   const act = e.target.closest('[data-act]');
   if (!act) {
     if (e.target.id === 'modal-mask' || e.target.closest('#modal-close-btn')) closeModal();
@@ -284,6 +303,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
+  if (a === 'heal') { const r = healPotion(); resultSheet(r.lines); if (!r.blocked) render(); return; }
   if (a === 'rest') { restNow(); settlementSheet(); render(); return; }
   if (a === 'save') { save(); toast('已保存。'); return; }
   if (a === 'reload') { if (load()) { V.place = null; closeModal(); render(); toast('已读档。'); } return; }

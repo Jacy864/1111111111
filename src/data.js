@@ -1071,7 +1071,7 @@ const ENDINGS = {
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5, shoot: 2,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）

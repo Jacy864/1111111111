@@ -191,6 +191,13 @@ function npcSheet(id) {
       extras += `<button class="btn line ib ${noGy ? 'dis' : ''}" data-act="repair" ${noGy ? 'disabled' : ''}>修补（2·黄金玉）${noGy ? '·没有黄金玉' : ''}</button>`;
     }
   }
+  /* 寻欢：有台词池 + 爱情≥50 才出现（偷尝轨·感情线条件待告白系统实装后补） */
+  const fp = funPools(n, s);
+  if (fp && s.l >= 50) {
+    extras += G.node >= DAY_NODES
+      ? `<button class="btn line ib" data-act="ia" data-id="${id}" data-ia="fun">寻欢（${COST.fun}·度过今晚）</button>`
+      : `<button class="btn line ib dis" disabled>寻欢（夜里来）</button>`;
+  }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
@@ -337,7 +344,10 @@ document.addEventListener('click', e => {
     return;
   }
   const a = act.dataset.act, id = act.dataset.id;
-  if (a === 'close-res') { closeModal(); render(); return; }
+  if (a === 'close-res') {
+    if (V.pendingSettle) { V.pendingSettle = false; settlementSheet(); return; }
+    closeModal(); render(); return;
+  }
   if (a === 'feed-toggle') {
     V.feedAll = !V.feedAll; render();
     const f = document.getElementById('feed-sec');
@@ -352,7 +362,10 @@ document.addEventListener('click', e => {
     if (r.duel) { duelSheet(); return; }
     resultSheet(r.lines);
     if (G.over) { render(); return; }
-    if (r.settled) setTimeout(settlementSheet, 10);
+    if (r.settled) {
+      if (act.dataset.ia === 'fun') V.pendingSettle = true;   // 枕边话先看完，点继续再结算
+      else setTimeout(settlementSheet, 10);
+    }
     else render();
     return;
   }

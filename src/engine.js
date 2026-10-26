@@ -64,6 +64,11 @@ function load() {
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
+    /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁 */
+    for (const k in G.npc) {
+      G.npc[k].funOnce = !!G.npc[k].funOnce;
+      G.npc[k].funDay = G.npc[k].funDay || 0;
+    }
     G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
     if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
     return true;
@@ -336,20 +341,71 @@ function knightStressRoll(place, aggressive) {
 
 /* 台词池取值：支持平铺数组（旧格式）与分档对象（v2 台词库）
    chat 按友情分档（0-30/30-60/60+），flirt 按爱意分档（低<40/中40-75/高75+）；缺档回退 low */
+/* 寻欢台词池归一：Vivienne/Levi 主池 joy*；骑士 after.fun*；Lee 恢复后台 after（记忆线批四后段再开） */
+function funPools(def, st) {
+  if (!def) return null;
+  if (def.id === 'lee' && !(st && st.restored)) return null;
+  const a = def.after || {};
+  const inv = def.joyInvite || a.funInv || [], yes = def.joyAccept || a.funYes || [],
+        no = def.joyRefuse || a.funNo || [], night = def.joyNight || a.funNight || [],
+        morn = def.joyFeed || a.funMorn || [], real = def.afterReal || a.loverSneak || [];
+  if (!yes.length || !night.length) return null;
+  return { inv, yes, no, night, morn, real };
+}
+
 function poolArr(def, type, st) {
   const p = def[type];
-  if (Array.isArray(p)) return p;
-  if (p && typeof p === 'object') {
+  let arr = [];
+  if (Array.isArray(p)) arr = p;
+  else if (p && typeof p === 'object') {
     const v = type === 'flirt' ? st.l : st.f;
     const hi = type === 'flirt' ? 75 : 60, mid = type === 'flirt' ? 40 : 30;
     const t = v >= hi ? 'high' : v >= mid ? 'mid' : 'low';
-    const arr = (p[t] && p[t].length) ? p[t] : (p.low && p.low.length ? p.low : (p.mid || p.high || []));
-    return Array.isArray(arr) ? arr : [];
+    const a = (p[t] && p[t].length) ? p[t] : (p.low && p.low.length ? p.low : (p.mid || p.high || []));
+    arr = Array.isArray(a) ? a : [];
   }
-  return [];
+  /* 有实后日常混入闲聊池（§8 寻欢：永久切换版；吃醋升级版台词待台词库补） */
+  if (type === 'chat' && st && st.funOnce) {
+    const fp = funPools(def, st);
+    if (fp && fp.real.length) arr = arr.concat(fp.real);
+  }
+  return arr;
+}
+
+/* 寻欢（§8 双轨·偷尝轨）：夜间发起，掷接受率；接受=今晚在这过（直接结算到天亮） */
+function doFun(id) {
+  const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
+  if (!fp) return { lines: ['现在不适合。'], blocked: true };
+  if (G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
+  if (st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
+  const err = canDo('fun');
+  if (err) return { lines: [err], blocked: true };
+  st.funDay = G.day;
+  /* 接受率：爱情越深越难拒，有过之后不再生分 */
+  const rate = clamp(0.5 + st.l * 0.005 + (st.funOnce ? 0.15 : 0), 0, 1);
+  if (Math.random() > rate) {
+    st.last = G.day;
+    return { lines: ['你开口了。', `<b>${def.name}</b>：「${rnd(fp.no)}」`] };
+  }
+  st.funOnce = true;
+  rel(id, 'l', 3 + Math.floor(Math.random() * 3));
+  rel(id, 'p', 5 + Math.floor(Math.random() * 4));
+  G.energy -= (COST.fun + (G.hurt === 2 ? 1 : 0));
+  G.stats.fun = (G.stats.fun || 0) + 1;
+  G.dayLog.push(`跟${def.name}过了今晚`);
+  st.last = G.day;
+  const lines = [
+    `<b>${def.name}</b>：「${rnd(fp.inv.concat(fp.yes))}」`,
+    `<b>${def.name}</b>：「${rnd(fp.night)}」`,
+    '天亮了。',
+  ];
+  settleDay();
+  if (fp.morn.length) addFeed('morn', rnd(fp.morn));
+  return { lines, settled: true };
 }
 
 function interact(id, type) {
+  if (type === 'fun') return doFun(id);
   const def = npcDef(id), st = G.npc[id];
   const err = canDo(type);
   if (err) return { lines: [err], blocked: true };

@@ -35,6 +35,7 @@ function newGame() {
     flowersPickedDay: 0,
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
+    knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false },  // 完好度/修补连续天数/E2b数据钩子
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
   };
@@ -58,6 +59,7 @@ function load() {
     G.stats.hunts = G.stats.hunts || 0;
     G.stats.kills = G.stats.kills || 0;
     G.stats.gy = G.stats.gy || 0;
+    G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false }, G.knight || {});
     return true;
   } catch (e) { return false; }
 }
@@ -177,7 +179,53 @@ function settleDay() {
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
+  knightWear();
   save();
+}
+
+/* ---------- 骑士：夜战磨损 + 修补连续性 ---------- */
+function knightCondWord() {
+  const c = G.knight.cond;
+  return KNIGHT_COND.find(([t]) => c >= t) || KNIGHT_COND[KNIGHT_COND.length - 1];
+}
+/* 每晚两波怪，各 40% 磨 2-5 点；日常磨损磨不死他（战败/终末之月是批三） */
+function knightWear() {
+  const kn = G.knight;
+  let dmg = 0;
+  for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
+  if (dmg > 0) {
+    kn.cond = Math.max(5, kn.cond - dmg);
+    const heavy = dmg >= 6 || kn.cond < 35;
+    addFeed(heavy ? 'major' : 'sim', rnd(heavy ? KNIGHT_WEAR_HEAVY : KNIGHT_WEAR_LIGHT));
+  }
+  if (kn.repairedToday) { kn.streak++; kn.best = Math.max(kn.best, kn.streak); }
+  else kn.streak = 0;
+  kn.repairedToday = false;
+}
+
+/* ---------- 骑士：修补（黄金玉×1·精力2） ---------- */
+function repairKnight() {
+  if (G.node >= DAY_NODES) return { lines: ['夜里他在前线。等天亮。'], blocked: true };
+  const kn = G.knight;
+  if (kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
+  const err = canDo('repair');
+  if (err) return { lines: [err], blocked: true };
+  G.bag.黄金玉--; if (G.bag.黄金玉 <= 0) delete G.bag.黄金玉;
+  kn.cond = Math.min(100, kn.cond + 35);
+  kn.gyUsed++; kn.repairedToday = true;
+  rel('knight', 'f', 2); rel('knight', 'l', 2); rel('knight', 'p', 1);
+  const tier = G.npc.knight.l >= 40 ? KNIGHT_REPAIR.high : KNIGHT_REPAIR.low;
+  const lines = [
+    '你把黄金玉碾成粉，调了水，一点一点按进裂缝。',
+    `<b>骑士</b>：「${rnd(tier)}」`,
+  ];
+  if (kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
+  addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
+  G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push('给骑士做了修补');
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
 }
 
 function visibleDayEvents() {
@@ -440,6 +488,11 @@ function doExplore(zone, act) {
   const night = G.node >= DAY_NODES;
   let rate = act === 'minefar' ? z.farRate : z.rate;
   if (night && zone !== 'plain') rate = 1;                 // 夜里遇怪拉满（平原除外）
+  /* 近矿卡 bug：白天他送你到村界石（爱≥25 或 友≥50，40%）——近矿他陪，深矿在界外他到不了 */
+  let escort = false;
+  if (act === 'minenear' && !night && (G.npc.knight.l >= 25 || G.npc.knight.f >= 50) && Math.random() < 0.4) {
+    escort = true; rate = 0;
+  }
 
   /* 遇怪：这个节点改成战斗 */
   if (zone !== 'plain' && act !== 'train' && Math.random() < rate) {
@@ -481,9 +534,15 @@ function doExplore(zone, act) {
     lines.push(rnd(EXP_TEXT.dive), `河底的旧硬币：+${coins} 安娜币`);
     youFeed('dive');
   } else if (act === 'minenear') {
-    const n = 1 + (Math.random() < 0.5 ? 1 : 0);
+    const n = 1 + (Math.random() < 0.5 ? 1 : 0) + (escort ? 1 : 0);
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     lines.push(rnd(EXP_TEXT.mineNear), `拾获：铁矿×${n}`);
+    if (escort) {
+      lines.push(resolveNames('你往近矿走。[[knight]]在界石那里跟上了你，走到洞口就站住。'));
+      lines.push(`<b>骑士</b>：「${rnd(KNIGHT_ESCORT)}」`);
+      rel('knight', 'f', 1);
+      addFeed('you', '你下近矿。[[knight]]送你到洞口，站在村界石上等你出来。', ['knight']);
+    }
     youFeed('mine');
   } else if (act === 'minefar') {
     const n = 2 + Math.floor(Math.random() * 2);

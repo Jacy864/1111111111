@@ -165,7 +165,7 @@ function npcSheet(id) {
   if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
   if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
-  if (id === 'knight') html += `<div class="relbar dim">状态：完好。</div>`;
+  if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }
   /* 互动：基础四人组 2×2；送花/交易等进「更多」 */
   const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
   html += `<div class="sec-sub">互动</div>`;
@@ -180,6 +180,10 @@ function npcSheet(id) {
   if (id === 'knight') {
     const noFlower = (G.bag.花 || 0) < 1;
     extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
+    if (G.knight.cond < 100) {
+      const noGy = (G.bag.黄金玉 || 0) < 1;
+      extras += `<button class="btn line ib ${noGy ? 'dis' : ''}" data-act="repair" ${noGy ? 'disabled' : ''}>修补（2·黄金玉）${noGy ? '·没有黄金玉' : ''}</button>`;
+    }
   }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
@@ -293,6 +297,13 @@ document.addEventListener('click', e => {
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else if (a === 'buy') tradeSheet(id); else { closeModal(); render(); }
+    return;
+  }
+  if (a === 'repair') {
+    const r = repairKnight();
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
     return;
   }
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {

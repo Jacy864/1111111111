@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#3a2f26">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="color-scheme" content="light">
-<style>html{background:#2b2420}</style>
+<style>html{background:#F7F6F2}</style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="村庄">
@@ -15,167 +15,301 @@
 <script>if ("serviceWorker" in navigator && location.protocol !== "file:") window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 <title>村庄</title>
 <style>
-/* ============ 村庄文游 · 样式（第一批） ============ */
+/* ============ 村庄文游 · 瑞士风 App 样式（v2） ============
+   纸白 #F7F6F2 / 纯黑 #191813 / 单一红 #E03328
+   8pt 网格 · 字级四档（大标/小标/内文/注释）· 触控 ≥48px */
+
+:root {
+  --paper: #F7F6F2;
+  --surface: #FFFFFF;
+  --ink: #191813;
+  --ink-2: rgba(25, 24, 19, .64);
+  --ink-3: rgba(25, 24, 19, .42);
+  --hair: #E6E3DB;
+  --wash: #EFEDE6;
+  --red: #D9291C;
+  --red-deep: #B72217;
+  --red-wash: #FAEBE9;
+  --ease: cubic-bezier(.32, .72, .24, 1);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html { background: #2b2420; }
+html { background: var(--paper); }
 body {
-  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: #f6efe2; color: #3a2f26;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  background: var(--paper); color: var(--ink);
   max-width: 480px; margin: 0 auto; min-height: 100dvh;
   display: flex; flex-direction: column;
+  font-size: 15px; line-height: 1.7;
+  -webkit-user-select: none; user-select: none;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
 }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 #app { display: flex; flex-direction: column; min-height: 100dvh; }
 
-/* 顶栏 */
+/* ---------- 顶栏 ---------- */
 #statusbar {
   position: sticky; top: 0; z-index: 20;
-  background: #3a2f26; color: #e8dcc4; padding: 8px 14px;
-  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hair);
+  padding: 12px 20px; padding-top: calc(12px + env(safe-area-inset-top));
+  display: flex; align-items: center; gap: 12px;
 }
-#avatar { font-size: 22px; }
-.pinfo { flex: 1; }
-.pname { font-weight: 700; font-size: 15px; }
-.statline { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: #c9b896; margin-top: 2px; }
+#avatar {
+  width: 40px; height: 40px; background: var(--ink); color: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; flex: none;
+}
+.pinfo { flex: 1; min-width: 0; }
+.pname { font-weight: 700; font-size: 16px; letter-spacing: .02em; line-height: 1.3; }
+.statline {
+  display: flex; flex-wrap: wrap; gap: 2px 10px;
+  font-size: 12px; color: var(--ink-2); margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.statline .st:first-child { color: var(--ink); font-weight: 700; }
+.statline .st:first-child::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  background: var(--red); margin-right: 7px; vertical-align: 1px;
+}
 
-/* 主区 */
-#main { flex: 1; padding: 12px 12px 76px; overflow-wrap: break-word; }
+/* ---------- 主区 ---------- */
+#main { flex: 1; padding: 20px 20px 100px; overflow-wrap: break-word; }
+#main > * { animation: rise .18s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-/* 底栏 */
+/* ---------- 底栏 ---------- */
 #tabbar {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px; z-index: 20;
-  display: flex; background: #3a2f26; border-top: 1px solid #5a4a38;
+  display: flex; background: var(--surface); border-top: 1px solid var(--hair);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .tab {
-  flex: 1; text-align: center; padding: 9px 0 11px; color: #9a8a6e;
-  font-size: 12px; cursor: pointer;
+  flex: 1; text-align: center; padding: 9px 0 8px;
+  color: var(--ink-3); font-size: 11px; font-weight: 500;
+  cursor: pointer; position: relative;
+  transition: color .15s;
 }
-.tab .ico { display: block; font-size: 18px; margin-bottom: 2px; }
-.tab.active { color: #f0e3c0; background: #4a3d30; }
+.tab .ico { display: block; margin: 0 auto 3px; width: 24px; height: 24px; }
+.tab .ico svg { display: block; width: 100%; height: 100%; stroke: currentColor; }
+.tab.active { color: var(--ink); font-weight: 700; }
+.tab.active::before {
+  content: ""; position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 3px; background: var(--red);
+}
 
-/* 通用 */
-.sec-title { font-size: 15px; font-weight: 700; margin: 14px 2px 8px; color: #6b4f2e; }
-.sec-sub { font-size: 13px; font-weight: 700; margin: 10px 2px 6px; color: #6b4f2e; }
-.dim { color: #9a8a72; font-size: 12px; }
-.back { background: none; border: none; color: #8a6a3e; font-size: 13px; margin: 2px 0 6px; cursor: pointer; padding: 4px 2px; }
+/* ---------- 标题层级 ---------- */
+.sec-title {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em;
+  color: var(--ink-2); margin: 28px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-title::before { content: ""; width: 6px; height: 6px; background: var(--red); flex: none; }
+.sec-sub { font-size: 12px; font-weight: 700; letter-spacing .1em; color: var(--ink-2); margin: 20px 0 8px; }
+.dim { color: var(--ink-3); font-size: 13px; }
+.back {
+  background: none; border: none; color: var(--ink-2); font-size: 14px; font-weight: 500;
+  margin: 0 0 4px -8px; cursor: pointer; padding: 12px 8px; min-height: 44px;
+  transition: color .15s;
+}
+.back:active { color: var(--ink); }
+
+/* ---------- 卡片 ---------- */
 .card, .zone {
-  background: #fffaf0; border: 1px solid #e2d5bc; border-radius: 10px;
-  padding: 10px 12px; margin-bottom: 8px;
+  background: var(--surface); border: 1px solid var(--hair);
+  padding: 16px; margin-bottom: 10px;
 }
 .row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.li { font-size: 13px; margin: 4px 0; line-height: 1.6; }
+.li { font-size: 15px; margin: 6px 0; line-height: 1.75; }
 
-/* 地点格 */
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+/* ---------- 地点格 ---------- */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .cell {
-  background: #fffaf0; border: 1px solid #d8c9a8; border-radius: 10px;
-  padding: 10px 6px; font-size: 13px; color: #3a2f26; cursor: pointer;
-  display: flex; flex-direction: column; gap: 4px; align-items: center;
+  background: var(--surface); border: 1px solid var(--hair);
+  padding: 16px 8px; min-height: 76px;
+  font-size: 15px; font-weight: 500; color: var(--ink);
+  cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center;
+  transition: background .12s, transform .12s;
 }
-.cell:active { background: #f0e4c8; }
-.pwho { font-size: 10.5px; color: #9a8a72; }
-.place-desc { font-size: 12.5px; color: #7a6a52; margin-bottom: 10px; line-height: 1.6; }
+.cell:active { background: var(--wash); transform: scale(.97); }
+.pwho { font-size: 11px; color: var(--ink-3); font-weight: 400; line-height: 1.4; }
+.place-desc { font-size: 14px; color: var(--ink-2); margin-bottom: 16px; line-height: 1.75; }
 
-/* NPC 卡 */
+/* ---------- NPC 卡 ---------- */
 .npc-card {
-  width: 100%; text-align: left; background: #fffaf0;
-  border: 1px solid #e2d5bc; border-radius: 10px; padding: 10px 12px;
-  margin-bottom: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 3px;
-}
-.npc-card:active { background: #f0e4c8; }
-.nname { font-weight: 700; font-size: 15px; }
-.njob { font-size: 11.5px; color: #9a8a72; }
-.nrel { font-size: 12px; color: #8a6a3e; }
-
-/* 播报流 */
-.feed-wrap { display: flex; flex-direction: column; gap: 6px; }
-.feed {
-  background: #fffaf0; border: 1px solid #e8dcc4; border-radius: 8px;
-  padding: 7px 10px; font-size: 13px; line-height: 1.65;
-}
-.feed.you { background: #f2ecff; border-color: #cfc4ec; }
-.feed.major { background: #fff0e8; border-color: #e8bfa8; }
-.fmeta { font-size: 10.5px; color: #a89878; margin-bottom: 2px; }
-.ftag { margin-left: 6px; font-size: 10px; border-radius: 4px; padding: 0 4px; }
-.ftag.you { background: #cfc4ec; color: #4a3d70; }
-.ftag.major { background: #e8bfa8; color: #7a4020; }
-.feed-hint { font-size: 12px; color: #9a8a72; background: #f0e8d4; border-radius: 8px; padding: 8px 10px; }
-.nm { color: #7a5a2e; border-bottom: 1px dotted #b09868; cursor: pointer; font-weight: 600; }
-.night-note { font-size: 12.5px; color: #6a5a7a; background: #ece8f2; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; }
-
-/* 按钮 */
-.btn {
-  background: #8a6a3e; color: #f6efe2; border: none; border-radius: 8px;
-  padding: 9px 14px; font-size: 13px; cursor: pointer;
-}
-.btn:active { background: #6f5430; }
-.btn.gold { background: #a8842e; }
-.btn.warn { background: #9a4a30; }
-.btn.dis { background: #b8ac96; color: #e8e0d0; }
-.btn.big { padding: 12px 22px; font-size: 14px; }
-.btn.ib { flex: 1; min-width: 0; }
-.actrow2 { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-.tb { flex: 1 1 45%; }
-
-/* 档案弹窗 */
-#modal-mask {
-  position: fixed; inset: 0; background: rgba(30, 24, 18, .55);
-  display: none; z-index: 40; align-items: flex-end; justify-content: center;
-}
-#modal-mask.show { display: flex; }
-#modal {
-  background: #f6efe2; width: 100%; max-width: 480px; max-height: 82dvh;
-  border-radius: 16px 16px 0 0; padding: 16px 16px 24px; overflow-y: auto;
+  width: 100%; text-align: left; background: var(--surface);
+  border: 1px solid var(--hair); padding: 14px 16px;
+  margin-bottom: 10px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 3px;
+  transition: background .12s, transform .12s;
   position: relative;
 }
+.npc-card:active { background: var(--wash); transform: scale(.985); }
+.npc-card::after {
+  content: "›"; position: absolute; right: 14px; top: 50%;
+  transform: translateY(-52%); color: var(--ink-3); font-size: 20px; line-height: 1;
+}
+.nname { font-weight: 700; font-size: 16px; }
+.star-mark { color: var(--red); font-size: 13px; margin-left: 4px; vertical-align: 1px; }
+.njob { font-size: 12px; color: var(--ink-2); }
+.nrel { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+
+/* ---------- 播报流 ---------- */
+.feed-wrap { display: flex; flex-direction: column; gap: 10px; }
+.feed {
+  background: var(--surface); border: 1px solid var(--hair); border-left-width: 3px; border-left-color: var(--hair);
+  padding: 12px 14px; font-size: 15px; line-height: 1.75;
+}
+.feed.you { border-left-color: var(--red); }
+.feed.major { border-left-color: var(--ink); }
+.fmeta {
+  font-size: 11px; color: var(--ink-3); margin-bottom: 5px;
+  letter-spacing: .05em; font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.ftag {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  border: 1px solid currentColor; border-radius: 2px; padding: 1px 6px;
+}
+.ftag.you { color: var(--red); }
+.ftag.major { color: var(--ink-2); }
+.feed-hint {
+  font-size: 13px; color: var(--ink-2);
+  background: var(--wash); border: 1px solid var(--hair); padding: 12px 14px;
+}
+.nm { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--hair); text-underline-offset: 3px; cursor: pointer; }
+.night-note {
+  font-size: 13.5px; line-height: 1.75; color: var(--paper);
+  background: var(--ink); padding: 12px 14px; margin-bottom: 12px;
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  background: var(--ink); color: var(--surface); border: none;
+  padding: 13px 16px; min-height: 48px; font-size: 15px; font-weight: 500;
+  cursor: pointer; letter-spacing: .02em;
+  transition: background .12s, transform .12s;
+}
+.btn:active { background: #000; transform: scale(.97); }
+.btn.gold { background: var(--red); }
+.btn.gold:active { background: var(--red-deep); }
+.btn.warn { background: transparent; color: var(--red); box-shadow: inset 0 0 0 1.5px var(--red); }
+.btn.warn:active { background: var(--red-wash); }
+.btn.dis { background: var(--wash); color: var(--ink-3); pointer-events: none; }
+.btn.big { padding: 15px 24px; min-height: 54px; font-size: 16px; font-weight: 700; }
+.btn.ib { flex: 1; min-width: 0; }
+.actrow2 { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.tb { flex: 1 1 45%; }
+
+/* ---------- 档案弹窗 ---------- */
+#modal-mask {
+  position: fixed; inset: 0; background: rgba(20, 19, 16, .45);
+  display: none; z-index: 40; align-items: flex-end; justify-content: center;
+}
+#modal-mask.show { display: flex; animation: fade .2s ease both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+#modal {
+  background: var(--surface); width: 100%; max-width: 480px; max-height: 86dvh;
+  padding: 14px 20px calc(28px + env(safe-area-inset-bottom)); overflow-y: auto;
+  position: relative; animation: sheet .26s var(--ease) both;
+}
+@keyframes sheet { from { transform: translateY(100%); } to { transform: none; } }
+#modal::before {
+  content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 4px; border-radius: 2px; background: #D6D2C8;
+}
 .modal-close {
-  position: absolute; top: 10px; right: 10px; background: none; border: none;
-  font-size: 16px; color: #9a8a72; cursor: pointer; padding: 6px;
+  position: absolute; top: 16px; right: 14px; background: none; border: none;
+  font-size: 16px; color: var(--ink-3); cursor: pointer; padding: 6px; line-height: 1;
+  transition: color .15s;
 }
-#modal-title { font-size: 16px; margin-bottom: 8px; color: #3a2f26; }
-.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.sheet-name { font-size: 18px; }
-.star { background: none; border: 1px solid #c9a84e; color: #a8842e; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
-.star.on { background: #a8842e; color: #fff6dc; }
-.bio { font-size: 13px; line-height: 1.7; margin: 8px 0; color: #4a3f32; }
-.secret { font-size: 12.5px; color: #7a5a6e; background: #f2e8ee; border-radius: 8px; padding: 7px 10px; margin: 6px 0; }
-.relbar { font-size: 12.5px; color: #6a5a42; margin: 6px 0; }
-.bar { height: 6px; background: #e2d5bc; border-radius: 3px; margin-top: 3px; overflow: hidden; }
-.bar > div { height: 100%; background: #a8842e; }
-.line { font-size: 14px; line-height: 1.8; margin: 8px 0; }
+.modal-close:active { color: var(--ink); }
+#modal-title {
+  font-size: 12px; font-weight: 700; letter-spacing: .14em;
+  color: var(--ink-2); margin: 10px 0 6px;
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 4px; gap: 12px; }
+.sheet-name { font-size: 22px; font-weight: 700; letter-spacing: .02em; }
+.star {
+  background: none; box-shadow: inset 0 0 0 1.5px var(--hair); color: var(--ink-2);
+  border: none; padding: 9px 14px; min-height: 40px; font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all .15s;
+}
+.star.on { background: var(--red); box-shadow: none; color: #fff; font-weight: 700; }
+.star:active { transform: scale(.96); }
+.bio { font-size: 15px; line-height: 1.8; margin: 10px 0; color: var(--ink); }
+.secret {
+  font-size: 13.5px; line-height: 1.7; color: var(--ink-2);
+  background: var(--wash); padding: 10px 12px; margin: 8px 0;
+}
+.relbar { font-size: 13px; color: var(--ink-2); margin: 8px 0; font-variant-numeric: tabular-nums; }
+.bar { height: 4px; background: var(--wash); margin-top: 5px; }
+.bar > div { height: 100%; background: var(--red); transition: width .3s var(--ease); }
+.line { font-size: 15px; line-height: 1.85; margin: 8px 0; }
 
-/* 背包 / 编年史 */
-.bag { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+/* ---------- 背包 / 编年史 ---------- */
+.bag { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .bag-item {
-  background: #fffaf0; border: 1px solid #e2d5bc; border-radius: 8px;
-  padding: 8px 10px; font-size: 13px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--hair);
+  padding: 12px 14px; font-size: 15px; cursor: pointer; min-height: 78px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  transition: background .12s, transform .12s;
 }
+.bag-item:active { background: var(--wash); transform: scale(.97); }
+.bag-item b { font-size: 15px; }
 .chron {
-  background: #fffaf0; border: 1px solid #e2d5bc; border-radius: 8px;
-  padding: 8px 10px; margin-bottom: 6px; font-size: 13px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--hair);
+  padding: 12px 14px; margin-bottom: 10px; font-size: 15px; cursor: pointer;
+  transition: background .12s, transform .12s;
 }
+.chron:active { background: var(--wash); transform: scale(.985); }
+.trade { margin-top: 4px; }
 
-/* 启动页 */
-.boot { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70dvh; text-align: center; padding: 20px; }
-.boot-title { font-size: 34px; letter-spacing: 12px; color: #3a2f26; margin-bottom: 6px; }
-.boot-sub { font-size: 12px; color: #9a8a72; margin-bottom: 22px; }
-.boot-txt { font-size: 13.5px; line-height: 2; color: #4a3f32; margin-bottom: 26px; }
+/* ---------- 启动页 ---------- */
+.boot {
+  display: flex; flex-direction: column; align-items: stretch; justify-content: center;
+  flex: 1; padding: 40px 8px 24px;
+}
+.boot-title {
+  font-size: 40px; font-weight: 800; letter-spacing: .28em;
+  color: var(--ink); margin: 0 0 14px; text-indent: .28em; text-align: center;
+}
+.boot-sub {
+  font-size: 12px; color: var(--ink-2); letter-spacing: .18em;
+  margin-bottom: 36px; text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.boot-sub::before, .boot-sub::after { content: ""; width: 24px; height: 1px; background: var(--hair); }
+.boot-box { border-top: 2px solid var(--ink); padding-top: 20px; margin-bottom: 32px; }
+.boot-txt { font-size: 15px; line-height: 2.1; color: var(--ink); }
+.boot-actions { display: flex; flex-direction: column; gap: 10px; }
+.boot-actions .btn { width: 100%; }
+.boot-note { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 12px; }
 
-/* toast */
+/* ---------- toast ---------- */
 #toast {
-  position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
-  background: #3a2f26; color: #f0e3c0; font-size: 12.5px; border-radius: 20px;
-  padding: 8px 16px; opacity: 0; transition: all .25s; pointer-events: none; z-index: 60;
-  max-width: 86vw; text-align: center;
+  position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(16px);
+  background: var(--ink); color: var(--surface); font-size: 13.5px; border-radius: 999px;
+  padding: 10px 20px; opacity: 0; transition: all .25s var(--ease); pointer-events: none; z-index: 60;
+  max-width: 86vw; text-align: center; line-height: 1.6;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- 动效降级 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 
 </style>
 </head>
 <body>
 <div id="app">
   <div id="statusbar">
-    <div class="avatar" id="avatar">🏹</div>
+    <div class="avatar" id="avatar">G</div>
     <div class="pinfo">
       <div class="pname">Gloria</div>
       <div class="statline" id="statline"></div>
@@ -183,10 +317,10 @@ body {
   </div>
   <div id="main"></div>
   <div id="tabbar">
-    <div class="tab active" data-t="village"><span class="ico">🏘</span>村庄</div>
-    <div class="tab" data-t="home"><span class="ico">🏚</span>家</div>
-    <div class="tab" data-t="explore"><span class="ico">🌲</span>探险</div>
-    <div class="tab" data-t="settings"><span class="ico">📜</span>设定</div>
+    <div class="tab active" data-t="village"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg></span>村庄</div>
+    <div class="tab" data-t="home"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg></span>家</div>
+    <div class="tab" data-t="explore"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 19L10 6l4 7 3-4 4 10z"/></svg></span>探险</div>
+    <div class="tab" data-t="settings"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="#fff"/><circle cx="15" cy="12" r="2" fill="#fff"/><circle cx="8" cy="17" r="2" fill="#fff"/></svg></span>设定</div>
   </div>
   <div id="modal-mask">
     <div id="modal">
@@ -756,6 +890,8 @@ const ITEMS = {
   蛋糕: { d: 'Olivia 的新出炉。' },
   熟食: { d: '垫肚子用。' },
   花: { d: '广场边摘的。有人会喜欢。' },
+  弓: { d: '你吃饭的家伙。弦是自己换的。' },
+  水: { d: '井里打的，凉。' },
   旧地图: { d: '你带来的物件之一。边角磨白了。' },
   铜哨: { d: '你带来的物件之一。吹起来很响。' },
 };
@@ -1225,7 +1361,7 @@ function placeHtml(pid) {
 function npcCard(n) {
   const s = G.npc[n.id];
   return `<button class="npc-card" data-npc="${n.id}">
-    <span class="nname">${n.name}${G.stars[n.id] ? ' ⭐' : ''}</span>
+    <span class="nname">${n.name}${G.stars[n.id] ? '<span class="star-mark">★</span>' : ''}</span>
     <span class="njob">${n.job}</span>
     <span class="nrel">${friendWord(n.id)}${s.l >= 15 ? ' · ' + loveWord(n.id) : ''}</span>
   </button>`;
@@ -1287,8 +1423,7 @@ function settingsHtml() {
 function chronDetail(day) {
   const c = G.chronicle.find(x => x.day === day);
   if (!c) return;
-  let html = `<div class="sec-title">第 ${c.day} 天</div>`;
-  html += `<div class="sec-sub">你做了什么</div>` + c.log.map(l => `<div class="li">· ${l}</div>`).join('');
+  let html = `<div class="sec-sub">你做了什么</div>` + c.log.map(l => `<div class="li">· ${l}</div>`).join('');
   html += `<div class="sec-sub">Asher</div><div class="li">${c.ash}</div>`;
   html += `<div class="sec-sub">村里发生了什么</div>`;
   html += c.ev.length ? c.ev.map(e => `<div class="li">${e}</div>`).join('') : `<div class="dim">平静的一天。</div>`;
@@ -1324,7 +1459,7 @@ function npcSheet(id) {
   html += `</div>`;
   if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   if (n.trade) html += `<div class="actrow2"><button class="btn ib" data-act="trade" data-id="${id}">交易（1）</button></div>`;
-  openModal(n.name, html);
+  openModal('人物档案', html);
 }
 
 function tradeSheet(id) {
@@ -1356,6 +1491,7 @@ function settlementSheet() {
 
 /* ---------- 弹窗 / toast ---------- */
 function openModal(title, html) {
+  hideToast();
   $('#modal-title').innerHTML = title;
   $('#modal-body').innerHTML = html;
   $('#modal-mask').classList.add('show');
@@ -1364,12 +1500,14 @@ function closeModal() { $('#modal-mask').classList.remove('show'); }
 let toastTimer = null;
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 2200);
 }
+function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('show'); }
 
 /* ---------- 主渲染 ---------- */
 function render() {
   renderStatus();
+  $('#tabbar').style.display = '';
   const map = { village: villageHtml, home: homeHtml, explore: exploreHtml, settings: settingsHtml };
   app().innerHTML = map[V.tab]();
   document.querySelectorAll('#tabbar .tab').forEach(el => el.classList.toggle('active', el.dataset.t === V.tab));
@@ -1437,19 +1575,22 @@ document.addEventListener('click', e => {
 /* ---------- 启动 ---------- */
 function boot() {
   const saved = hasSave();
+  $('#tabbar').style.display = 'none';
   app().innerHTML = `
     <div class="boot">
-      <div class="boot-title">村 庄</div>
-      <div class="boot-sub">西幻中世纪 · 自由向文游 · 第一批试玩</div>
-      <div class="boot-txt">你是 Gloria，猎户，外来者，把家安在村口以北。<br>
-      村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
-      白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
-      <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span></div>
-      <div class="actrow2" style="justify-content:center">
+      <div class="boot-title">村庄</div>
+      <div class="boot-sub">西幻中世纪 · 自由向文游</div>
+      <div class="boot-box"><div class="boot-txt">
+        你是 Gloria，猎户，外来者，把家安在村口以北。<br>
+        村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
+        白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
+        <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span>
+      </div></div>
+      <div class="boot-actions">
         ${saved ? `<button class="btn big" data-boot="continue">继续旅程</button>` : ''}
-        <button class="btn big ${saved ? '' : 'gold'}" data-boot="new">${saved ? '新的旅程' : '开始'}</button>
+        <button class="btn big ${saved ? 'warn' : 'gold'}" data-boot="new">${saved ? '新的旅程' : '开始'}</button>
       </div>
-      ${saved ? '<div class="dim" style="text-align:center">新的旅程会覆盖旧档</div>' : ''}
+      ${saved ? '<div class="boot-note">新的旅程会覆盖旧档</div>' : ''}
     </div>`;
   document.querySelectorAll('[data-boot]').forEach(b => b.onclick = () => {
     if (b.dataset.boot === 'continue') { load(); } else { newGame(); }

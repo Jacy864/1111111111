@@ -71,7 +71,7 @@ function placeHtml(pid) {
 function npcCard(n) {
   const s = G.npc[n.id];
   return `<button class="npc-card" data-npc="${n.id}">
-    <span class="nname">${n.name}${G.stars[n.id] ? ' ⭐' : ''}</span>
+    <span class="nname">${n.name}${G.stars[n.id] ? '<span class="star-mark">★</span>' : ''}</span>
     <span class="njob">${n.job}</span>
     <span class="nrel">${friendWord(n.id)}${s.l >= 15 ? ' · ' + loveWord(n.id) : ''}</span>
   </button>`;
@@ -133,8 +133,7 @@ function settingsHtml() {
 function chronDetail(day) {
   const c = G.chronicle.find(x => x.day === day);
   if (!c) return;
-  let html = `<div class="sec-title">第 ${c.day} 天</div>`;
-  html += `<div class="sec-sub">你做了什么</div>` + c.log.map(l => `<div class="li">· ${l}</div>`).join('');
+  let html = `<div class="sec-sub">你做了什么</div>` + c.log.map(l => `<div class="li">· ${l}</div>`).join('');
   html += `<div class="sec-sub">Asher</div><div class="li">${c.ash}</div>`;
   html += `<div class="sec-sub">村里发生了什么</div>`;
   html += c.ev.length ? c.ev.map(e => `<div class="li">${e}</div>`).join('') : `<div class="dim">平静的一天。</div>`;
@@ -170,7 +169,7 @@ function npcSheet(id) {
   html += `</div>`;
   if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   if (n.trade) html += `<div class="actrow2"><button class="btn ib" data-act="trade" data-id="${id}">交易（1）</button></div>`;
-  openModal(n.name, html);
+  openModal('人物档案', html);
 }
 
 function tradeSheet(id) {
@@ -202,6 +201,7 @@ function settlementSheet() {
 
 /* ---------- 弹窗 / toast ---------- */
 function openModal(title, html) {
+  hideToast();
   $('#modal-title').innerHTML = title;
   $('#modal-body').innerHTML = html;
   $('#modal-mask').classList.add('show');
@@ -210,12 +210,14 @@ function closeModal() { $('#modal-mask').classList.remove('show'); }
 let toastTimer = null;
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 2200);
 }
+function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('show'); }
 
 /* ---------- 主渲染 ---------- */
 function render() {
   renderStatus();
+  $('#tabbar').style.display = '';
   const map = { village: villageHtml, home: homeHtml, explore: exploreHtml, settings: settingsHtml };
   app().innerHTML = map[V.tab]();
   document.querySelectorAll('#tabbar .tab').forEach(el => el.classList.toggle('active', el.dataset.t === V.tab));
@@ -283,19 +285,22 @@ document.addEventListener('click', e => {
 /* ---------- 启动 ---------- */
 function boot() {
   const saved = hasSave();
+  $('#tabbar').style.display = 'none';
   app().innerHTML = `
     <div class="boot">
-      <div class="boot-title">村 庄</div>
-      <div class="boot-sub">西幻中世纪 · 自由向文游 · 第一批试玩</div>
-      <div class="boot-txt">你是 Gloria，猎户，外来者，把家安在村口以北。<br>
-      村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
-      白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
-      <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span></div>
-      <div class="actrow2" style="justify-content:center">
+      <div class="boot-title">村庄</div>
+      <div class="boot-sub">西幻中世纪 · 自由向文游</div>
+      <div class="boot-box"><div class="boot-txt">
+        你是 Gloria，猎户，外来者，把家安在村口以北。<br>
+        村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
+        白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
+        <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span>
+      </div></div>
+      <div class="boot-actions">
         ${saved ? `<button class="btn big" data-boot="continue">继续旅程</button>` : ''}
-        <button class="btn big ${saved ? '' : 'gold'}" data-boot="new">${saved ? '新的旅程' : '开始'}</button>
+        <button class="btn big ${saved ? 'warn' : 'gold'}" data-boot="new">${saved ? '新的旅程' : '开始'}</button>
       </div>
-      ${saved ? '<div class="dim" style="text-align:center">新的旅程会覆盖旧档</div>' : ''}
+      ${saved ? '<div class="boot-note">新的旅程会覆盖旧档</div>' : ''}
     </div>`;
   document.querySelectorAll('[data-boot]').forEach(b => b.onclick = () => {
     if (b.dataset.boot === 'continue') { load(); } else { newGame(); }

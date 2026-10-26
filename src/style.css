@@ -91,7 +91,11 @@ button { font-family: inherit; }
   display: flex; align-items: center; gap: 8px;
 }
 .sec-title::before { content: ""; width: 6px; height: 6px; background: var(--red); flex: none; }
-.sec-sub { font-size: 12px; font-weight: 700; letter-spacing .1em; color: var(--ink-2); margin: 20px 0 8px; }
+.sec-sub {
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--ink-2); margin: 20px 0 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sec-sub::before { content: ""; width: 6px; height: 6px; background: var(--red); flex: none; }
 .dim { color: var(--ink-3); font-size: 13px; }
 .back {
   background: none; border: none; color: var(--ink-2); font-size: 14px; font-weight: 500;
@@ -163,6 +167,15 @@ button { font-family: inherit; }
   font-size: 13px; color: var(--ink-2);
   background: var(--wash); border: 1px solid var(--hair); padding: 12px 14px;
 }
+.feed-more {
+  width: 100%; background: var(--surface); border: none; box-shadow: inset 0 0 0 1.5px var(--hair);
+  color: var(--ink-2); font-size: 13px; font-weight: 500; padding: 12px; min-height: 44px;
+  cursor: pointer; letter-spacing: .02em;
+  transition: background .12s, transform .12s;
+}
+.feed-more:active { background: var(--wash); transform: scale(.985); }
+#feed-sec { scroll-margin-top: 72px; }
+#main > .sec-title:first-child { margin-top: 4px; }
 .nm { color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--hair); text-underline-offset: 3px; cursor: pointer; }
 .night-note {
   font-size: 13.5px; line-height: 1.75; color: var(--paper);
@@ -182,9 +195,13 @@ button { font-family: inherit; }
 .btn.warn { background: transparent; color: var(--red); box-shadow: inset 0 0 0 1.5px var(--red); }
 .btn.warn:active { background: var(--red-wash); }
 .btn.dis { background: var(--wash); color: var(--ink-3); pointer-events: none; }
+.btn.line { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.btn.line:active { background: var(--wash); }
+.btn.line.dis { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--hair); color: var(--ink-3); }
 .btn.big { padding: 15px 24px; min-height: 54px; font-size: 16px; font-weight: 700; }
 .btn.ib { flex: 1; min-width: 0; }
-.actrow2 { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+.actrow2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 12px 0; }
+.actrow2 .btn:only-child { grid-column: 1 / -1; }
 .tb { flex: 1 1 45%; }
 
 /* ---------- 档案弹窗 ---------- */

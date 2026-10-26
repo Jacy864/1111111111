@@ -1,6 +1,6 @@
 /* ============ 村庄文游 · UI 层（第一批） ============ */
 
-const V = { tab: 'village', place: null, chronDay: null };
+const V = { tab: 'village', place: null, chronDay: null, feedAll: false };
 
 const $ = s => document.querySelector(s);
 const app = () => $('#main');
@@ -18,30 +18,28 @@ function renderStatus() {
 
 /* ---------- 播报流 ---------- */
 function feedHtml() {
-  const list = visibleFeed().slice(-30).reverse();
-  if (!Object.keys(G.stars).some(k => G.stars[k])) {
-    const hint = `<div class="feed-hint">在人物界面星标后，这里只显示与TA有关的事。现在显示全部。</div>`;
-    if (!list.length) return hint;
-    return hint + list.map(e => {
-      const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : '';
-      return `<div class="feed ${e.t}"><div class="fmeta">第${e.d}天 ${NODE_NAMES[e.n]}${tag}</div><div class="ftext">${e.html}</div></div>`;
-    }).join('');
-  }
-  if (!list.length) return '<div class="feed-hint">星标的人这段时间没有动静。</div>';
-  return list.map(e => {
+  const all = visibleFeed().slice(-30).reverse();
+  const starred = Object.keys(G.stars).some(k => G.stars[k]);
+  const hint = starred ? '' : `<div class="feed-hint">在人物界面星标后，这里只显示与TA有关的事。现在显示全部。</div>`;
+  if (!all.length) return `<div class="feed-hint">${starred ? '星标的人这段时间没有动静。' : '村里还没有动静。'}</div>`;
+  const item = e => {
     const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : '';
     return `<div class="feed ${e.t}"><div class="fmeta">第${e.d}天 ${NODE_NAMES[e.n]}${tag}</div><div class="ftext">${e.html}</div></div>`;
-  }).join('');
+  };
+  const shown = V.feedAll ? all : all.slice(0, 6);
+  const more = all.length > 6
+    ? `<button class="feed-more" data-act="feed-toggle">${V.feedAll ? '收起播报' : `更早的播报 · 还有 ${all.length - 6} 条`}</button>`
+    : '';
+  return hint + shown.map(item).join('') + more;
 }
 
 /* ---------- 村庄页 ---------- */
 function villageHtml() {
   if (V.place) return placeHtml(V.place);
   const night = G.node >= DAY_NODES;
-  let html = `<div class="sec-title">村庄</div>`;
+  let html = `<div class="sec-title">去哪</div>`;
   if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
-  html += `<div class="feed-wrap">${feedHtml()}</div>`;
-  html += `<div class="sec-title">去哪</div><div class="grid">`;
+  html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
     const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
@@ -49,6 +47,7 @@ function villageHtml() {
     html += `<button class="cell" data-place="${pid}">${p.name}${label}</button>`;
   }
   html += `</div>`;
+  html += `<div class="sec-title" id="feed-sec">播报</div><div class="feed-wrap">${feedHtml()}</div>`;
   return html;
 }
 
@@ -158,17 +157,23 @@ function npcSheet(id) {
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
   if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
   if (id === 'knight') html += `<div class="relbar dim">状态：完好。</div>`;
-  /* 互动 */
+  /* 互动：基础四人组 2×2；送花/交易等进「更多」 */
   const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
+  html += `<div class="sec-sub">互动</div>`;
   html += `<div class="actrow2">`;
   html += btn('chat', `闲聊（1）`);
   html += btn('flirt', `暧昧（2）`, s.f < 40);
   html += btn('tease', `打闹（2）`);
   if (!n.noAttack) html += btn('hit', '攻击（2）');
-  if (id === 'knight') html += btn('flower', `送花（1）${(G.bag.花 || 0) < 1 ? '·没花' : ''}`, (G.bag.花 || 0) < 1);
   html += `</div>`;
   if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
-  if (n.trade) html += `<div class="actrow2"><button class="btn ib" data-act="trade" data-id="${id}">交易（1）</button></div>`;
+  let extras = '';
+  if (id === 'knight') {
+    const noFlower = (G.bag.花 || 0) < 1;
+    extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
+  }
+  if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
+  if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
 }
 
@@ -248,6 +253,12 @@ document.addEventListener('click', e => {
   }
   const a = act.dataset.act, id = act.dataset.id;
   if (a === 'close-res') { closeModal(); render(); return; }
+  if (a === 'feed-toggle') {
+    V.feedAll = !V.feedAll; render();
+    const f = document.getElementById('feed-sec');
+    if (f) f.scrollIntoView({ block: 'start' });
+    return;
+  }
   if (a === 'star') { G.stars[id] = !G.stars[id]; save(); npcSheet(id); render(); return; }
   if (a === 'trade') { tradeSheet(id); return; }
   if (a === 'ia') {

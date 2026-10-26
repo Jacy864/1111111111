@@ -1,6 +1,6 @@
 /* ============ 村庄文游 · UI 层（第一批） ============ */
 
-const V = { tab: 'village', place: null, chronDay: null, feedAll: false };
+const V = { tab: 'village', place: null, chronDay: null, feedAll: false, endingChoice: 0 };
 
 const $ = s => document.querySelector(s);
 const app = () => $('#main');
@@ -40,6 +40,10 @@ function villageHtml() {
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
   if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
+  if (G.knight.core) {
+    const left = Math.max(0, G.knight.doomEnd - G.day);
+    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他。皇帝的信使要三十天后才到。夜里怪物还会来——他出战就是死，村里只剩你的弓。</div></div>`;
+  }
   html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
@@ -113,6 +117,7 @@ function exploreHtml() {
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">探险</div>`;
   html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面。除了平原，走到哪都会撞上。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
+  if (night) html += `<div class="zone"><b>夜猎</b><div class="dim">出村守一夜：一到两波怪物，掉落比白天厚。${G.knight.core ? '现在村里的夜，只有你的弓。' : ''}</div><div class="actrow2"><button class="btn warn" data-act="nighthunt">夜猎守村（精力5）</button></div></div>`;
   for (const [zid, z] of Object.entries(EXPLORE)) {
     const rateTxt = zid === 'plain' ? '绝对安全'
       : night ? '夜里必遇怪'
@@ -232,8 +237,63 @@ function toast(msg) {
 }
 function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('show'); }
 
+/* ---------- 结局画面（批三） ---------- */
+function renderEnding() {
+  closeModal();
+  $('#tabbar').style.display = 'none';
+  $('#statline').innerHTML = `<span class="st">第 ${G.over.day} 天 · 终</span>`;
+  const t = G.over.t, e = ENDINGS[t];
+  let body = t === 'E3'
+    ? (e3Variant() === 'love' ? e.bodyLove : e3Variant() === 'poss' ? e.bodyPoss : e.bodyFriend).concat(e.tail)
+    : (e.body || []);
+  let html = `<div class="ending"><div class="end-title">${e.title}</div>`;
+  if (e.sub) html += `<div class="end-sub">${e.sub}</div>`;
+  html += `<div class="end-body">${body.map(l => `<div class="line">${l}</div>`).join('')}</div>`;
+  if (t === 'E2b' && !G.over.v) {
+    html += `<div class="actrow2 end-choice">
+      <button class="btn" data-act="endchoice" data-v="v0">一起走</button>
+      <button class="btn" data-act="endchoice" data-v="v1">他留下</button>
+    </div>`;
+  } else {
+    if (t === 'E2b') html += `<div class="end-body">${e[G.over.v].map(l => `<div class="line">${l}</div>`).join('')}</div>`;
+    html += `<div class="end-stats">存活 ${G.over.day} 天 · 武力 ${G.force} · 击杀 ${G.stats.kills}</div>
+      <div class="actrow2"><button class="btn warn" data-act="newgame">重新开始</button></div>`;
+  }
+  app().innerHTML = html + `</div>`;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 决斗弹窗（§6.3） ---------- */
+let duelTimer = null;
+function duelSheet() {
+  if (!G.duel) return;
+  openModal('骑士', `
+    <div class="line">${resolveNames(DUEL_TEXT.scene[G.duel.reason] || DUEL_TEXT.scene.npcHit)}</div>
+    <div class="line dim">你的武力：${G.force}。</div>
+    <div class="actrow2">
+      <button class="btn" data-act="duel" data-m="a">防御</button>
+      <button class="btn" data-act="duel" data-m="b">进攻</button>
+    </div>
+    <div class="actrow2"><button class="btn warn" data-act="duel-c">下死手</button></div>`);
+}
+function duelConfirmSheet() {
+  openModal('骑士', `
+    <div class="line">${DUEL_TEXT.cGo}</div>
+    <div class="line dim">只有一次机会。五秒之内动手。</div>
+    <div class="duel-timer"><div class="duel-bar"></div></div>
+    <div class="actrow2"><button class="btn warn" data-act="duel" data-m="c">动手</button></div>`);
+  clearTimeout(duelTimer);
+  duelTimer = setTimeout(() => {
+    if (!G.duel) return;
+    const r = duelMove('ctimeout');
+    resultSheet(r.lines);
+    if (!r.settled) render();
+  }, 5000);
+}
+
 /* ---------- 主渲染 ---------- */
 function render() {
+  if (G.over) { renderEnding(); return; }
   renderStatus();
   $('#tabbar').style.display = '';
   const map = { village: villageHtml, home: homeHtml, explore: exploreHtml, settings: settingsHtml };
@@ -264,6 +324,7 @@ document.addEventListener('click', e => {
     const [z, a] = ex.dataset.exp.split(':');
     const r = doExplore(z, a);
     resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;
@@ -287,7 +348,9 @@ document.addEventListener('click', e => {
   if (a === 'ia') {
     if (act.disabled) return;
     const r = interact(id, act.dataset.ia);
+    if (r.duel) { duelSheet(); return; }
     resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;
@@ -311,6 +374,29 @@ document.addEventListener('click', e => {
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
+    return;
+  }
+  if (a === 'nighthunt') {
+    const r = nightHunt();
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'duel') {
+    clearTimeout(duelTimer);
+    const r = duelMove(act.dataset.m);
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'duel-c') { duelConfirmSheet(); return; }
+  if (a === 'endchoice') {
+    G.over.v = act.dataset.v; save();
+    render();
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }

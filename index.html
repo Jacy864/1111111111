@@ -317,6 +317,22 @@ button { font-family: inherit; }
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ---------- 终末之月 / 结局 / 决斗（批三） ---------- */
+.card.doom { box-shadow: inset 0 0 0 1.5px var(--red); }
+.card.doom .b { color: var(--red); }
+
+.ending { padding: 26px 4px 30px; }
+.end-title { font-size: 22px; font-weight: 700; text-align: center; margin: 8px 0 4px; }
+.end-sub { text-align: center; color: var(--ink-2); font-size: 13px; margin-bottom: 14px; }
+.end-body .line { margin: 10px 0; line-height: 1.75; }
+.end-body .line:first-child { margin-top: 0; }
+.end-choice { margin: 16px 0 0; }
+.end-stats { text-align: center; color: var(--ink-2); font-size: 12px; margin: 18px 0 10px; font-variant-numeric: tabular-nums; }
+
+.duel-timer { height: 6px; background: var(--red-wash); border-radius: 3px; overflow: hidden; margin: 10px 0 12px; }
+.duel-bar { height: 100%; width: 100%; background: var(--red); animation: duel-shrink 5s linear forwards; }
+@keyframes duel-shrink { from { width: 100%; } to { width: 0%; } }
+
 /* ---------- 动效降级 ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -1269,8 +1285,143 @@ const KNIGHT_ESCORT = [
   '这里的石头和我一样，缺了都要靠人来补。',
 ];
 
+/* ---------- 夜猎 / 怪物潮 / 终末之月 / 骑士战（批三） ---------- */
+const NIGHT_TEXT = {
+  go: [
+    '你吹熄了灯，摸黑出村。弓在背上，箭囊勒紧了。',
+    '你贴着篱笆走出村口。黑暗里有东西在挪动。',
+  ],
+  wave: [
+    '黑暗里先动的是它。你后发先至。',
+    '它从坡上滚下来扑你。你往侧面跨了一步，放箭。',
+    '你听见爪子刮石头的声音，朝声音放了两箭。',
+  ],
+  wave2: ['没等喘匀气，第二只跟了上来。', '血腥味招来了第二只。'],
+  back: ['你踏着晨雾回村，箭囊空了。', '天边发白的时候你进了村。靴子上的血干成黑色。'],
+};
+const TIDE_TEXT = [
+  '入夜后山那头的怪叫没停过。[[knight]]在前线打到后半夜，村里人捂着耳朵睡。',
+  '怪物成群过了界线。[[knight]]把它们挡在村口，剑声一直响到天亮。',
+];
+const DOOM_TEXT = {
+  start: [
+    '[[knight]]是被村民们抬回来的。胸口的裂缝里露出玉色的芯。它说：「我还能站。」皇帝的御匠不会来。修好它的黄金玉，只在你手里。',
+  ],
+  decay: [
+    '[[knight]]现在夜里不出村了。它站在广场上，天亮也不动。',
+    '[[knight]]的左腿接缝处掉了一小块。它把那块攥在手里。',
+  ],
+  forced: [
+    '昨夜怪物进了村口的田。[[knight]]还是出去了。它回来的时候，裂缝又长了一寸。',
+    '没人守夜。怪物挠了两家的门。[[knight]]出去了一趟，回来时右臂垂着。',
+  ],
+  safe: ['昨夜有你守着村口。[[knight]]在广场站了一整夜，没动。', '你的箭替村子值了一夜的班。'],
+};
+const DUEL_TEXT = {
+  scene: {
+    npcHit: '[[knight]]的剑出了鞘，剑尖对着你。广场安静下来。',
+    knightHit: '你朝它挥的手还没落下来，剑已经横在了你们中间。',
+  },
+  aStop: '剑在你颈侧停住，剑刃贴着皮肤。「走。」',
+  aHurt: '剑背把你扫倒在地。他收剑，转身，站在原地没有再动。',
+  bWin: '你硬接了他的三剑，第四剑磕开了他的手腕。他退了半步，垂下剑。你们都在流血。',
+  bLose: '你被剑面拍在墙上，滑坐下去，肋骨响了两声。他站在原地，剑垂下去，没有再动。',
+  cGo: '你看准了他收剑的那半寸。这半寸里只有一次机会。',
+  cFail: '你犹豫的那一瞬，它先动了。',
+  cLose: '它先动了。剑停在你胸口前——最后偏了半寸，削断了你一缕头发。你们都没有再说话。',
+};
+
+/* 结局文本（§12；结局允许少量叙述，以对白推进） */
+const ENDINGS = {
+  E0: {
+    title: '村庄还在',
+    sub: '你死在了村外。',
+    body: [
+      '第二天，Asher 仍准时出现在你家门口，手里拿着路上摘的花。他等了很久。',
+      '骑士还是每晚去走你常走的那条巡逻路线。皇帝的傀儡不需要记住任何人。',
+      'Isabel 把两份心事一起埋了。沙发上再没人起来。',
+      'Vivienne 那一夜的忏悔，第一次有了真意。',
+      'Leo 把你借的最后一本书放回原位，再没借出过。',
+      'Alice 在农田里骂了一整天，晚上对庄稼道歉。',
+      'Levi 一整天没说话。动物们围着他。',
+      'Olivia 第一次主动把蛋糕放上坟。',
+      'Bess 和 Jacob 知道你为什么死的。守着秘密，更沉默了。',
+      'Lee 早在几天前的谶语里说过了。村民这才想起来。',
+      'Jasper 以贵族的礼节立了一块体面的墓碑。没人知道他为什么会这个。',
+      '肉、矿、稀有花的供给断了。安娜币变回了印着皇帝脸的普通金属。',
+    ],
+  },
+  E1: {
+    title: '新任守护者',
+    sub: '骑士碎在了村口。',
+    body: [
+      '全村下了葬。皇帝来函：「该骑士已尽力。」',
+      '一个月后，皇帝的信使送来新骑士。一模一样的瓷白，一模一样的湖蓝眼睛，一模一样的温柔。',
+      '他向你正式自我介绍：「外来者，你好。我是本村的新任守护者。」',
+      '你递给他一朵花。他礼貌道谢，问：「请问你是？」',
+    ],
+  },
+  E2a: {
+    title: '第三十个黎明',
+    sub: '他和它们一起停在晨光里。',
+    body: [
+      '三十天里，你每天用金粉吊着他的命。他每天道谢，道谢到最后一晚。',
+      '第三十个黎明，怪物死去的时刻，他和它们一起停在晨光里。',
+      '全村下葬。皇帝来函：「该骑士已尽力。」',
+    ],
+  },
+  E2b: {
+    title: '界线之外',
+    sub: '',
+    body: [
+      '第三十个黎明，怪物死在晨光里。他没有停。',
+      '没有御匠的重构，凭着被补了三十天的躯壳，挣脱了皇帝的控纹。',
+      '他跨出村界，第一次站在村庄的边界线外。湖蓝色的眼睛看着你。',
+      '「外面是什么样的？」',
+    ],
+    choice: ['一起走', '他留下'],
+    v0: ['你把家当捆上背。他的手很凉，一直没松。', '（你和他都没再回来。村里人说，北边的官道上有一对怪客，一个瓷白，一个背弓。）'],
+    v1: ['他看了村界很久，然后退回来一步，站回了界线里面。「有人得守着他们。」', '（他自愿留下守护村民。你出村那天，他送到界石，站住，像每一次一样。）'],
+  },
+  E2c: {
+    title: '沉默里凋零',
+    sub: '他拒绝了你的金粉。',
+    body: [
+      '他不再让你修补。裂缝一天天爬满全身，他在沉默里凋零。',
+      '最后一天，他开口说了一句：「对不起。」',
+      '全村下葬。皇帝来函：「该骑士已尽力。」',
+    ],
+  },
+  E3: {
+    title: '瓷白碎开',
+    sub: '你亲手打碎了他。',
+    bodyLove: [
+      '他没有防御，松开了剑。「动手吧。」',
+      '他看着你，一直看到瓷白碎开。',
+    ],
+    bodyFriend: [
+      '他全力应战到最后一刻，死时仍不明白为什么。',
+    ],
+    bodyPoss: [
+      '他玉石俱焚，拖着重伤与你同倒。你们都没能站起来。',
+    ],
+    tail: [
+      '皇帝的信使仍会送来新骑士。但村民都知道是谁杀了他。',
+      'Asher 再也不来你家睡了。',
+    ],
+  },
+  E4: {
+    title: '清除威胁',
+    sub: '剑落下来的那一刻，你想起的是第一次送他的花。',
+    body: [
+      '皇帝来函嘉奖骑士「清除威胁」。',
+      '嘉奖函被他垫在了花盆底下。花盆里的花，是你种的。',
+    ],
+  },
+};
+
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5,
   gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）
@@ -1368,7 +1519,8 @@ function newGame() {
     flowersPickedDay: 0,
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
-    knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false },  // 完好度/修补连续天数/E2b数据钩子
+    nightHunted: false,    // 昨夜是否夜猎守村（终末之月判定用，界面不显示）
+    knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
   };
@@ -1392,7 +1544,10 @@ function load() {
     G.stats.hunts = G.stats.hunts || 0;
     G.stats.kills = G.stats.kills || 0;
     G.stats.gy = G.stats.gy || 0;
-    G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false }, G.knight || {});
+    G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
+    G.nightHunted = !!G.nightHunted;
+    G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
+    if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
     return true;
   } catch (e) { return false; }
 }
@@ -1513,39 +1668,89 @@ function settleDay() {
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
   knightWear();
+  G.nightHunted = false;
   save();
 }
 
-/* ---------- 骑士：夜战磨损 + 修补连续性 ---------- */
+/* ---------- 结局 ---------- */
+function endGame(t) {
+  if (G.over) return;
+  G.over = { t, day: G.day, v: '' };
+  save();
+}
+/* E3 反杀变体：爱高优先，其次占有欲高，默认全力应战 */
+function e3Variant() {
+  const k = G.npc.knight;
+  if (k.l >= 50) return 'love';
+  if (k.p >= 60) return 'poss';
+  return 'friend';
+}
+
+/* ---------- 骑士：夜战磨损 + 终末之月（批三） ---------- */
 function knightCondWord() {
   const c = G.knight.cond;
   return KNIGHT_COND.find(([t]) => c >= t) || KNIGHT_COND[KNIGHT_COND.length - 1];
 }
-/* 每晚两波怪，各 40% 磨 2-5 点；日常磨损磨不死他（战败/终末之月是批三） */
+
+/* 终末之月的一晚：他不再出战；没人守村就被迫出手，加速凋零 */
+function doomNight(kn) {
+  const decay = 3 + (G.nightHunted ? 0 : 8);
+  kn.cond -= decay;
+  addFeed('major', rnd(G.nightHunted ? DOOM_TEXT.safe : DOOM_TEXT.forced));
+  /* 好感已死 + 对峙已发生：他拒绝修补，提前凋零（E2c） */
+  const k = G.npc.knight;
+  if (kn.duelFlag && k.f + k.l < 20) { endGame('E2c'); return; }
+  if (kn.cond <= 0) { endGame('E1'); return; }
+  /* 第 30 天黎明：结算 */
+  if (G.day >= kn.doomEnd) {
+    if (k.f >= 60 && k.l >= 60 && kn.streak >= 30 && G.stats.gy >= 40) endGame('E2b');
+    else endGame('E2a');
+  }
+}
+
+/* 每晚两波怪，各 40% 磨 2-5 点；约 4% 的夜晚有怪物潮（20-35） */
 function knightWear() {
   const kn = G.knight;
-  let dmg = 0;
-  for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
-  if (dmg > 0) {
-    kn.cond = Math.max(5, kn.cond - dmg);
-    const heavy = dmg >= 6 || kn.cond < 35;
-    addFeed(heavy ? 'major' : 'sim', rnd(heavy ? KNIGHT_WEAR_HEAVY : KNIGHT_WEAR_LIGHT));
-  }
   if (kn.repairedToday) { kn.streak++; kn.best = Math.max(kn.best, kn.streak); }
   else kn.streak = 0;
   kn.repairedToday = false;
+
+  if (kn.core) { doomNight(kn); return; }   // 终末之月：不再出战，只衰减
+
+  let dmg = 0;
+  const tide = Math.random() < 0.04;
+  if (tide) dmg += 20 + Math.floor(Math.random() * 16);
+  for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
+  if (dmg > 0) {
+    kn.cond -= dmg;
+    if (tide) addFeed('major', rnd(TIDE_TEXT));
+    else {
+      const heavy = dmg >= 6 || kn.cond < 35;
+      addFeed(heavy ? 'major' : 'sim', rnd(heavy ? KNIGHT_WEAR_HEAVY : KNIGHT_WEAR_LIGHT));
+    }
+  }
+  /* 核心受损：进入终末之月，30 天为限 */
+  if (kn.cond <= 0) {
+    kn.core = true;
+    kn.cond = 30;                       // 吊命线
+    kn.doomEnd = G.day + 30;
+    addFeed('major', rnd(DOOM_TEXT.start));
+    addFeed('sim', resolveNames('[[knight]]说：「三十天后，皇帝的信使到。新的人会来。」'));
+  }
 }
 
 /* ---------- 骑士：修补（黄金玉×1·精力2） ---------- */
 function repairKnight() {
-  if (G.node >= DAY_NODES) return { lines: ['夜里他在前线。等天亮。'], blocked: true };
   const kn = G.knight;
-  if (kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里他不让你碰那道缝。「天亮。」' : '夜里他在前线。等天亮。'], blocked: true };
+  const cap = kn.core ? 50 : 100;                       // 终末之月：半死之躯修不满
+  if (!kn.core && kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (kn.repairedToday) return { lines: ['今天补过了。金粉要吃进瓷里才作数，急不来。'], blocked: true };
   if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
   const err = canDo('repair');
   if (err) return { lines: [err], blocked: true };
   G.bag.黄金玉--; if (G.bag.黄金玉 <= 0) delete G.bag.黄金玉;
-  kn.cond = Math.min(100, kn.cond + 35);
+  kn.cond = Math.min(cap, kn.cond + 35);
   kn.gyUsed++; kn.repairedToday = true;
   rel('knight', 'f', 2); rel('knight', 'l', 2); rel('knight', 'p', 1);
   const tier = G.npc.knight.l >= 40 ? KNIGHT_REPAIR.high : KNIGHT_REPAIR.low;
@@ -1553,7 +1758,8 @@ function repairKnight() {
     '你把黄金玉碾成粉，调了水，一点一点按进裂缝。',
     `<b>骑士</b>：「${rnd(tier)}」`,
   ];
-  if (kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
+  if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
+  if (kn.core) lines.push('缝吃住了金粉。他的手指在你手背上碰了一下，又收回去。');
   addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
   G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
   G.dayLog.push('给骑士做了修补');
@@ -1628,6 +1834,9 @@ function interact(id, type) {
   const err = canDo(type);
   if (err) return { lines: [err], blocked: true };
 
+  /* 攻击骑士本人 = 直接对峙（§6.3 骑士战） */
+  if (type === 'hit' && id === 'knight') { startDuel('knightHit'); return { duel: true }; }
+
   const place = locOf(def, G.node);
   const lines = [];
   const daysSince = G.day - st.last;
@@ -1665,6 +1874,8 @@ function interact(id, type) {
     lines.push(`你动手了。`);
     const stress = knightStressRoll(place, true);
     if (stress) {
+      /* 占有欲高的误判：把打闹看成攻击，直接拔剑（骑士战） */
+      if (G.npc.knight.p >= 60) { startDuel('npcHit'); return { duel: true }; }
       lines.push(resolveNames(stress));
       rel('knight', 'f', -10);
       addFeed('major', `你在${PLACES[place].name}动手打了${def.name}。[[knight]]的剑出了鞘。`);
@@ -1783,25 +1994,31 @@ function tradeSell(id, item, price) {
 /* 战斗：武力决定胜率；胜涨武力+战利品，败挂彩。平原绝对安全 */
 function winChance() { return clamp(0.5 + G.force * 0.035, 0.15, 0.95); }
 
-function dropLoot() {
+function dropLoot(night) {
   const got = [];
-  if (Math.random() < 0.6) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
-  if (Math.random() < 0.5) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
-  if (Math.random() < 0.15) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
+  if (Math.random() < (night ? 0.7 : 0.6)) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
+  if (Math.random() < (night ? 0.6 : 0.5)) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
+  if (Math.random() < (night ? 0.25 : 0.15)) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
   return got;
 }
 
-function monsterFight() {
+function monsterFight(night) {
   const lines = [];
   if (Math.random() < winChance()) {
     const nick = Math.random() < 0.3;
-    lines.push(rnd(nick ? EXP_TEXT.mobHurt : EXP_TEXT.mobWin));
+    lines.push(rnd(nick ? EXP_TEXT.mobHurt : night ? NIGHT_TEXT.wave : EXP_TEXT.mobWin));
     if (nick) G.hurt = Math.min(2, G.hurt + 1);
-    const got = dropLoot();
+    const got = dropLoot(night);
     G.stats.kills++;
-    if (Math.random() < 0.5) G.force++;
+    if (Math.random() < (night ? 0.6 : 0.5)) G.force++;
     if (got.length) lines.push('拾获：' + got.join('、'));
   } else {
+    /* 重伤再败：40% 死在野外（E0） */
+    if (G.hurt === 2 && Math.random() < 0.4) {
+      lines.push(rnd(EXP_TEXT.mobLose), '你没能站起来。天亮的时候，搜索的人找到了你的弓。');
+      endGame('E0');
+      return lines;
+    }
     lines.push(rnd(EXP_TEXT.mobLose));
     G.hurt = Math.min(2, G.hurt + 1);
     if (G.hurt === 2) lines.push(rnd(EXP_TEXT.hurtHeavy));
@@ -1811,6 +2028,29 @@ function monsterFight() {
 }
 
 const EXP_ACT_NAME = { gather: '采集', hunt: '打猎', fish: '钓鱼', dive: '潜水', minenear: '挖了近矿', minefar: '摸进了深矿', train: '练剑' };
+
+/* ---------- 夜猎（批三）：夜里出村守一夜，村子和你都有收获 ---------- */
+function nightHunt() {
+  if (G.node < DAY_NODES) return { lines: ['夜猎要等天黑。'], blocked: true };
+  const err = canDo('nighthunt');
+  if (err) return { lines: [err], blocked: true };
+
+  const lines = [rnd(NIGHT_TEXT.go)];
+  lines.push(...monsterFight(true));
+  if (G.over) return { lines };                        // 死在夜里，不再结算
+  if (Math.random() < 0.5) {
+    lines.push(rnd(NIGHT_TEXT.wave2));
+    lines.push(...monsterFight(true));
+    if (G.over) return { lines };
+  }
+  G.nightHunted = true;
+  lines.push(rnd(NIGHT_TEXT.back));
+  youFeed('fight');
+  G.energy -= COST.nighthunt + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push('夜猎守村');
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
 
 function doExplore(zone, act) {
   const z = EXPLORE[zone];
@@ -1829,7 +2069,8 @@ function doExplore(zone, act) {
 
   /* 遇怪：这个节点改成战斗 */
   if (zone !== 'plain' && act !== 'train' && Math.random() < rate) {
-    lines.push(...monsterFight());
+    lines.push(...monsterFight(false));
+    if (G.over) return { lines };                      // 战死野外，直接进结局
   } else if (act === 'gather') {
     if (Math.random() < 0.08) {
       G.bag.稀有花 = (G.bag.稀有花 || 0) + 1;
@@ -1896,6 +2137,65 @@ function doExplore(zone, act) {
   return { lines, settled: adv === 'settled' };
 }
 
+/* ---------- 骑士战（§6.3）：a 防御 b 进攻 c 下死手（限时） ---------- */
+function startDuel(reason) {
+  G.duel = { reason, armed: false };
+  save();
+}
+
+function duelMove(m) {
+  const reason = G.duel ? G.duel.reason : 'npcHit';
+  G.duel = null;
+  const k = G.npc.knight, kn = G.knight;
+  const lines = [resolveNames(DUEL_TEXT.scene[reason] || DUEL_TEXT.scene.npcHit)];
+  kn.duelFlag = true;
+
+  if (m === 'a') {                                      // 防御：挨一下，关系掉
+    if (k.l >= 50) {
+      lines.push(`<b>骑士</b>：「${DUEL_TEXT.aStop}」`);
+      rel('knight', 'l', -10);
+    } else {
+      lines.push(DUEL_TEXT.aHurt);
+      G.hurt = Math.min(2, G.hurt + 1);
+      rel('knight', 'f', -5);
+    }
+    addFeed('major', '你在广场跟[[knight]]对了一剑。全村都看见了。');
+  } else if (m === 'b') {                               // 进攻：武力决胜负
+    if (Math.random() < clamp(0.3 + G.force * 0.04, 0.1, 0.9)) {
+      lines.push(DUEL_TEXT.bWin);
+      rel('knight', 'f', 5);
+    } else {
+      lines.push(DUEL_TEXT.bLose);
+      G.hurt = 2;
+      rel('knight', 'f', -5);
+    }
+    addFeed('major', '你跟[[knight]]真刀真枪打了一场。');
+  } else if (m === 'c') {                               // 下死手（限时确认后）
+    lines.push(DUEL_TEXT.cGo);
+    if (Math.random() < clamp(0.15 + G.force * 0.045, 0.05, 0.85)) {
+      lines.push('他看着你，一直看到瓷白碎开。');
+      endGame('E3');
+      return { lines, over: true };
+    }
+    if (G.force < 12 && Math.random() < 0.5) {
+      lines.push(DUEL_TEXT.cFail, '剑落下来了。');
+      endGame('E4');
+      return { lines, over: true };
+    }
+    lines.push(DUEL_TEXT.cLose);
+    G.hurt = 2; G.energy = 0;
+    rel('knight', 'f', -10); rel('knight', 'l', -10);
+  } else {                                              // ctimeout：犹豫败北，不死
+    lines.push(DUEL_TEXT.cFail, '剑背把你扫倒在地。他收剑走了，没有再看你。');
+    G.hurt = Math.min(2, G.hurt + 1);
+    rel('knight', 'f', -5);
+    addFeed('major', '你跟[[knight]]对了一剑，输了。');
+  }
+  save();
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
 /* ---------- 治疗药水 ---------- */
 function healPotion() {
   if (!G.hurt) return { lines: ['身上没有伤。'], blocked: true };
@@ -1936,7 +2236,7 @@ function nap() {
 <script>
 /* ============ 村庄文游 · UI 层（第一批） ============ */
 
-const V = { tab: 'village', place: null, chronDay: null, feedAll: false };
+const V = { tab: 'village', place: null, chronDay: null, feedAll: false, endingChoice: 0 };
 
 const $ = s => document.querySelector(s);
 const app = () => $('#main');
@@ -1976,6 +2276,10 @@ function villageHtml() {
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
   if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
+  if (G.knight.core) {
+    const left = Math.max(0, G.knight.doomEnd - G.day);
+    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他。皇帝的信使要三十天后才到。夜里怪物还会来——他出战就是死，村里只剩你的弓。</div></div>`;
+  }
   html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
@@ -2049,6 +2353,7 @@ function exploreHtml() {
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">探险</div>`;
   html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面。除了平原，走到哪都会撞上。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
+  if (night) html += `<div class="zone"><b>夜猎</b><div class="dim">出村守一夜：一到两波怪物，掉落比白天厚。${G.knight.core ? '现在村里的夜，只有你的弓。' : ''}</div><div class="actrow2"><button class="btn warn" data-act="nighthunt">夜猎守村（精力5）</button></div></div>`;
   for (const [zid, z] of Object.entries(EXPLORE)) {
     const rateTxt = zid === 'plain' ? '绝对安全'
       : night ? '夜里必遇怪'
@@ -2168,8 +2473,63 @@ function toast(msg) {
 }
 function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('show'); }
 
+/* ---------- 结局画面（批三） ---------- */
+function renderEnding() {
+  closeModal();
+  $('#tabbar').style.display = 'none';
+  $('#statline').innerHTML = `<span class="st">第 ${G.over.day} 天 · 终</span>`;
+  const t = G.over.t, e = ENDINGS[t];
+  let body = t === 'E3'
+    ? (e3Variant() === 'love' ? e.bodyLove : e3Variant() === 'poss' ? e.bodyPoss : e.bodyFriend).concat(e.tail)
+    : (e.body || []);
+  let html = `<div class="ending"><div class="end-title">${e.title}</div>`;
+  if (e.sub) html += `<div class="end-sub">${e.sub}</div>`;
+  html += `<div class="end-body">${body.map(l => `<div class="line">${l}</div>`).join('')}</div>`;
+  if (t === 'E2b' && !G.over.v) {
+    html += `<div class="actrow2 end-choice">
+      <button class="btn" data-act="endchoice" data-v="v0">一起走</button>
+      <button class="btn" data-act="endchoice" data-v="v1">他留下</button>
+    </div>`;
+  } else {
+    if (t === 'E2b') html += `<div class="end-body">${e[G.over.v].map(l => `<div class="line">${l}</div>`).join('')}</div>`;
+    html += `<div class="end-stats">存活 ${G.over.day} 天 · 武力 ${G.force} · 击杀 ${G.stats.kills}</div>
+      <div class="actrow2"><button class="btn warn" data-act="newgame">重新开始</button></div>`;
+  }
+  app().innerHTML = html + `</div>`;
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 决斗弹窗（§6.3） ---------- */
+let duelTimer = null;
+function duelSheet() {
+  if (!G.duel) return;
+  openModal('骑士', `
+    <div class="line">${resolveNames(DUEL_TEXT.scene[G.duel.reason] || DUEL_TEXT.scene.npcHit)}</div>
+    <div class="line dim">你的武力：${G.force}。</div>
+    <div class="actrow2">
+      <button class="btn" data-act="duel" data-m="a">防御</button>
+      <button class="btn" data-act="duel" data-m="b">进攻</button>
+    </div>
+    <div class="actrow2"><button class="btn warn" data-act="duel-c">下死手</button></div>`);
+}
+function duelConfirmSheet() {
+  openModal('骑士', `
+    <div class="line">${DUEL_TEXT.cGo}</div>
+    <div class="line dim">只有一次机会。五秒之内动手。</div>
+    <div class="duel-timer"><div class="duel-bar"></div></div>
+    <div class="actrow2"><button class="btn warn" data-act="duel" data-m="c">动手</button></div>`);
+  clearTimeout(duelTimer);
+  duelTimer = setTimeout(() => {
+    if (!G.duel) return;
+    const r = duelMove('ctimeout');
+    resultSheet(r.lines);
+    if (!r.settled) render();
+  }, 5000);
+}
+
 /* ---------- 主渲染 ---------- */
 function render() {
+  if (G.over) { renderEnding(); return; }
   renderStatus();
   $('#tabbar').style.display = '';
   const map = { village: villageHtml, home: homeHtml, explore: exploreHtml, settings: settingsHtml };
@@ -2200,6 +2560,7 @@ document.addEventListener('click', e => {
     const [z, a] = ex.dataset.exp.split(':');
     const r = doExplore(z, a);
     resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;
@@ -2223,7 +2584,9 @@ document.addEventListener('click', e => {
   if (a === 'ia') {
     if (act.disabled) return;
     const r = interact(id, act.dataset.ia);
+    if (r.duel) { duelSheet(); return; }
     resultSheet(r.lines);
+    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;
@@ -2247,6 +2610,29 @@ document.addEventListener('click', e => {
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
+    return;
+  }
+  if (a === 'nighthunt') {
+    const r = nightHunt();
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'duel') {
+    clearTimeout(duelTimer);
+    const r = duelMove(act.dataset.m);
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) setTimeout(settlementSheet, 10);
+    else render();
+    return;
+  }
+  if (a === 'duel-c') { duelConfirmSheet(); return; }
+  if (a === 'endchoice') {
+    G.over.v = act.dataset.v; save();
+    render();
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }

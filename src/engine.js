@@ -59,8 +59,9 @@ function extractNames(text) {
   text.replace(/\[\[(\w+)\]\]/g, (_, id) => { out.push(id); return _; });
   return out;
 }
-function addFeed(type, html, names) {
-  G.feed.push({ d: G.day, n: G.node, t: type, html, names: names || extractNames(html) });
+function addFeed(type, text, names) {
+  const html = resolveNames(text);
+  G.feed.push({ d: G.day, n: G.node, t: type, html, names: names || extractNames(text) });
   if (G.feed.length > 80) G.feed.splice(0, G.feed.length - 80);
 }
 function visibleFeed() {
@@ -68,6 +69,19 @@ function visibleFeed() {
   return G.feed.filter(e =>
     e.t === 'major' || e.t === 'you' || e.t === 'morn' ||
     starred.length === 0 || e.names.some(n => starred.includes(n)));
+}
+
+/* 你的行动进播报：极简事件句（§8.6），[[id]] 替换成互动对象 */
+function youFeed(key, m) {
+  const pool = YOU_FEED[key];
+  if (!pool || !pool.length) return;
+  let t = rnd(pool);
+  if (m) {
+    if (m.id) t = t.split('[[id]]').join(`[[${m.id}]]`);
+    if (m.place) t = t.split('{place}').join(m.place);
+    if (m.item) t = t.split('{item}').join(m.item);
+  }
+  addFeed('you', t);
 }
 
 /* ---------- NPC 并行推演（微事件引擎） ---------- */
@@ -89,7 +103,7 @@ function genSimEvents(node) {
     const t = rnd(pool);
     if (used.has(t) && used.size < pool.length) { i--; continue; }
     used.add(t);
-    addFeed('sim', resolveNames(t));
+    addFeed('sim', t);
   }
   /* 兜底：共处但没专属事件的二人 */
   if (used.size === 0) {
@@ -104,16 +118,16 @@ function genSimEvents(node) {
       const a = ids[Math.floor(Math.random() * ids.length)];
       let b = a; while (b === a && ids.length > 1) b = rnd(ids);
       const t = rnd(GENERIC_EVENTS).replace(/\[\[a\]\]/g, `[[${a}]]`).replace(/\[\[b\]\]/g, `[[${b}]]`);
-      addFeed('sim', resolveNames(t));
+      addFeed('sim', t);
     }
   }
 }
 
 function genMorning() {
-  addFeed('morn', resolveNames(rnd(MORNING_POOL)));
+  addFeed('morn', rnd(MORNING_POOL));
   const kn = G.npc.knight;
   if (kn && kn.l >= 60 && G.stats.flowers > 0) {
-    addFeed('sim', resolveNames('[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，他说：「她给的。」'));
+    addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，他说：「她给的。」');
   }
 }
 
@@ -130,7 +144,7 @@ function advanceNode() {
 function nightfall() {
   G.nightJacobAtTower = Math.random() < 0.25;
   if (G.nightJacobAtTower) {
-    addFeed('sim', resolveNames('[[jacob]]修表修过了头，索性睡在钟楼。他说：「齿轮比怪物好懂。」'));
+    addFeed('sim', '[[jacob]]修表修过了头，索性睡在钟楼。他说：「齿轮比怪物好懂。」');
   }
 }
 
@@ -236,17 +250,18 @@ function interact(id, type) {
   lines.push(`<b>${def.name}</b>：「${line}」`);
 
   /* 效果 */
-  if (type === 'chat') { rel(id, 'f', 2); G.stats.chats++; if (Math.random() < 0.15 && def.deep.length && st.f >= 40) {
+  const pname = (PLACES[place] || {}).name || '前线';
+  if (type === 'chat') { rel(id, 'f', 2); G.stats.chats++; youFeed('chat', { id, place: pname }); if (Math.random() < 0.15 && def.deep.length && st.f >= 40) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.deep)}」`); rel(id, 'f', 1);
   } }
-  if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); }
+  if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); }
   if (type === 'tease') {
-    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++;
+    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; youFeed('tease', { id, place: pname });
     const stress = knightStressRoll(place, false);
     if (stress) {
       lines.push(resolveNames(stress));
       rel('knight', 'f', -2); G.npc.knight.p = clamp(G.npc.knight.p + 1, 0, 100);
-      addFeed('sim', resolveNames(`[[knight]]在广场拦下了你和${def.name}的打闹。`));
+      addFeed('sim', `[[knight]]在广场拦下了你和${def.name}的打闹。`);
     }
   }
   if (type === 'hit') {
@@ -256,9 +271,9 @@ function interact(id, type) {
     if (stress) {
       lines.push(resolveNames(stress));
       rel('knight', 'f', -10);
-      addFeed('major', resolveNames(`你在${PLACES[place].name}动手打了${def.name}。[[knight]]的剑出了鞘。`));
+      addFeed('major', `你在${PLACES[place].name}动手打了${def.name}。[[knight]]的剑出了鞘。`);
     } else {
-      addFeed('sim', resolveNames(`你动了手。${def.name}没有声张。`), [id]);
+      addFeed('sim', `你动了手。${def.name}没有声张。`, [id]);
     }
   }
 
@@ -295,6 +310,7 @@ function giveFlower() {
   kn.last = G.day;
   const lines = [`你把花递给骑士。`, `<b>骑士</b>：${line}`];
   if (l >= 60) lines.push(resolveNames('第二天早上，[[knight]]胸甲的缝隙里别着那朵花。'));
+  youFeed('flower');
   G.energy -= COST.flower; G.dayLog.push('给骑士送了花');
   const adv = advanceNode();
   return { lines, settled: adv === 'settled' };
@@ -307,17 +323,20 @@ function doPlaceAction(place, act) {
     const err = canDo('pickflower'); if (err) return { lines: [err], blocked: true };
     G.bag.花 = (G.bag.花 || 0) + 1; G.flowersPickedDay++;
     G.energy -= COST.pickflower; G.dayLog.push('在广场边摘了花');
+    youFeed('pickflower');
     return { lines: ['你摘了一朵野花。'], settled: advanceNode() === 'settled' };
   }
   if (act === 'water') {
     G.bag.水 = (G.bag.水 || 0) + 1;
     G.dayLog.push('打了水');
+    youFeed('water');
     return { lines: ['你打了一桶水。不费什么力气。'], settled: advanceNode() === 'settled' };
   }
   if (act === 'pray') {
     const err = canDo('pray'); if (err) return { lines: [err], blocked: true };
     rel('vivienne', 'f', 1);
     G.energy -= COST.pray; G.dayLog.push('在教堂祈祷');
+    youFeed('pray');
     const l = G.npc.vivienne.f >= 40
       ? '「今天为你多念一段。」'
       : '「天主保佑。去忙吧。」';
@@ -327,6 +346,7 @@ function doPlaceAction(place, act) {
     const err = canDo('study'); if (err) return { lines: [err], blocked: true };
     G.force++; rel('leo', 'f', 1);
     G.energy -= COST.study; G.dayLog.push('在图书馆学习');
+    youFeed('study');
     const l = rnd(['「看完了就放回去。」', '「坐里面。里面亮。」', '「这本不适合你。换那本。」']);
     return { lines: [`你看了一上午书。武力 +1（现在 ${G.force}）`, `<b>Leo</b>：${l}`], settled: advanceNode() === 'settled' };
   }
@@ -341,6 +361,7 @@ function tradeBuy(id, item, price) {
   G.bag[item] = (G.bag[item] || 0) + (item === '箭矢' ? 5 : 1);
   const def = npcDef(id); rel(id, 'f', 1);
   G.energy -= COST.trade; G.dayLog.push(`从${def.name}那买了${item}`);
+  youFeed('buy', { id, item });
   const l = def.easy ? '「拿好。」' : def.hard ? '「钱货两清。」' : '「还要别的吗。」';
   return { lines: [`买到了${item}${item === '箭矢' ? '×5' : ''}（−${price} 安娜币）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
@@ -353,6 +374,7 @@ function tradeSell(id, item, price) {
   if (G.npc[id].f >= 60) { p = Math.ceil(price * 1.2); }
   G.coins += p; rel(id, 'f', 1);
   G.energy -= COST.trade; G.dayLog.push(`卖给了${def.name}${item}`);
+  youFeed('sell', { id, item });
   const l = G.npc[id].f >= 60 ? '「给你的价，别跟人说。」' : def.easy ? '「下次还拿来。」' : '「嗯。」';
   return { lines: [`卖出了${item}（+${p} 安娜币${p > price ? '，熟人价' : ''}）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
@@ -380,5 +402,6 @@ function nap() {
   if (G.energy >= MAX_ENERGY) return { lines: ['精力是满的。'], blocked: true };
   G.energy = Math.min(MAX_ENERGY, G.energy + 5);
   G.dayLog.push('午休了一会儿');
+  youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
 }

@@ -39,7 +39,7 @@ function villageHtml() {
   if (V.place) return placeHtml(V.place);
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
-  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。骑士在前线。</div>`;
+  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）、图书馆（Leo 守着灯）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。骑士在前线。</div>`;
   if (G.knight.core) {
     const left = Math.max(0, G.knight.doomEnd - G.day);
     html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他——白天挖到黄金玉就补，一天都别断。夜里怪物还会来，他带伤出去赶，每赶一夜裂得深一分。皇帝的信使三十天后到。</div></div>`;

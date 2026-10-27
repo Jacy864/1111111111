@@ -669,7 +669,7 @@ const NPCS = [
     bio: '冷峻，话少，常年把自己锁在锻造室。兵器打得好，脸色不好。',
     secretHint: '她夜里有时从后门搬东西进去。',
     loc: ['forge', 'forge', 'forge', 'home', 'home'],
-    trade: { sell: [['箭矢', 5], ['剑', 35]], buy: [['铁矿', 5], ['怪躯壳', 8]], hard: true },
+    trade: { sell: [['箭矢', 5]], buy: [['铁矿', 5], ['怪躯壳', 8]], hard: true },
     chat: [
       '兵器看好了就走。锻造室热。',
       '矿有力气自己挖。我只收成品。',
@@ -689,7 +689,7 @@ const NPCS = [
     bio: '慵懒，随性，能不起身就不起身。药和毒都卖。夜宿店里的沙发，全村唯一能夜访的人。',
     secretHint: '她看骑士的眼神和看你的眼神，是同一种。',
     loc: ['alchemy', 'alchemy', 'alchemy', 'alchemy', 'alchemy'],
-    trade: { sell: [['治疗药水', 8], ['毒药', 10]], buy: [['药材', 4]], moody: true },
+    trade: { sell: [['治疗药水', 8]], buy: [['药材', 4]], moody: true },
     chat: [
       '药在架子上，自己看标签。我脚冷，不起。',
       '今天不想动。明天大概也不想。你坐。',
@@ -1403,7 +1403,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2 };
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };
@@ -1502,7 +1502,7 @@ function newGame() {
   G = {
     day: 1, node: 0,
     energy: MAX_ENERGY, coins: 20, force: 5,
-    bag: { 弓: 1, 箭矢: 10, 生肉: 3, 旧地图: 1, 铜哨: 1 },
+    bag: { 弓: 1, 箭矢: 10, 生肉: 3 },
     npc: {}, stars: {},
     feed: [], chronicle: [],
     dayLog: [],            // 今天玩家的行动记录
@@ -1768,7 +1768,7 @@ function doomNight(kn) {
   if (kn.cond <= 0) { endGame('E1'); return; }
   /* 第 30 天黎明：结算 */
   if (G.day >= kn.doomEnd) {
-    if (k.f >= 60 && k.l >= 60 && kn.streak >= 30 && G.stats.gy >= 40) endGame('E2b');
+    if (k.f >= 60 && k.l >= 60 && kn.streak >= 30 && G.stats.gy >= 20) endGame('E2b');
     else endGame('E2a');
   }
 }
@@ -2321,7 +2321,7 @@ function restNow() {
 }
 function nap() {
   if (G.node !== 1) return { lines: ['只有中午能午休。'], blocked: true };
-  if (G.energy >= MAX_ENERGY) return { lines: ['精力是满的。'], blocked: true };
+  if (G.energy >= maxE()) return { lines: ['精力是满的。'], blocked: true };
   G.energy = Math.min(maxE(), G.energy + 5);
   G.dayLog.push('午休了一会儿');
   youFeed('nap');

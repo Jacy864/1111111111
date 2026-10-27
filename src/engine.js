@@ -28,7 +28,7 @@ function newGame() {
   G = {
     day: 1, node: 0,
     energy: MAX_ENERGY, coins: 20, force: 5,
-    bag: { 弓: 1, 箭矢: 10, 生肉: 3, 旧地图: 1, 铜哨: 1 },
+    bag: { 弓: 1, 箭矢: 10, 生肉: 3 },
     npc: {}, stars: {},
     feed: [], chronicle: [],
     dayLog: [],            // 今天玩家的行动记录
@@ -294,7 +294,7 @@ function doomNight(kn) {
   if (kn.cond <= 0) { endGame('E1'); return; }
   /* 第 30 天黎明：结算 */
   if (G.day >= kn.doomEnd) {
-    if (k.f >= 60 && k.l >= 60 && kn.streak >= 30 && G.stats.gy >= 40) endGame('E2b');
+    if (k.f >= 60 && k.l >= 60 && kn.streak >= 30 && G.stats.gy >= 20) endGame('E2b');
     else endGame('E2a');
   }
 }
@@ -847,7 +847,7 @@ function restNow() {
 }
 function nap() {
   if (G.node !== 1) return { lines: ['只有中午能午休。'], blocked: true };
-  if (G.energy >= MAX_ENERGY) return { lines: ['精力是满的。'], blocked: true };
+  if (G.energy >= maxE()) return { lines: ['精力是满的。'], blocked: true };
   G.energy = Math.min(maxE(), G.energy + 5);
   G.dayLog.push('午休了一会儿');
   youFeed('nap');

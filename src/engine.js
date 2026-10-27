@@ -251,7 +251,8 @@ function settleDay() {
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
   vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天） */
-  if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
+  if (G.hurt === 2) { G.hurt = 1; addFeed('morn', '睡了一夜，重伤将养成了轻伤。再养一晚就好利索。'); }
+  else if (G.hurt === 1) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
@@ -729,7 +730,9 @@ function doExplore(zone, act) {
   } else if (act === 'minenear') {
     const n = 1 + (Math.random() < 0.5 ? 1 : 0) + (escort ? 1 : 0);
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
-    lines.push(rnd(EXP_TEXT.mineNear), `拾获：铁矿×${n}`);
+    const got = [`铁矿×${n}`];
+    if (Math.random() < 0.15) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineNear), '拾获：' + got.join('、'));
     if (escort) {
       lines.push(resolveNames('你往近矿走。[[knight]]在界石那里跟上了你，走到洞口就站住。'));
       lines.push(`<b>骑士</b>：「${rnd(KNIGHT_ESCORT)}」`);
@@ -741,7 +744,7 @@ function doExplore(zone, act) {
     const n = 2 + Math.floor(Math.random() * 2);
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     const got = [`铁矿×${n}`];
-    if (Math.random() < 0.12) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    if (Math.random() < 0.55) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));
     youFeed('mine');
   } else if (act === 'train') {

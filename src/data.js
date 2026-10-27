@@ -1139,3 +1139,29 @@ const YOU_FEED = {
   train: ['你在平原上练剑。', '你在平原上放了一上午的箭。'],
   shoot: ['你在钟楼上放了一夜箭。', '钟楼夜里的射击位上是你。'],
 };
+
+/* 夜间突发五件套（§9#5 定案，2026-10-26 实装）：夜间户外动作后低概率撞见，各一次性（flag 记 G.nightEvents）
+   hook：hunt=夜猎 shoot=钟楼射击 explore=夜间野外动作；hook 空数组=不挂
+   text=极简事件句（系统文本）；say=NPC 台词池（待生产线补，空=不冒引语；viv 句贴自框架 §7 台词库现成句） */
+const NIGHT_EVENTS = [
+  { id: 'viv', who: 'vivienne', hook: ['hunt', 'shoot', 'explore'],
+    feed: '夜里，你撞见了[[vivienne]]的秘密。[[knight]]替她解了围。',
+    text: '村路拐角，[[vivienne]]被三只怪物围住。[[knight]]从前线赶到，一剑挑开了它们。她看见了你。',
+    say: ['你看到了。那就来忏悔吧。'] },
+  { id: 'olivia', who: 'olivia', hook: ['hunt', 'explore'],
+    feed: '夜里，你看见[[olivia]]在猎场捡腐肉。',
+    text: '猎场的硝烟没散。[[olivia]]提着灯笼，在怪物尸体间翻拣，往筐里装腐肉。',
+    say: [] },
+  { id: 'lee', who: 'lee', hook: ['hunt', 'shoot', 'explore'],
+    feed: '夜里，[[lee]]梦游往矿洞方向走，你把他送回了家。',
+    text: '村路上，[[lee]]睁着眼往矿洞方向走。你叫住他，他不应。你把他送回了家。',
+    say: [] },
+  { id: 'asher', who: 'asher', hook: ['hunt', 'shoot', 'explore'],
+    feed: '夜里出门，[[asher]]握着柴刀跟在你身后十步。',
+    text: '你回头。[[asher]]握着一把柴刀，跟在十步外。他站住了。',
+    say: [] },
+  { id: 'bess', who: 'bess', hook: ['hunt', 'shoot', 'explore'],
+    feed: '夜半，[[bess]]在锻造室后门搬尸，车辙通向地窖。',
+    text: '锻造室后门，[[bess]]往独轮车上搬一具蒙布的尸。车辙通向地窖。',
+    say: [] },
+];

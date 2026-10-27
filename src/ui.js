@@ -64,7 +64,6 @@ function placeHtml(pid) {
   let acts = '';
   if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
-  if (pid === 'belltower' && G.node >= DAY_NODES) acts += `<button class="btn" data-act="shoot">射击（精力2·${G.knight.core ? '守村' : '援护骑士'}）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
   if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
   if (acts) html += `<div class="actrow2">${acts}</div>`;
@@ -117,11 +116,13 @@ const EXP_BTNS = {
 function exploreHtml() {
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">探险</div>`;
-  html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面。除了平原，走到哪都会撞上。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
-  if (night) html += `<div class="zone"><b>夜猎</b><div class="dim">出村守一夜：一到两波怪物，掉落比白天厚。${G.knight.core ? '现在村里的夜，只有你的弓。' : ''}</div><div class="actrow2"><button class="btn warn" data-act="nighthunt">夜猎守村（精力5）</button></div></div>`;
+  html += `<div class="card"><div class="b">${G.hurt ? `你带着${hurtWord()}。` : '村外的地界，你熟。'}</div><div class="dim">${night ? '夜里怪物全在外面，谁都不出门。天亮再说。' : '白天怪物躲在林子和矿里，撞上了就打。打输了会挂彩。'}</div></div>`;
   for (const [zid, z] of Object.entries(EXPLORE)) {
+    if (night) {
+      html += `<div class="zone"><b>${z.name}</b><div class="dim">${z.desc}</div><div class="dim">夜里去不了。</div></div>`;
+      continue;
+    }
     const rateTxt = zid === 'plain' ? '绝对安全'
-      : night ? '夜里必遇怪'
       : zid === 'mine' ? '遇怪：近矿30% · 深矿50%' : `遇怪 ${Math.round(z.rate * 100)}%`;
     html += `<div class="zone"><b>${z.name}</b><div class="dim">${z.desc}</div><div class="dim">${rateTxt}</div><div class="actrow2">${EXP_BTNS[zid].map(([a, t]) => `<button class="btn" data-exp="${zid}:${a}">${t}</button>`).join('')}</div></div>`;
   }
@@ -389,22 +390,6 @@ document.addEventListener('click', e => {
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {
     const r = doPlaceAction(V.place, a);
     resultSheet(r.lines);
-    if (r.settled) setTimeout(settlementSheet, 10);
-    else render();
-    return;
-  }
-  if (a === 'shoot') {
-    const r = towerShoot();
-    resultSheet(r.lines);
-    if (G.over) { render(); return; }
-    if (r.settled) setTimeout(settlementSheet, 10);
-    else render();
-    return;
-  }
-  if (a === 'nighthunt') {
-    const r = nightHunt();
-    resultSheet(r.lines);
-    if (G.over) { render(); return; }
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;

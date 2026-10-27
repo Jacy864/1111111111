@@ -36,9 +36,8 @@ function newGame() {
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
     loveTouch: [],         // 今日亲密对象（暧昧/寻欢），每晚占有欲结算用
-    nightEvents: {},       // 夜间突发五件套已撞见 flag（id → day）
-    nightHunted: false,    // 昨夜是否夜猎守村（终末之月判定用，界面不显示）
-    helpedKnight: false,   // 昨夜是否在钟楼放箭辅助骑士（当晚磨损减半）
+    nightHunted: false,    // （夜间出门已删 2026-10-27，字段留作旧档兼容，恒 false）
+    helpedKnight: false,   // （钟楼夜射已删 2026-10-27，字段留作旧档兼容，恒 false）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
@@ -67,7 +66,6 @@ function load() {
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
     G.loveTouch = Array.isArray(G.loveTouch) ? G.loveTouch : [];
-    G.nightEvents = G.nightEvents || {};
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁 */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
@@ -239,25 +237,6 @@ function vivienneChain() {
   if (v.p >= 70 && VIV_CHAIN.claim.length) addFeed('sim', `[[vivienne]]当众揽住了你的肩：「${rnd(VIV_CHAIN.claim)}」`, ['vivienne']);
   else if (v.p >= 50 && VIV_CHAIN.visit.length) addFeed('sim', `夜里有人敲你的门。[[vivienne]]：「${rnd(VIV_CHAIN.visit)}」`, ['vivienne']);
   else if (v.p >= 30 && VIV_CHAIN.sting.length) addFeed('morn', `[[vivienne]]：「${rnd(VIV_CHAIN.sting)}」`, ['vivienne']);
-}
-
-/* 夜间突发五件套（§9#5）：夜间户外动作后低概率撞见，各一次性；台词池空=只有事件句。
-   撞见=只有你知道的秘密 → 播报走 you 流，不进全村视野 */
-function nightEventRoll(hook) {
-  if (G.node < DAY_NODES || G.over) return [];
-  const seen = G.nightEvents || {};
-  const pool = NIGHT_EVENTS.filter(e =>
-    !seen[e.id] && e.hook.includes(hook) && (e.id !== 'viv' || !G.knight.core));  // 终末之月骑士不出战，救场戏不成立
-  if (!pool.length || Math.random() >= 0.15) return [];
-  const e = pool[Math.floor(Math.random() * pool.length)];
-  G.nightEvents = seen;
-  seen[e.id] = G.day;
-  const lines = [resolveNames(e.text)];
-  if (e.say.length) lines.push(`<b>${npcName(e.who)}</b>：「${rnd(e.say)}」`);
-  if (e.id === 'lee') rel('lee', 'f', 2);                    // 你送他回家
-  if (e.id === 'asher') { rel('asher', 'f', 2); rel('asher', 'l', 1); }   // 撞破他护你，你领情
-  addFeed('you', e.feed, [e.who]);
-  return lines;
 }
 
 function settleDay() {
@@ -657,23 +636,23 @@ function tradeSell(id, item, price) {
 /* 战斗：武力决定胜率；胜涨武力+战利品，败挂彩。平原绝对安全 */
 function winChance() { return clamp(0.5 + G.force * 0.035, 0.15, 0.95); }
 
-function dropLoot(night) {
+function dropLoot() {
   const got = [];
-  if (Math.random() < (night ? 0.7 : 0.6)) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
-  if (Math.random() < (night ? 0.6 : 0.5)) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
-  if (Math.random() < (night ? 0.25 : 0.15)) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
+  if (Math.random() < 0.6) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got.push('腐肉×1'); }
+  if (Math.random() < 0.5) { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got.push('骨头×1'); }
+  if (Math.random() < 0.15) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got.push('完好的躯壳×1'); }
   return got;
 }
 
-function monsterFight(night) {
+function monsterFight() {
   const lines = [];
   if (Math.random() < winChance()) {
     const nick = Math.random() < 0.3;
-    lines.push(rnd(nick ? EXP_TEXT.mobHurt : night ? NIGHT_TEXT.wave : EXP_TEXT.mobWin));
+    lines.push(rnd(nick ? EXP_TEXT.mobHurt : EXP_TEXT.mobWin));
     if (nick) G.hurt = Math.min(2, G.hurt + 1);
-    const got = dropLoot(night);
+    const got = dropLoot();
     G.stats.kills++;
-    if (Math.random() < (night ? 0.6 : 0.5)) G.force++;
+    if (Math.random() < 0.5) G.force++;
     if (got.length) lines.push('拾获：' + got.join('、'));
   } else {
     /* 重伤再败：40% 死在野外（E0） */
@@ -692,42 +671,19 @@ function monsterFight(night) {
 
 const EXP_ACT_NAME = { gather: '采集', hunt: '打猎', fish: '钓鱼', dive: '潜水', minenear: '挖了近矿', minefar: '摸进了深矿', train: '练剑' };
 
-/* ---------- 夜猎（批三）：夜里出村守一夜，村子和你都有收获 ---------- */
-function nightHunt() {
-  if (G.node < DAY_NODES) return { lines: ['夜猎要等天黑。'], blocked: true };
-  const err = canDo('nighthunt');
-  if (err) return { lines: [err], blocked: true };
-
-  const lines = [rnd(NIGHT_TEXT.go)];
-  lines.push(...monsterFight(true));
-  if (G.over) return { lines };                        // 死在夜里，不再结算
-  if (Math.random() < 0.5) {
-    lines.push(rnd(NIGHT_TEXT.wave2));
-    lines.push(...monsterFight(true));
-    if (G.over) return { lines };
-  }
-  G.nightHunted = true;
-  lines.push(rnd(NIGHT_TEXT.back));
-  lines.push(...nightEventRoll('hunt'));   // 回村路上：夜间突发（§9#5）
-  youFeed('fight');
-  G.energy -= COST.nighthunt + (G.hurt === 2 ? 1 : 0);
-  G.dayLog.push('夜猎守村');
-  const adv = advanceNode();
-  return { lines, settled: adv === 'settled' };
-}
+/* ---------- 夜间世界规则（言拍板 2026-10-27）：夜里怪物横行，全村闭户，Gloria 也不出门 ---------- */
 
 function doExplore(zone, act) {
   const z = EXPLORE[zone];
+  if (G.node >= DAY_NODES) return { lines: ['夜里怪物横行，出不了门。等天亮。'], blocked: true };   // 夜间世界规则（言拍板 2026-10-27）
   const err = canDo(act);
   if (err) return { lines: [err], blocked: true };
 
   const lines = [];
-  const night = G.node >= DAY_NODES;
   let rate = act === 'minefar' ? z.farRate : z.rate;
-  if (night && zone !== 'plain') rate = 1;                 // 夜里遇怪拉满（平原除外）
   /* 近矿卡 bug：白天他送你到村界石（爱≥25 或 友≥50，40%）——近矿他陪，深矿在界外他到不了 */
   let escort = false;
-  if (act === 'minenear' && !night && (G.npc.knight.l >= 25 || G.npc.knight.f >= 50) && Math.random() < 0.4) {
+  if (act === 'minenear' && (G.npc.knight.l >= 25 || G.npc.knight.f >= 50) && Math.random() < 0.4) {
     escort = true; rate = 0;
   }
 
@@ -795,7 +751,6 @@ function doExplore(zone, act) {
     youFeed('train');
   }
 
-  if (night) lines.push(...nightEventRoll('explore'));   // 夜间野外：夜间突发（§9#5）
   G.energy -= (COST[act] || 0) + (G.hurt === 2 ? 1 : 0);
   G.dayLog.push(`去${z.name}${EXP_ACT_NAME[act] || act}`);
   const adv = advanceNode();
@@ -857,38 +812,6 @@ function duelMove(m) {
     addFeed('major', '你跟[[knight]]对了一剑，输了。');
   }
   save();
-  const adv = advanceNode();
-  return { lines, settled: adv === 'settled' };
-}
-
-/* ---------- 钟楼射击（批三）：夜里从射击位放箭，辅助前线骑士/终末之月守村 ---------- */
-function towerShoot() {
-  if (G.node < DAY_NODES) return { lines: ['射击位是夜里用的。白天这里是 Jacob 的工坊。'], blocked: true };
-  const err = canDo('shoot');
-  if (err) return { lines: [err], blocked: true };
-
-  const lines = [rnd(EXP_TEXT.shoot)];
-  if (Math.random() < 0.5) { G.force++; lines.push(`武力 +1（现在 ${G.force}）`); }
-
-  const kn = G.knight;
-  if (kn.core) {
-    /* 终末之月：他不出战，你的箭就是村口的守卫 */
-    G.nightHunted = true;
-    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.doomNote)}」`);
-    rel('knight', 'f', 1);
-    addFeed('you', '你在钟楼射了一夜的箭，替[[knight]]守着村口。', ['knight']);
-  } else {
-    /* 他在前线：你的箭帮他分掉一波怪 */
-    G.helpedKnight = true;
-    rel('knight', 'f', 1);
-    if (Math.random() < 0.3) rel('knight', 'l', 1);
-    lines.push(`<b>骑士</b>：「${rnd(KNIGHT_SHOOT.note)}」`);
-    addFeed('sim', '钟楼的箭声和[[knight]]在前线的剑声，一夜没停。', ['knight']);
-  }
-  youFeed('shoot');
-  lines.push(...nightEventRoll('shoot'));   // 下楼回村路：夜间突发（§9#5）
-  G.energy -= COST.shoot + (G.hurt === 2 ? 1 : 0);
-  G.dayLog.push('上钟楼射击');
   const adv = advanceNode();
   return { lines, settled: adv === 'settled' };
 }

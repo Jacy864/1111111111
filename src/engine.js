@@ -35,6 +35,7 @@ function newGame() {
     flowersPickedDay: 0,
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
+    loveTouch: [],         // 今日亲密对象（暧昧/寻欢），每晚占有欲结算用
     nightHunted: false,    // 昨夜是否夜猎守村（终末之月判定用，界面不显示）
     helpedKnight: false,   // 昨夜是否在钟楼放箭辅助骑士（当晚磨损减半）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
@@ -64,6 +65,7 @@ function load() {
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
+    G.loveTouch = Array.isArray(G.loveTouch) ? G.loveTouch : [];
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁 */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
@@ -175,6 +177,68 @@ function nightfall() {
   }
 }
 
+/* ---------- 占有欲通用引擎 + Vivienne 活报纸（拍板 2026-10-15#5 / 2026-10-16#15·修订 2026-10-26） ---------- */
+/* 今日亲密对象记录（暧昧/寻欢），供每晚占有欲结算 */
+function touchLog(id) {
+  G.loveTouch = G.loveTouch || [];
+  if (!G.loveTouch.includes(id)) G.loveTouch.push(id);
+}
+
+/* 每晚结算：竞争涨/爱高盯紧涨/冷落降/爱褪阴干，乘性格系数；骑士 p=痛苦度（只积累，表现走台词线） */
+function possessTick() {
+  const touched = G.loveTouch || [];
+  let competitors = 0;
+  for (const n of NPCS) if (G.npc[n.id].l >= 30) competitors++;
+  for (const n of NPCS) {
+    const st = G.npc[n.id];
+    if (st.l < 30) { st.p = Math.max(0, st.p - 1); continue; }            // 爱意掉出 30，占有欲阴干
+    if (G.day - st.last >= 3) { st.p = Math.max(0, st.p - 1); continue; }  // 冷落降
+    if (touched.includes(n.id)) continue;                                  // 今天亲近的是TA，安心不涨
+    let d = 0;
+    if (touched.length) d += 1 + Math.floor(Math.random() * 2);            // 有人跟你亲密了（竞争）
+    if (st.l >= 60 && competitors >= 3) d += 1;                            // 爱高+村里竞争者多，盯得更紧
+    if (d) st.p = clamp(st.p + Math.round(d * (P_RATE[n.id] || 1)), 0, 100);
+  }
+  G.loveTouch = [];
+}
+
+/* Vivienne 活报纸：昨日真事经她的嘴免费说出；力度按她的爱意分档（不熟只报村闻，爱高全知含私密） */
+function vivienneNews() {
+  const v = G.npc.vivienne;
+  const y = G.chronicle[G.chronicle.length - 1];
+  if (!y) return;
+  const isPriv = t => /过了今晚|夜猎守村|做了修补/.test(t);
+  const priv = y.log.filter(isPriv);
+  const acts = y.log.filter(t => !isPriv(t));
+  const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day);
+  const send = (kind, fact, names) => {
+    const pool = VIV_NEWS[kind];
+    /* 台词池待生产线生成；空=回退系统过渡句（占位，2026-10-26） */
+    const frame = pool.length
+      ? `[[vivienne]]：「${rnd(pool).split('{x}').join(fact)}」`
+      : { village: '晨祷后，[[vivienne]]把村里的事说给你听：', act: '[[vivienne]]提起你昨天做的事：', private: '[[vivienne]]凑近了些，说破你昨晚的事：' }[kind] + fact;
+    addFeed('morn', frame, names);
+  };
+  if (v.l >= 60) {                                   /* 全知：私密优先，再带一条村闻 */
+    if (priv.length) send('private', rnd(priv));
+    if (sims.length) { const e = rnd(sims); send('village', e.html, e.names); }
+  } else if (v.l >= 30) {                            /* 行踪档：你的公开行动优先 */
+    if (acts.length && Math.random() < 0.6) send('act', rnd(acts));
+    else if (sims.length) { const e = rnd(sims); send('village', e.html, e.names); }
+  } else if (sims.length && Math.random() < 0.7) {   /* 村闻档：牧师本来就知道的公开事 */
+    const e = rnd(sims); send('village', e.html, e.names);
+  }
+}
+
+/* Vivienne 占有欲链：带刺 p30+ / 上门 p50+ / 公开宣示 p70+；台词池空=不触发（引擎先上线，词后补即活） */
+function vivienneChain() {
+  const v = G.npc.vivienne;
+  if (v.l < 30 || Math.random() >= 0.3) return;
+  if (v.p >= 70 && VIV_CHAIN.claim.length) addFeed('sim', `[[vivienne]]当众揽住了你的肩：「${rnd(VIV_CHAIN.claim)}」`, ['vivienne']);
+  else if (v.p >= 50 && VIV_CHAIN.visit.length) addFeed('sim', `夜里有人敲你的门。[[vivienne]]：「${rnd(VIV_CHAIN.visit)}」`, ['vivienne']);
+  else if (v.p >= 30 && VIV_CHAIN.sting.length) addFeed('morn', `[[vivienne]]：「${rnd(VIV_CHAIN.sting)}」`, ['vivienne']);
+}
+
 function settleDay() {
   /* 结算：编年史 + Asher 夜话 + 入夜杂闻 */
   const ash = rnd(npcDef('asher').night);
@@ -186,11 +250,14 @@ function settleDay() {
   });
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
+  vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天，nightHunted 仍是昨日值） */
   if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   genMorning();
   knightWear();
+  possessTick();                        /* 占有欲每晚结算 */
+  vivienneChain();                      /* Vivienne 占有欲链（池空不触发） */
   G.nightHunted = false;
   G.helpedKnight = false;
   save();
@@ -329,12 +396,10 @@ function canDo(costKey) {
 function knightStressRoll(place, aggressive) {
   if (!PLACES[place] || !PLACES[place].outdoor) return null;
   const k = G.npc.knight;
-  const base = aggressive ? 0.9 : 0.08 + k.p * 0.003;   // 攻击户外几乎必触发；打闹随占有欲上升
+  const base = aggressive ? 0.9 : 0.08;   // 攻击户外几乎必触发；打闹小概率被拦（与占有欲无关·2026-10-26 言修订）
   if (locOf(npcDef('knight'), G.node) === 'front') return null; // 骑士夜在前线
   if (Math.random() < Math.min(base, 0.95)) {
-    return aggressive
-      ? '剑尖停在你脖子侧面。[[knight]]说：「再动一下试试。」'
-      : '广场那头传来[[knight]]的声音：「住手。」';
+    return aggressive ? 'stress' : '广场那头传来[[knight]]的声音：「住手。」';
   }
   return null;
 }
@@ -391,6 +456,7 @@ function doFun(id) {
   st.funOnce = true;
   rel(id, 'l', 3 + Math.floor(Math.random() * 3));
   rel(id, 'p', 5 + Math.floor(Math.random() * 4));
+  touchLog(id);
   G.energy -= (COST.fun + (G.hurt === 2 ? 1 : 0));
   G.stats.fun = (G.stats.fun || 0) + 1;
   G.dayLog.push(`跟${def.name}过了今晚`);
@@ -418,11 +484,12 @@ function interact(id, type) {
   const lines = [];
   const daysSince = G.day - st.last;
 
-  /* 冷落/吃醋前置（闲聊和暧昧时冒头） */
+  /* 冷落/吃醋前置（闲聊和暧昧时冒头）；吃醋间隔随占有欲缩短 */
+  const jgap = st.p >= 70 ? 2 : st.p >= 40 ? 3 : 4;
   if ((type === 'chat' || type === 'flirt') && st.coldPending && def.cold.length) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.cold)}」`);
     st.coldPending = false;
-  } else if ((type === 'chat' || type === 'flirt') && st.l >= 30 && daysSince >= 4 && def.jealous.length) {
+  } else if ((type === 'chat' || type === 'flirt') && st.l >= 30 && daysSince >= jgap && def.jealous.length) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.jealous)}」`);
   }
 
@@ -436,7 +503,7 @@ function interact(id, type) {
   if (type === 'chat') { rel(id, 'f', 2); G.stats.chats++; youFeed('chat', { id, place: pname }); if (Math.random() < 0.15 && def.deep.length && st.f >= 40) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.deep)}」`); rel(id, 'f', 1);
   } }
-  if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); }
+  if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
     rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; youFeed('tease', { id, place: pname });
     const stress = knightStressRoll(place, false);
@@ -451,11 +518,9 @@ function interact(id, type) {
     lines.push(`你动手了。`);
     const stress = knightStressRoll(place, true);
     if (stress) {
-      /* 占有欲高的误判：把打闹看成攻击，直接拔剑（骑士战） */
-      if (G.npc.knight.p >= 60) { startDuel('npcHit'); return { duel: true }; }
-      lines.push(resolveNames(stress));
-      rel('knight', 'f', -10);
-      addFeed('major', `你在${PLACES[place].name}动手打了${def.name}。[[knight]]的剑出了鞘。`);
+      /* 误判只源于护村设定：他看见你真伤村民，认定你是威胁，剑指（骑士战）——与占有欲无关（言修订 2026-10-26） */
+      startDuel('npcHit');
+      return { duel: true };
     } else {
       addFeed('sim', `你动了手。${def.name}没有声张。`, [id]);
     }

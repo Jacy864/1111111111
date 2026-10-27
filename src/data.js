@@ -1074,6 +1074,15 @@ const ENDINGS = {
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, nighthunt: 5, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, mine: 4, train: 2 };
 
+/* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
+const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };
+
+/* Vivienne 活报纸台词池（待生产线生成；空=回退系统过渡句。{x}=当日事实占位） */
+const VIV_NEWS = { village: [], act: [], private: [] };
+
+/* Vivienne 占有欲链台词池（带刺 p30+/上门 p50+/公开宣示 p70+；待生产线生成，空=不触发） */
+const VIV_CHAIN = { sting: [], visit: [], claim: [] };
+
 /* 你做的事也进播报（you 型：红条 + 「你」标）
    [[id]] 会替换成当前互动对象 → 可点人名 + 星标过滤 + 未来吃醋扫描的数据钩子 */
 const YOU_FEED = {

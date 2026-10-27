@@ -39,19 +39,28 @@ function villageHtml() {
   if (V.place) return placeHtml(V.place);
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
-  if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
+  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。骑士在前线。</div>`;
   if (G.knight.core) {
     const left = Math.max(0, G.knight.doomEnd - G.day);
-    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他。皇帝的信使要三十天后才到。夜里怪物还会来——他出战就是死，村里只剩你的弓。</div></div>`;
+    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他——白天挖到黄金玉就补，一天都别断。夜里怪物还会来，他带伤出去赶，每赶一夜裂得深一分。皇帝的信使三十天后到。</div></div>`;
   }
   html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
     const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
+    if (night && !who.length) continue;   // 夜里没人的铺子不开门
     const label = who.length ? `<span class="pwho">${who.map(n => n.name).join('·')}</span>` : '';
     html += `<button class="cell" data-place="${pid}">${p.name}${label}</button>`;
   }
   html += `</div>`;
+  if (night) {
+    /* 夜间世界规则（言拍板 2026-10-27）：全村闭户、屋里互通——各家可敲门找；Asher 在你家不列；骑士在前线 */
+    const homes = NPCS.filter(n => locOf(n, G.node) === 'home' && n.id !== 'asher');
+    html += `<div class="sec-title">夜里能找的人</div>`;
+    html += homes.map(n => npcCard(n)).join('');
+    html += npcCard(npcDef('knight'));
+    html += `<div class="dim" style="margin:4px 2px">骑士在前线杀怪，天亮前后经过村口。</div>`;
+  }
   html += `<div class="sec-title" id="feed-sec">播报</div><div class="feed-wrap">${feedHtml()}</div>`;
   return html;
 }
@@ -141,7 +150,7 @@ function settingsHtml() {
   if (!G.chronicle.length) html += `<div class="dim">还没有记录。</div>`;
   else html += G.chronicle.slice().reverse().map(c =>
     `<div class="chron" data-chron="${c.day}"><b>第 ${c.day} 天</b><div class="dim">${c.log.slice(0, 2).join('；')}${c.log.length > 2 ? '…' : ''}</div></div>`).join('');
-  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）+ 批二（经济与探险）已实装。批三：骑士与结局。批四：血肉。</div>`;
+  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）/ 批二（经济与探险）/ 批三（骑士与结局）已实装。批四（寻欢·占有欲·感情线）实装中，配角台词陆续上生产线。</div>`;
   return html;
 }
 
@@ -167,7 +176,9 @@ function npcSheet(id) {
     <b class="sheet-name">${n.name}</b>
     <button class="star ${G.stars[id] ? 'on' : ''}" data-act="star" data-id="${id}">${G.stars[id] ? '★ 已星标' : '☆ 星标'}</button>
   </div>`;
-  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${PLACES[locOf(n, G.node)] ? PLACES[locOf(n, G.node)].name : '前线'}</div>`;
+  const lnow = locOf(n, G.node);
+  const locName = lnow === 'home' ? (n.livesWithYou ? '你家' : '家里') : (PLACES[lnow] ? PLACES[lnow].name : '前线');
+  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${locName}</div>`;
   html += `<div class="bio">${n.bio}</div>`;
   if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
@@ -329,7 +340,7 @@ document.addEventListener('click', e => {
   if (ch) { chronDetail(+ch.dataset.chron); return; }
 
   const it = e.target.closest('[data-item]');
-  if (it) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
+  if (it && !e.target.closest('[data-act]')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
 
   const ex = e.target.closest('[data-exp]');
   if (ex) {
@@ -431,7 +442,7 @@ function boot() {
       <div class="boot-box"><div class="boot-txt">
         你是 Gloria，猎户，外来者，把家安在村口以北。<br>
         村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
-        白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
+        一天五个时段。白天三个，村里人各在各的岗位上；夜里两个，全村闭户，人都待在屋里。<br>
         <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span>
       </div></div>
       <div class="boot-actions">

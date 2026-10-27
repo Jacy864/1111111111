@@ -14,7 +14,7 @@
 「村口风铃草开了。Gloria傍晚想不想去看。就我们。」
 「Vivienne牧师说今天祷告词念错的人要扫教堂。不是小Asher。」
 「小Asher发现溪边蓝铃花开了。下午带Gloria去摘。」
-「面包房的Bess摔了陶罐。她说不用赔但小Asher明天去帮她采麦子。」
+「面包房的Olivia摔了陶罐。她说不用赔但小Asher明天去帮她采麦子。」
 「Olivia新出了蜂蜜卷。小Asher帮Gloria占了一个，去晚了可就没了。」
 「Levi让小Asher独自看半亩苗了。Gloria明天来验收嘛，Asher没有偷懒的。」
 「Leo给了小Asher一册植物图鉴。Gloria上山的时候，带上Asher认药草嘛。」

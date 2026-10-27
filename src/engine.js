@@ -207,7 +207,7 @@ function vivienneNews() {
   const v = G.npc.vivienne;
   const y = G.chronicle[G.chronicle.length - 1];
   if (!y) return;
-  const isPriv = t => /过了今晚|夜猎守村|做了修补/.test(t);
+  const isPriv = t => /过了今晚|做了修补/.test(t);
   const priv = y.log.filter(isPriv);
   const acts = y.log.filter(t => !isPriv(t));
   const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day);
@@ -250,7 +250,7 @@ function settleDay() {
   });
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
-  vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天，nightHunted 仍是昨日值） */
+  vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天） */
   if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
@@ -258,8 +258,6 @@ function settleDay() {
   knightWear();
   possessTick();                        /* 占有欲每晚结算 */
   vivienneChain();                      /* Vivienne 占有欲链（池空不触发） */
-  G.nightHunted = false;
-  G.helpedKnight = false;
   save();
 }
 
@@ -283,11 +281,12 @@ function knightCondWord() {
   return KNIGHT_COND.find(([t]) => c >= t) || KNIGHT_COND[KNIGHT_COND.length - 1];
 }
 
-/* 终末之月的一晚：他不再出战；没人守村就被迫出手，加速凋零 */
+/* 终末之月的一晚：夜里怪物还是会进村口的田，他带伤出去赶，固定裂 11 点
+   （旧的「有人替他守村就只裂 3 点」豁免随 2026-10-27 夜间规则删除——夜里谁都不能出村） */
 function doomNight(kn) {
-  const decay = 3 + (G.nightHunted ? 0 : 8);
+  const decay = 11;
   kn.cond -= decay;
-  addFeed('major', rnd(G.nightHunted ? DOOM_TEXT.safe : DOOM_TEXT.forced));
+  addFeed('major', rnd(DOOM_TEXT.forced));
   /* 好感已死 + 对峙已发生：他拒绝修补，提前凋零（E2c） */
   const k = G.npc.knight;
   if (kn.duelFlag && k.f + k.l < 20) { endGame('E2c'); return; }
@@ -312,7 +311,6 @@ function knightWear() {
   const tide = Math.random() < 0.04;
   if (tide) dmg += 20 + Math.floor(Math.random() * 16);
   for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
-  if (G.helpedKnight) dmg = Math.floor(dmg / 2);     // 钟楼的箭替他分掉一波怪
   if (dmg > 0) {
     kn.cond -= dmg;
     if (tide) addFeed('major', rnd(TIDE_TEXT));
@@ -337,6 +335,7 @@ function repairKnight() {
   if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里他不让你碰那道缝。「天亮。」' : '夜里他在前线。等天亮。'], blocked: true };
   const cap = kn.core ? 50 : 100;                       // 终末之月：半死之躯修不满
   if (!kn.core && kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (kn.core && kn.cond >= cap) return { lines: ['裂缝还合着，不用补。这块黄金玉省下来，夜里裂开再填。'], blocked: true };
   if (kn.repairedToday) return { lines: ['今天补过了。金粉要吃进瓷里才作数，急不来。'], blocked: true };
   if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
   const err = canDo('repair');

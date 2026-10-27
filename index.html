@@ -381,10 +381,10 @@ const PLACES = {
   farm:     { name: '养殖场', outdoor: true,  desc: 'Levi 的羊都在这。羊毛和奶制品的稳定来源。' },
   church:   { name: '教堂',   outdoor: false, desc: 'Vivienne 的地盘。可以祈祷。' },
   library:  { name: '图书馆', outdoor: false, desc: 'Leo 守着。可以借书、坐一天学习。' },
-  forge:    { name: '锻造室', outdoor: false, desc: 'Bess 的锻造室，热得烤人。兵器比自造的好。' },
+  forge:    { name: '锻造室', outdoor: false, desc: 'Bess 的锻造室，热得烤人。兵器是她的手艺。' },
   bakery:   { name: '烘焙坊', outdoor: false, desc: 'Olivia 的炉子从早烧到晚。' },
   alchemy:  { name: '炼药房', outdoor: false, desc: 'Isabel 常年躺在店里的沙发上。夜里也睡这。' },
-  belltower:{ name: '钟楼',   outdoor: false, desc: '白天是 Jacob 的工坊。夜里是射击位。' },
+  belltower:{ name: '钟楼',   outdoor: false, desc: 'Jacob 的工坊。他修晚了就睡这儿。' },
   home:     { name: '你家',   outdoor: false, desc: 'Gloria 自建的房子。Asher 每晚睡这。' },
 };
 
@@ -564,7 +564,7 @@ const NPCS = [
       '村口风铃草开了。Gloria傍晚想不想去看。就我们。',
       'Vivienne牧师说今天祷告词念错的人要扫教堂。不是小Asher。',
       '小Asher发现溪边蓝铃花开了。下午带Gloria去摘。',
-      '面包房的Bess摔了陶罐。她说不用赔但小Asher明天去帮她采麦子。',
+      '面包房的Olivia摔了陶罐。她说不用赔但小Asher明天去帮她采麦子。',
       'Olivia新出了蜂蜜卷。小Asher帮Gloria占了一个，去晚了可就没了。',
       'Levi让小Asher独自看半亩苗了。Gloria明天来验收嘛，Asher没有偷懒的。',
       'Leo给了小Asher一册植物图鉴。Gloria上山的时候，带上Asher认药草嘛。',
@@ -928,7 +928,7 @@ const NPCS = [
       '弓拉满再放。箭不着急。',
       '前线昨夜两波。都处理了。',
     ], mid: [        /* 友30-60 认真答话+开始提问 */
-      '村口那边的木材不够用了吗。我看你拿了斧头。',
+      '村口那边的木材还够用吗。我看你屋里堆了不少。',
       '怪物昨晚聚集在东边的树林附近。你白天去那边采矿要小心。',
       '为什么还去钓鱼。村里的粮食已经很多了。',
       '那个叫Lee的孩子今天说了奇怪的话。你听懂他在说什么了吗。',
@@ -1143,24 +1143,24 @@ const MORNING_POOL = [
 const ITEMS = {
   小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。' },
   胡萝卜: { d: 'Alice 的田里成筐出。' },
-  土豆: { d: '硬通货。2 币 1 个。' },
+  土豆: { d: '顶饱的过冬粮。' },
   蘑菇: { d: '森林里捡的。' },
   卷心菜: { d: '结结实实一颗。' },
   羊毛: { d: '养殖场的稳定产出。' },
   奶酪: { d: 'Levi 加工的。' },
   生肉: { d: '打猎所得。Olivia 收。' },
   纸张: { d: 'Leo 造的纸。' },
-  书: { d: '图书馆的书。读完了卖回去也行。' },
+  书: { d: '图书馆的书。看完放回原架。' },
   稀有花: { d: '森林最深处才有。Leo 出高价，骑士也喜欢。' },
   铁矿: { d: '矿洞产出。Bess 收。' },
   药材: { d: '森林采集。Isabel 收。' },
   治疗药水: { d: 'Isabel 的招牌。' },
   毒药: { d: '用途你自己想。' },
-  箭矢: { d: '一次买五支。' },
+  箭矢: { d: '配你那张弓。放出去就捡不回来。' },
   剑: { d: 'Bess 的手艺，比自造的好。' },
   钟表: { d: 'Jacob 的活。走得很准。' },
   指南针: { d: 'Jacob 的活。' },
-  银钉: { d: '小零件。Jacob 收。' },
+  银钉: { d: 'Jacob 打的小零件，修表用。' },
   木板: { d: '建筑材料。' },
   蛋糕: { d: 'Olivia 的新出炉。' },
   熟食: { d: '垫肚子用。' },
@@ -1172,11 +1172,11 @@ const ITEMS = {
   鱼: { d: '水里的。Olivia 收。' },
   水果: { d: '林子里的野果。垫肚子。' },
   木材: { d: '捡的枯木。烧火打家具都行。' },
-  兔皮: { d: '猎户的手艺。' },
+  兔皮: { d: '打猎的副产物。先囤着。' },
   腐肉: { d: '怪物身上割的。居然有人收。' },
   骨头: { d: '怪物的骨头，比牲口的沉。' },
-  怪躯壳: { d: '没烂的躯壳。Bess 说她要研究。' },
-  黄金玉: { d: '矿洞深处才有。比钻石韧。谁用得着，你还不知道。' },
+  怪躯壳: { d: '完整剥下来的怪物躯壳。沉。' },
+  黄金玉: { d: '矿洞深处才有。比钻石韧，整块凿下来也不碎。' },
 };
 
 /* ---------- 探险区域（批二） ---------- */
@@ -1284,7 +1284,6 @@ const KNIGHT_ESCORT = [
   '怪物不过来。它们认得我。',
   '这里的石头和我一样，缺了都要靠人来补。',
 ];
-/* 钟楼射击：夜里从钟楼放箭辅助前线（§11 弓=辅助骑士） */
 /* ---------- 怪物潮 / 骑士战（批三；夜猎·钟楼夜射已删 2026-10-27 夜间世界规则） ---------- */
 const TIDE_TEXT = [
   '入夜后山那头的怪叫没停过。[[knight]]在前线打到后半夜，村里人捂着耳朵睡。',
@@ -1294,15 +1293,10 @@ const DOOM_TEXT = {
   start: [
     '[[knight]]是被村民们抬回来的。胸口的裂缝里露出玉色的芯。它说：「我还能站。」皇帝的御匠不会来。修好它的黄金玉，只在你手里。',
   ],
-  decay: [
-    '[[knight]]现在夜里不出村了。它站在广场上，天亮也不动。',
-    '[[knight]]的左腿接缝处掉了一小块。它把那块攥在手里。',
-  ],
   forced: [
     '昨夜怪物进了村口的田。[[knight]]还是出去了。它回来的时候，裂缝又长了一寸。',
     '没人守夜。怪物挠了两家的门。[[knight]]出去了一趟，回来时右臂垂着。',
   ],
-  safe: ['昨夜有你守着村口。[[knight]]在广场站了一整夜，没动。', '你的箭替村子值了一夜的班。'],
 };
 const DUEL_TEXT = {
   scene: {
@@ -1687,7 +1681,7 @@ function vivienneNews() {
   const v = G.npc.vivienne;
   const y = G.chronicle[G.chronicle.length - 1];
   if (!y) return;
-  const isPriv = t => /过了今晚|夜猎守村|做了修补/.test(t);
+  const isPriv = t => /过了今晚|做了修补/.test(t);
   const priv = y.log.filter(isPriv);
   const acts = y.log.filter(t => !isPriv(t));
   const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day);
@@ -1730,7 +1724,7 @@ function settleDay() {
   });
   addFeed('morn', ash);
   if (G.chronicle.length > 60) G.chronicle.splice(0, G.chronicle.length - 60);
-  vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天，nightHunted 仍是昨日值） */
+  vivienneNews();                       /* 活报纸：昨日真事经她的嘴说出（此时 chronicle 末条=昨天） */
   if (G.hurt === 1 && Math.random() < 0.5) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
@@ -1738,8 +1732,6 @@ function settleDay() {
   knightWear();
   possessTick();                        /* 占有欲每晚结算 */
   vivienneChain();                      /* Vivienne 占有欲链（池空不触发） */
-  G.nightHunted = false;
-  G.helpedKnight = false;
   save();
 }
 
@@ -1763,11 +1755,12 @@ function knightCondWord() {
   return KNIGHT_COND.find(([t]) => c >= t) || KNIGHT_COND[KNIGHT_COND.length - 1];
 }
 
-/* 终末之月的一晚：他不再出战；没人守村就被迫出手，加速凋零 */
+/* 终末之月的一晚：夜里怪物还是会进村口的田，他带伤出去赶，固定裂 11 点
+   （旧的「有人替他守村就只裂 3 点」豁免随 2026-10-27 夜间规则删除——夜里谁都不能出村） */
 function doomNight(kn) {
-  const decay = 3 + (G.nightHunted ? 0 : 8);
+  const decay = 11;
   kn.cond -= decay;
-  addFeed('major', rnd(G.nightHunted ? DOOM_TEXT.safe : DOOM_TEXT.forced));
+  addFeed('major', rnd(DOOM_TEXT.forced));
   /* 好感已死 + 对峙已发生：他拒绝修补，提前凋零（E2c） */
   const k = G.npc.knight;
   if (kn.duelFlag && k.f + k.l < 20) { endGame('E2c'); return; }
@@ -1792,7 +1785,6 @@ function knightWear() {
   const tide = Math.random() < 0.04;
   if (tide) dmg += 20 + Math.floor(Math.random() * 16);
   for (let w = 0; w < 2; w++) if (Math.random() < 0.4) dmg += 2 + Math.floor(Math.random() * 4);
-  if (G.helpedKnight) dmg = Math.floor(dmg / 2);     // 钟楼的箭替他分掉一波怪
   if (dmg > 0) {
     kn.cond -= dmg;
     if (tide) addFeed('major', rnd(TIDE_TEXT));
@@ -1817,6 +1809,7 @@ function repairKnight() {
   if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里他不让你碰那道缝。「天亮。」' : '夜里他在前线。等天亮。'], blocked: true };
   const cap = kn.core ? 50 : 100;                       // 终末之月：半死之躯修不满
   if (!kn.core && kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (kn.core && kn.cond >= cap) return { lines: ['裂缝还合着，不用补。这块黄金玉省下来，夜里裂开再填。'], blocked: true };
   if (kn.repairedToday) return { lines: ['今天补过了。金粉要吃进瓷里才作数，急不来。'], blocked: true };
   if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
   const err = canDo('repair');
@@ -2375,19 +2368,28 @@ function villageHtml() {
   if (V.place) return placeHtml(V.place);
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
-  if (night) html += `<div class="night-note">夜里村民都在家，屋外只有你和前线的骑士。<br>能去的地方：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。</div>`;
+  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。骑士在前线。</div>`;
   if (G.knight.core) {
     const left = Math.max(0, G.knight.doomEnd - G.day);
-    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他。皇帝的信使要三十天后才到。夜里怪物还会来——他出战就是死，村里只剩你的弓。</div></div>`;
+    html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他——白天挖到黄金玉就补，一天都别断。夜里怪物还会来，他带伤出去赶，每赶一夜裂得深一分。皇帝的信使三十天后到。</div></div>`;
   }
   html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
     const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
+    if (night && !who.length) continue;   // 夜里没人的铺子不开门
     const label = who.length ? `<span class="pwho">${who.map(n => n.name).join('·')}</span>` : '';
     html += `<button class="cell" data-place="${pid}">${p.name}${label}</button>`;
   }
   html += `</div>`;
+  if (night) {
+    /* 夜间世界规则（言拍板 2026-10-27）：全村闭户、屋里互通——各家可敲门找；Asher 在你家不列；骑士在前线 */
+    const homes = NPCS.filter(n => locOf(n, G.node) === 'home' && n.id !== 'asher');
+    html += `<div class="sec-title">夜里能找的人</div>`;
+    html += homes.map(n => npcCard(n)).join('');
+    html += npcCard(npcDef('knight'));
+    html += `<div class="dim" style="margin:4px 2px">骑士在前线杀怪，天亮前后经过村口。</div>`;
+  }
   html += `<div class="sec-title" id="feed-sec">播报</div><div class="feed-wrap">${feedHtml()}</div>`;
   return html;
 }
@@ -2477,7 +2479,7 @@ function settingsHtml() {
   if (!G.chronicle.length) html += `<div class="dim">还没有记录。</div>`;
   else html += G.chronicle.slice().reverse().map(c =>
     `<div class="chron" data-chron="${c.day}"><b>第 ${c.day} 天</b><div class="dim">${c.log.slice(0, 2).join('；')}${c.log.length > 2 ? '…' : ''}</div></div>`).join('');
-  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）+ 批二（经济与探险）已实装。批三：骑士与结局。批四：血肉。</div>`;
+  html += `<div class="sec-title">关于</div><div class="dim" style="margin:2px">村庄 · 批一（活的村庄）/ 批二（经济与探险）/ 批三（骑士与结局）已实装。批四（寻欢·占有欲·感情线）实装中，配角台词陆续上生产线。</div>`;
   return html;
 }
 
@@ -2503,7 +2505,9 @@ function npcSheet(id) {
     <b class="sheet-name">${n.name}</b>
     <button class="star ${G.stars[id] ? 'on' : ''}" data-act="star" data-id="${id}">${G.stars[id] ? '★ 已星标' : '☆ 星标'}</button>
   </div>`;
-  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${PLACES[locOf(n, G.node)] ? PLACES[locOf(n, G.node)].name : '前线'}</div>`;
+  const lnow = locOf(n, G.node);
+  const locName = lnow === 'home' ? (n.livesWithYou ? '你家' : '家里') : (PLACES[lnow] ? PLACES[lnow].name : '前线');
+  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${locName}</div>`;
   html += `<div class="bio">${n.bio}</div>`;
   if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
@@ -2665,7 +2669,7 @@ document.addEventListener('click', e => {
   if (ch) { chronDetail(+ch.dataset.chron); return; }
 
   const it = e.target.closest('[data-item]');
-  if (it) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
+  if (it && !e.target.closest('[data-act]')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
 
   const ex = e.target.closest('[data-exp]');
   if (ex) {
@@ -2767,7 +2771,7 @@ function boot() {
       <div class="boot-box"><div class="boot-txt">
         你是 Gloria，猎户，外来者，把家安在村口以北。<br>
         村里有一位皇帝送的骑士，浑身瓷白，夜里在前线杀怪物。<br>
-        白天五个时段，村里人各在各的岗位上。想找谁，就去哪找。<br>
+        一天五个时段。白天三个，村里人各在各的岗位上；夜里两个，全村闭户，人都待在屋里。<br>
         <span class="dim">每个行动推进一个时段。播报里能看见村里人之间的事。</span>
       </div></div>
       <div class="boot-actions">

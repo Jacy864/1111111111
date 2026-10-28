@@ -3023,7 +3023,12 @@ function loveChoice(key, c) {
     loveDone('levi');
     if (c === 'y') {
       G.lover = 'levi';
-      return { lines: ['你答应了。', '他半天没说话。然后接着把那垄草拔完了。'], settled: chatTail('levi') };
+      const say = rnd([
+        '你可别跟我开这种玩笑，我这人当真的。',
+        '以后你说什么我都听你的，你让我干啥我就干啥，别赶我走，行不行。',
+        '我啥也不会说，就是心里烫得慌，只要能这么守着你，让我干什么都行。',
+      ]);
+      return { lines: ['你答应了。', '他低着头，伸手拽住了你的衣角。', `<b>Levi</b>：「${say}」`], settled: chatTail('levi') };
     }
     G.noPropose.levi = true;
     return { lines: ['你摇了头。', '<b>Levi</b>：「嗯。草我明天照拔。」'], settled: chatTail('levi') };

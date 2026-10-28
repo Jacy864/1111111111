@@ -16,10 +16,11 @@ function npcName(id) { const d = npcDef(id); return d ? d.name : id; }
 function hurtWord() { return G.hurt === 2 ? '重伤' : G.hurt === 1 ? '轻伤' : '完好'; }
 function maxE() { return MAX_ENERGY - (G.hurt === 2 ? 8 : G.hurt === 1 ? 3 : 0); }
 
-/* NPC 当前节点位置（含动态：Jacob 夜宿钟楼、骑士夜在前线） */
+/* NPC 当前节点位置（含动态：Jacob 夜宿钟楼、骑士夜在前线、Leo 闭馆三天在家） */
 function locOf(def, node) {
   let l = def.loc[node];
   if (node >= DAY_NODES && def.id === 'jacob' && G.nightJacobAtTower) l = 'belltower';
+  if (def.id === 'leo' && G.evF && G.evF.leoClosedUntil && G.day < G.evF.leoClosedUntil) l = 'home';
   return l;
 }
 
@@ -41,6 +42,12 @@ function newGame() {
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
     starTipShown: false,
+    love: {},               // 感情线（第一批）：每人事件队列进度 {n:完成数, day:上次触发日}
+    evF: {},                // 感情线事件 flag 池（记档走向、闭馆日、蓝日期等）
+    lover: null,            // 当前恋人（告白接受后；仅一人）
+    noPropose: {},          // 告白被拒过的人：不再开口
+    weather: 0,             // 今日天气：0晴 1雨（每天早晨掷，约四天一雨）
+    nightOut: 0,            // 你夜里出门次数（在村里走动合法；Asher 事件2的引子）
   };
   for (const n of NPCS) G.npc[n.id] = { f: n.initF, l: 0, p: 0, last: 1, coldPending: false };
   addFeed('major', '你把家安在了村口以北。第一天，从上午开始。');
@@ -66,10 +73,18 @@ function load() {
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
     G.loveTouch = Array.isArray(G.loveTouch) ? G.loveTouch : [];
-    /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁 */
+    /* 感情线第一批字段迁移（2026-10-28，旧档自动补齐） */
+    G.love = G.love || {};
+    G.evF = G.evF || {};
+    G.lover = G.lover || null;
+    G.noPropose = G.noPropose || {};
+    G.weather = G.weather ? 1 : 0;
+    G.nightOut = G.nightOut || 0;
+    /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数 */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
       G.npc[k].funDay = G.npc[k].funDay || 0;
+      G.npc[k].teases = G.npc[k].teases || 0;
     }
     G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
     if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
@@ -120,8 +135,10 @@ function npcAt(place, node) {
 
 function genSimEvents(node) {
   if (node >= DAY_NODES) return;          // 夜间不生成 NPC 街面事件
+  const ashBlue = !!(G.evF && G.evF.ashBlueUntil && G.day < G.evF.ashBlueUntil);  // 家人档头三天：Asher 躲着不出播报
   const pool = [];
   for (const m of MICRO_EVENTS) {
+    if (ashBlue && m.need.includes('asher')) continue;
     if (m.where && npcAt(m.where, node).length === 0) continue;
     const ok = m.need.every(id => locOf(npcDef(id), node) === m.where);
     if (ok) for (const t of m.ev) pool.push(t);
@@ -138,7 +155,7 @@ function genSimEvents(node) {
   if (used.size === 0) {
     const byPlace = {};
     for (const p of ['plaza', 'field', 'bakery', 'library']) {
-      const ids = npcAt(p, node);
+      const ids = npcAt(p, node).filter(x => !(ashBlue && x === 'asher'));
       if (ids.length >= 2) byPlace[p] = ids;
     }
     const ps = Object.keys(byPlace);
@@ -149,6 +166,11 @@ function genSimEvents(node) {
       const t = rnd(GENERIC_EVENTS).replace(/\[\[a\]\]/g, `[[${a}]]`).replace(/\[\[b\]\]/g, `[[${b}]]`);
       addFeed('sim', t);
     }
+  }
+  /* 感情线记档解锁的村民播报（一天最多一条） */
+  if (G._loveSimDay !== G.day) {
+    if (G.evF.leviField && Math.random() < 0.25) { addFeed('sim', LOVE_SIM.leviField); G._loveSimDay = G.day; }
+    else if (G.evF.ashPact && !ashBlue && Math.random() < 0.2) { addFeed('sim', LOVE_SIM.ashPact); G._loveSimDay = G.day; }
   }
 }
 
@@ -434,22 +456,27 @@ function poolArr(def, type, st) {
     const fp = funPools(def, st);
     if (fp && fp.real.length) arr = arr.concat(fp.real);
   }
+  /* 感情线（第一批）：恋人档日常——告白接受后，只对现任恋人混入（池已有存量，本批不新写） */
+  if (type === 'chat' && G.lover === def.id && Array.isArray(def.afterRealLover) && def.afterRealLover.length) {
+    arr = arr.concat(def.afterRealLover);
+  }
   return arr;
 }
 
-/* 寻欢（§8 双轨·偷尝轨）：夜间发起，掷接受率；接受=今晚在这过（直接结算到天亮） */
-function doFun(id) {
+/* 寻欢（§8 双轨·偷尝轨）：夜间发起，掷接受率；接受=今晚在这过（直接结算到天亮）
+   forced=true 跳过时段/当日/掷骰限制（Vivienne 交换夜晚：她开的价，保底接受） */
+function doFun(id, forced) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
-  if (st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
-  if (G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
-  if (st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
+  if (!forced && st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
+  if (!forced && G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
+  if (!forced && st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
   const err = canDo('fun');
   if (err) return { lines: [err], blocked: true };
   st.funDay = G.day;
   /* 接受率：爱情越深越难拒，有过之后不再生分 */
   const rate = clamp(0.5 + st.l * 0.005 + (st.funOnce ? 0.15 : 0), 0, 1);
-  if (Math.random() > rate) {
+  if (!forced && Math.random() > rate) {
     st.last = G.day;
     return { lines: ['你开口了。', `<b>${def.name}</b>：「${rnd(fp.no)}」`] };
   }
@@ -480,6 +507,12 @@ function interact(id, type) {
   /* 攻击骑士本人 = 直接对峙（§6.3 骑士战） */
   if (type === 'hit' && id === 'knight') { startDuel('knightHit'); return { duel: true }; }
 
+  /* 感情线（第一批）：闲聊顶替型事件优先于普通互动（精力检查已在上面 canDo 过了） */
+  if (type === 'chat') {
+    const ev = chatEvPending(id);
+    if (ev) return ev;
+  }
+
   const place = locOf(def, G.node);
   const lines = [];
   const daysSince = G.day - st.last;
@@ -495,7 +528,8 @@ function interact(id, type) {
 
   const pool = poolArr(def, type, st);
   if (!pool.length) return { lines: ['现在不适合。'], blocked: true };
-  const line = rnd(pool);
+  let line = rnd(pool);
+  if (id === 'leo' && G.evF.leoColdDay === G.day) line = '还书。登记。就这样。';   // 感情线事件2次日：他把你晾了一天
   lines.push(`<b>${def.name}</b>：「${line}」`);
 
   /* 效果 */
@@ -505,7 +539,7 @@ function interact(id, type) {
   } }
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
-    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; youFeed('tease', { id, place: pname });
+    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
     const stress = knightStressRoll(place, false);
     if (stress) {
       lines.push(resolveNames(stress));
@@ -526,8 +560,21 @@ function interact(id, type) {
     }
   }
 
-  /* Asher 拆散：你对骑士亲密，且 Asher 同场或在家里 */
-  if (id === 'knight' && (type === 'flirt' || type === 'flower') && G.npc.knight.l >= 25 && Math.random() < 0.3) {
+  /* 感情线：Levi 事件2（打斗之后）——跟他打闹满 3 次的那天，打完追加 */
+  if (type === 'tease' && id === 'levi' && nextEv('levi') === 'lev2' && loveReady('levi') && EV_GATES.lev2()) {
+    loveDone('levi'); rel('levi', 'l', 2);
+    G.evF.leviSitLate = true;               // 当晚播报：他一个人在田里坐到很晚
+    lines.push('你把他按在草垛上，他不挣了。');
+    lines.push('<b>Levi</b>：「没事。起来干活了。」');
+  }
+  /* 感情线：Asher 事件3 选了如实说——你打 Alice 的主意，他都要插一脚 */
+  if (type === 'tease' && id === 'alice' && G.evF.ashSabUp) {
+    lines.push('<b>Asher</b>：「Alice 姐，昨天的干粮还有吗，我帮你搬。」');
+    addFeed('sim', '你和[[alice]]闹着玩。[[asher]]凑了过去，非拉她去搬东西。', ['alice', 'asher']);
+  }
+
+  /* Asher 拆散：你对骑士亲密，且 Asher 同场或在家里（告白选我心里有人后关停） */
+  if (id === 'knight' && (type === 'flirt' || type === 'flower') && G.npc.knight.l >= 25 && !G.evF.ashSabOff && Math.random() < 0.3) {
     const ashHere = locOf(npcDef('asher'), G.node) === place;
     if (ashHere || G.node >= DAY_NODES) {
       lines.push(`<b>Asher</b>：「Levi 找你搬东西。现在就要。」<span class="dim">他盯着骑士看，不等回答。</span>`);
@@ -842,7 +889,9 @@ settleDay = function () { coldCheck(); _settleDay(); };
 
 /* ---------- 家：休息/午休 ---------- */
 function restNow() {
-  const adv = settleDay();
+  const ev = restLoveEvent();          // 感情线：夜里在家的事件（Asher 一串）优先于入睡结算
+  if (ev) return { ev };
+  settleDay();
   return { settled: true };
 }
 function nap() {
@@ -853,3 +902,431 @@ function nap() {
   youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
 }
+
+/* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */
+/* 每人一条顺序事件队列（LOVE_SEQ），一天一人最多触发一个（loveReady）。
+   触发方式：闲聊顶替（EV_CHAT）/ 白天进图书馆撞见（Leo）/ 夜里去井边撞见（Asher）/
+   夜里在家休息时自动（Asher 一串）/ Levi 两个专属按钮。
+   选项走弹窗按钮 → loveChoice(key, 选)。
+   告白：接受=记 G.lover（恋人档台词池由各 NPC afterRealLover/after 自带，本批不新写），
+   拒绝=记 G.noPropose，线不断；告白只在单身（G.lover 空）时提出。
+   婚姻层（求婚念头）不在本批。 */
+
+const LOVE_SEQ = {
+  vivienne: ['viv2'],
+  levi: ['lev1', 'lev2', 'lev3', 'lev4', 'levC'],
+  leo: ['leo1', 'leo2', 'leo3', 'leo4', 'leoC'],
+  asher: ['ash1', 'ash2', 'ash3', 'ash4', 'ashC'],
+};
+const EV_CHAT = { viv2: 1, lev1: 1, leo1: 1, leo4: 1, levC: 1, leoC: 1 };   // 闲聊顶替型
+const EV_GATES = {
+  viv2: () => G.npc.vivienne.l >= 60,
+  lev1: () => G.npc.levi.f >= 40,
+  lev2: () => G.npc.levi.f >= 50 && (G.npc.levi.teases || 0) >= 3,
+  lev3: () => G.npc.levi.l >= 40,
+  lev4: () => G.npc.levi.l >= 55,
+  levC: () => G.npc.levi.l >= 60 && G.npc.levi.f >= 60,
+  leo1: () => G.npc.leo.f >= 40,
+  leo2: () => G.npc.leo.l >= 35,
+  leo3: () => G.npc.leo.l >= 50,
+  leo4: () => G.npc.leo.l >= 60,
+  leoC: () => G.npc.leo.l >= 60 && G.npc.leo.f >= 55,
+  ash1: () => G.npc.asher.f >= 50,
+  ash2: () => (G.nightOut || 0) >= 2,
+  ash3: () => G.npc.knight.l >= 40,
+  ash4: () => G.npc.asher.l >= 50,
+  ashC: () => G.npc.asher.l >= 60 && G.npc.asher.f >= 70,
+};
+
+function loveSt(id) { return G.love[id] || (G.love[id] = { n: 0, day: 0 }); }
+function loveDone(id) { const s = loveSt(id); s.n++; s.day = G.day; }
+function loveReady(id) { return loveSt(id).day !== G.day; }
+
+/* 队列里的下一个事件 key（走完=null；Leo 断线后全线停） */
+function nextEv(id) {
+  if (id === 'leo' && G.evF.leoLineDead) return null;
+  const seq = LOVE_SEQ[id];
+  if (!seq) return null;
+  const n = loveSt(id).n;
+  return n < seq.length ? seq[n] : null;
+}
+
+/* 闲聊顶替：结算按普通闲聊（精力1+时段），见 chatTail */
+function chatTail(id) {
+  const st = G.npc[id];
+  st.last = G.day;
+  G.energy -= COST.chat + (G.hurt === 2 ? 1 : 0);
+  G.dayLog.push(`跟${npcDef(id).name}聊了聊`);
+  G.stats.chats++;
+  return advanceNode() === 'settled';
+}
+
+function chatEvPending(id) {
+  const key = nextEv(id);
+  if (!key || !EV_CHAT[key] || !loveReady(id)) return null;
+  if (!EV_GATES[key]()) return null;
+  if (key === 'lev1' && locOf(npcDef('levi'), G.node) !== 'field') return null;   // 只在农田闲聊时顶替
+  if ((key === 'levC' || key === 'leoC') && G.lover) return null;                 // 告白只在单身时提出
+  return runChatEv(id, key);
+}
+
+function runChatEv(id, key) {
+  if (key === 'leo1') {
+    loveDone('leo'); rel('leo', 'f', 1);
+    return {
+      lines: [
+        '登记本摊在柜台上。你名字那一行，笔画比别的行深。',
+        '他把本子合上了。',
+        '<b>Leo</b>：「墨透了。我补的。」',
+      ],
+      settled: chatTail(id),
+    };
+  }
+  if (key === 'leo4') {
+    loveDone('leo'); rel('leo', 'l', 2);
+    return {
+      lines: [
+        '里侧最好的位置上放了块小木牌，没有字。你问是谁的。',
+        '<b>Leo</b>：「常来的人。就你。」',
+      ],
+      settled: chatTail(id),
+    };
+  }
+  if (key === 'lev1') {
+    return {
+      lines: [
+        '他的田垄到头就是你的地。他蹲在垄沟边拔草，顺手把你地里的也拔了。',
+        '你问：「你帮所有人，你自己的田谁管。」',
+        '<b>Levi</b>：「我的长得慢就慢吧。」',
+      ],
+      ev: { key: 'lev1', choices: [{ k: 'a', t: '明天我来管' }, { k: 'b', t: '不接话' }] },
+    };
+  }
+  if (key === 'levC') {
+    return {
+      lines: [
+        '太阳偏西。你们坐在田埂上。',
+        '<b>Levi</b>：「我知道我不该想这些。你要是嫌烦，我照样帮你干活。」',
+      ],
+      ev: { key: 'levC', choices: [{ k: 'y', t: '接受' }, { k: 'n', t: '拒绝' }] },
+    };
+  }
+  if (key === 'leoC') {
+    return {
+      lines: [
+        '闭馆后，他递给你一本书。是你第一次借的那本。',
+        '扉页有铅笔字，写了又擦过。',
+        '<b>Leo</b>：「这本…你第一次借的。扉页…有字。擦掉的那句…和现在这句…是一个意思。」',
+        '扉页现在的那句写着：「这本书你借过。这次不用还。」',
+      ],
+      ev: { key: 'leoC', choices: [{ k: 'y', t: '接受' }, { k: 'n', t: '拒绝' }] },
+    };
+  }
+  if (key === 'viv2') {
+    return {
+      lines: [
+        '她把你叫住了。',
+        '<b>Vivienne</b>：「我这里有一条你正想要的消息。价钱是老价钱。一整晚。」',
+      ],
+      ev: { key: 'viv2', choices: [{ k: 'y', t: '答应（把今晚给她）' }, { k: 'n', t: '摇头' }] },
+    };
+  }
+  return null;
+}
+
+/* 白天进图书馆撞见（Leo 事件2/3） */
+function enterEvPending() {
+  if (G.node >= DAY_NODES) return null;
+  const key = nextEv('leo');
+  if (!key || !loveReady('leo')) return null;
+  if (key === 'leo2' && EV_GATES.leo2()) {
+    loveDone('leo'); rel('leo', 'l', 2);
+    G.evF.leoLightLate = true;             // 当晚：图书馆的灯亮到很晚
+    G.evF.leoColdDay = G.day + 1;          // 次日：他的所有回覆换成一條
+    return {
+      lines: [
+        'Alice 在柜台还书。Leo 多擦了一遍柜台。',
+        '你进门，他把抹布收进了抽屉。',
+      ],
+    };
+  }
+  if (key === 'leo3' && EV_GATES.leo3()) {
+    loveDone('leo');
+    return {
+      lines: ['<b>Leo</b>：「Alice 的事，你看出来了。」'],
+      ev: { key: 'leo3', choices: [{ k: 'a', t: '帮他去问' }, { k: 'b', t: '劝他放下' }, { k: 'c', t: '不管' }] },
+    };
+  }
+  return null;
+}
+
+/* 夜里去井边撞见（Asher 事件2；只在你夜里出门满 2 次后，井边格子出现时） */
+function wellEvPending() {
+  if (G.node < DAY_NODES) return null;
+  if (nextEv('asher') !== 'ash2' || !loveReady('asher') || !EV_GATES.ash2()) return null;
+  loveDone('asher'); rel('asher', 'l', 1);
+  G.evF.ashBedFirst = true;                // 当晚：他先你一步钻进了被窝
+  return {
+    lines: [
+      '井后面站着一个人。是 Asher，兜里揣着弹弓。',
+      '<b>Asher</b>：「我散步。」',
+    ],
+  };
+}
+/* 井边格子是否显示（夜里，仅事件待触发时） */
+function ashWellPending() {
+  return G.node >= DAY_NODES && nextEv('asher') === 'ash2' && loveReady('asher') && EV_GATES.ash2();
+}
+
+/* 夜里在家休息时自动（Asher 事件1/3/4、告白；只占当晚，完再入睡结算） */
+function restLoveEvent() {
+  if (G.node < DAY_NODES) return null;
+  const key = nextEv('asher');
+  if (!key || !loveReady('asher')) return null;
+  if (key === 'ash1' && EV_GATES.ash1()) {
+    loveDone('asher'); rel('asher', 'f', 1);
+    return {
+      lines: [
+        '夜里你听见他翻身。',
+        '<b>Asher</b>：「床的事。我就是还没习惯有自己的一张。」',
+      ],
+      settle: true,
+    };
+  }
+  if (key === 'ash3' && EV_GATES.ash3()) {
+    loveDone('asher');
+    return {
+      lines: ['<b>Asher</b>：「那个瓷的，知不知道你晚上去哪。」'],
+      ev: { key: 'ash3', choices: [{ k: 'a', t: '如实说' }, { k: 'b', t: '敷衍' }, { k: 'c', t: '反问他在想什么' }] },
+      settle: true,
+    };
+  }
+  if (key === 'ash4' && EV_GATES.ash4() && G.weather && Math.random() < 0.5) {
+    loveDone('asher');
+    addFeed('sim', '傍晚下起了雨。[[asher]]淋着回来的。', ['asher']);
+    return {
+      lines: [
+        '傍晚下起了雨。Asher 淋着回来的。',
+        '夜里他烧得迷迷糊糊，说了一夜胡话。',
+        '<b>Asher</b>：「村口。马车。他们说去去就回。」',
+        '天亮时烧退了。他问：',
+        '<b>Asher</b>：「我说什么了。」',
+      ],
+      ev: { key: 'ash4', choices: [{ k: 'y', t: '说' }, { k: 'n', t: '不说' }] },
+      settle: true,
+    };
+  }
+  if (key === 'ashC' && G.evF.bdayToday && EV_GATES.ashC()) {
+    loveDone('asher');
+    return {
+      lines: [
+        '你回到家。他还坐在桌边，没睡。',
+        '<b>Asher</b>：「全村都说我是大家的孩子。」',
+        '他停了一会儿。',
+        '<b>Asher</b>：「我不想当你的孩子。」',
+      ],
+      ev: { key: 'ashC', choices: [{ k: 'a', t: '等你长大' }, { k: 'b', t: '你永远是我家人' }, { k: 'c', t: '我心里有人' }] },
+      settle: true,
+    };
+  }
+  return null;
+}
+
+/* Levi 两个专属按钮（一次性；出现在他的档案页） */
+function levButton(key) {
+  if (!loveReady('levi')) return { lines: ['今天他够累的了。明天再说。'], blocked: true };
+  if (nextEv('levi') !== key) return { lines: ['现在没这个由头。'], blocked: true };
+  if (key === 'lev3') {
+    const err = canDo('gather'); if (err) return { lines: [err], blocked: true };
+    loveDone('levi'); rel('levi', 'l', 4); rel('levi', 'f', 2);
+    G.energy -= COST.gather + (G.hurt === 2 ? 1 : 0);
+    G.dayLog.push('带 Levi 出村去林子帮忙');
+    addFeed('you', '你带着[[levi]]出了村界，往林子那边去。', ['levi']);
+    const lines = [
+      '出了村界，就只有你们俩。',
+      '你话没说完，他就答应了。答应完，他自己站了一会儿。',
+      '<b>Levi</b>：「从小就这样。他们打我，都是顺手的。你是专门的。」',
+    ];
+    return { lines, settled: advanceNode() === 'settled' };
+  }
+  if (key === 'lev4') {
+    const err = canDo('chat'); if (err) return { lines: [err], blocked: true };
+    loveDone('levi'); rel('levi', 'l', 3);
+    G.evF.leviBasket = true;               // 当晚结算：一筐东西+字条
+    G.energy -= COST.chat + (G.hurt === 2 ? 1 : 0);
+    G.dayLog.push('让 Levi 歇一天');
+    const lines = [
+      '你让他歇一天，田里的活不许他碰。',
+      '<b>Levi</b>：「好。」',
+    ];
+    return { lines, settled: advanceNode() === 'settled' };
+  }
+  return { lines: ['（这个动作还没实装）'], blocked: true };
+}
+
+/* Vivienne 的消息：按进度自动挑（骑士损耗 > 村民秘密 > Lee 胡话） */
+function vivInfoText() {
+  const k = G.npc.knight, kn = G.knight;
+  if (kn.core || kn.cond < 100 || k.l >= 30) {
+    const est = kn.core ? '芯已经露了。剩下的日子要一天一天数。'
+      : kn.cond >= 65 ? '裂得还不深。撑到月底不难。'
+      : kn.cond >= 35 ? '再这么裂两回，就要见芯了。'
+      : '缝已经能塞进指头了。';
+    return `[[vivienne]]清点着蜡烛，压低了声音：「那瓷的，昨晚又添了新口子。${est}」`;
+  }
+  const cands = NPCS.filter(n => n.secretHint && n.id !== 'lee' && n.id !== 'vivienne' && G.npc[n.id].f < 50);
+  if (cands.length && Math.random() < 0.75) {
+    const n = rnd(cands);
+    return `[[vivienne]]说起[[${n.id}]]：「${n.secretHint}」`;
+  }
+  const lc = npcDef('lee').chat;
+  const line = rnd(Array.isArray(lc) ? lc : (lc.low || lc.mid || lc.high || ['今天天气好。']));
+  return `[[vivienne]]背了一条[[lee]]的胡话：「${line}」他说过的，她全记着。`;
+}
+
+/* 选项结算（弹窗按钮回调）；夜里事件的选项带 settled:true，UI 收到后入睡结算 */
+function loveChoice(key, c) {
+  const F = G.evF;
+  if (key === 'lev1') {
+    loveDone('levi');
+    if (c === 'a') F.leviField = true;
+    const lines = c === 'a'
+      ? ['你说：明天我来管。', '<b>Levi</b>：「成。」']
+      : ['你没有接话。他也没再说。'];
+    return { lines, settled: chatTail('levi') };
+  }
+  if (key === 'levC') {
+    loveDone('levi');
+    if (c === 'y') {
+      G.lover = 'levi';
+      return { lines: ['你答应了。', '他半天没说话。然后接着把那垄草拔完了。'], settled: chatTail('levi') };
+    }
+    G.noPropose.levi = true;
+    return { lines: ['你摇了头。', '<b>Levi</b>：「嗯。草我明天照拔。」'], settled: chatTail('levi') };
+  }
+  if (key === 'leoC') {
+    loveDone('leo');
+    if (c === 'y') {
+      G.lover = 'leo';
+      return { lines: ['你答应了。', '他把登记本翻开，把你那一行的墨又描深了一遍。'], settled: chatTail('leo') };
+    }
+    G.noPropose.leo = true;
+    return { lines: ['你摇了头。他把那本书放回了架子上。'], settled: chatTail('leo') };
+  }
+  if (key === 'viv2') {
+    loveDone('vivienne');
+    if (c === 'y') {
+      F.vivInfo = vivInfoText();                 // 先记下：结算里的 genMorning 会把它发进次日晨报
+      const r = doFun('vivienne', true);         // 今晚直接结算
+      if (r.blocked) { delete F.vivInfo; return r; }
+      return r;
+    }
+    F.vivSnub = true;                            // 当晚：教堂的蜡烛没点
+    return {
+      lines: [
+        '你摇了头。',
+        '<b>Vivienne</b>：「拿去。这次不要钱。」',
+        resolveNames(vivInfoText()),
+      ],
+      settled: chatTail('vivienne'),
+    };
+  }
+  if (key === 'leo3') {
+    if (c === 'a') {
+      F.leoAskRejected = true;
+      F.leoClosedUntil = G.day + 4;              // 闭馆三天，第四天重开
+      const lines = [
+        '你把话带到了。',
+        '<b>Alice</b>：「回去告诉他，书我不借了。人也别等。」',
+      ];
+      if (G.npc.alice.l > G.npc.leo.l) lines.push('<b>Alice</b>：「他让你来问的？……他是不是有别人了。」');
+      lines.push('当天，图书馆关了门。');
+      return { lines };
+    }
+    if (c === 'b') {
+      F.leoUnresolved = true;
+      return { lines: ['你劝他把这件事放下。', '<b>Leo</b>：「放着吧，反正也不重。」'] };
+    }
+    F.leoSkipped = true;
+    return { lines: ['你没有接话。他也没再说。'] };
+  }
+  if (key === 'ash3') {
+    if (c === 'a') {
+      F.ashSabUp = true;                         // 往后你打 Alice 的主意他都插一脚
+      return { lines: ['你把夜里的事一五一十说了。', '<b>Asher</b>：「行。你知道自己在干什么就行。」'], settled: true };
+    }
+    if (c === 'b') return { lines: ['你含糊了两句。他没有再问。'], settled: true };
+    rel('asher', 'l', 1);
+    return { lines: ['你反问他在想什么。', '<b>Asher</b>：「没想什么。」'], settled: true };
+  }
+  if (key === 'ash4') {
+    if (c === 'y') return { lines: ['你把那句话原样说给他听。', '他半天没说话。', '<b>Asher</b>：「哦。」'], settled: true };
+    F.ashRainSecret = true;                      // 村口马车那句，归你保管
+    return { lines: ['你说不记得了。', '这个秘密归你保管。'], settled: true };
+  }
+  if (key === 'ashC') {
+    if (c === 'a') {
+      F.ashPact = true;                          // 约定档：家页添一行+留饭播报
+      return { lines: ['你说：等你长大。', '<b>Asher</b>：「好。」'], settled: true };
+    }
+    if (c === 'b') {
+      F.ashFamily = true;                        // 家人档：难过三天，之后真的变成家人
+      F.ashBlueUntil = G.day + 4;
+      F.ashBdayNext = G.day + 30;                // 往后每 30 天生日那天他多喝一杯
+      return { lines: ['你说：你永远是我家人。', '那晚他没有再说话。'], settled: true };
+    }
+    F.ashSabOff = true;                          // 心里有人：拆散机制从此关停
+    return { lines: ['你说：我心里有人。', '<b>Asher</b>：「我知道。我早就知道了。」', '当晚，他睡回了第二张床。'], settled: true };
+  }
+  return { lines: ['（这个选项还没实装）'], blocked: true };
+}
+
+/* 夜里出门计数（Asher 事件2的引子；在村里走动合法，一夜一个节点只计一次） */
+function markNightOut() {
+  const k = G.day * 10 + G.node;
+  if (G._nOutKey === k) return;
+  G._nOutKey = k;
+  G.nightOut++;
+}
+
+/* 每日晨间勾子（包在 genMorning 前）：天气、雨天闲话、情报送达、生日 */
+function morningLoveTick() {
+  G.weather = Math.random() < 0.25 ? 1 : 0;
+  if (G.weather && Math.random() < 0.3) addFeed('sim', rnd(RAIN_FEED));
+  if (G.evF.vivInfo) { addFeed('morn', G.evF.vivInfo); delete G.evF.vivInfo; }
+  if (G.evF.ashBdayNext && G.day >= G.evF.ashBdayNext) {
+    addFeed('sim', '[[asher]]今天多喝了一杯。谁劝都没用。');
+    G.evF.ashBdayNext = G.day + 30;
+  }
+  /* 告白排到位后，数日内某天轮到他的生日（40%/天） */
+  if (nextEv('asher') === 'ashC' && EV_GATES.ashC() && !G.evF.bdayToday && Math.random() < 0.4) {
+    G.evF.bdayToday = true;
+    addFeed('morn', '今天是 Asher 的生日。全村给他过了，蛋糕是 Olivia 的，酒是 Jasper 出的。');
+  }
+}
+
+/* 每晚结算后勾子：当晚专属播报、Levi 一筐东西、Leo 断线判定 */
+function loveNightFeed() {
+  const F = G.evF;
+  if (F.leviSitLate) { addFeed('sim', '[[levi]]一个人在田里坐到很晚。'); delete F.leviSitLate; }
+  if (F.leoLightLate) { addFeed('sim', '图书馆的灯亮到很晚。', ['leo']); delete F.leoLightLate; }
+  if (F.vivSnub) { addFeed('sim', '[[vivienne]]晚上没点教堂的蜡烛。'); delete F.vivSnub; }
+  if (F.ashBedFirst) { addFeed('sim', '他先你一步钻进了被窝。', ['asher']); delete F.ashBedFirst; }
+  if (F.leviBasket) {
+    G.bag.小麦 = (G.bag.小麦 || 0) + 2;
+    G.bag.羊毛 = (G.bag.羊毛 || 0) + 1;
+    addFeed('sim', '[[levi]]晚上送来一筐东西，小麦和羊毛码得整整齐齐。筐底压着字条：「今天是我今年最开心的一天。」');
+    delete F.leviBasket;
+  }
+  /* Leo 断线：帮问被拒后 30 天没再理他 */
+  if (F.leoAskRejected && !F.leoLineDead && G.day - G.npc.leo.last >= 30) {
+    F.leoLineDead = true;
+    addFeed('major', '[[leo]]把窗边那把椅子搬回了原位。');
+  }
+  delete F.bdayToday;                             // 生日当晚没在家睡：告白改日再轮
+}
+
+const _genMorningLove = genMorning;
+genMorning = function () { morningLoveTick(); _genMorningLove(); };
+const _settleDayLove = settleDay;
+settleDay = function () { _settleDayLove(); loveNightFeed(); };

@@ -14,6 +14,7 @@ function renderStatus() {
     `<span class="st">精力 ${G.energy}/${maxE()}</span>` +
     `<span class="st">安娜币 ${G.coins}</span>` +
     `<span class="st">武力 ${G.force}</span>` +
+    (G.weather ? `<span class="st">雨</span>` : '') +
     (G.hurt ? `<span class="st warn-st">${hurtWord()}</span>` : '');
 }
 
@@ -47,6 +48,10 @@ function villageHtml() {
   html += `<div class="grid">`;
   for (const [pid, p] of Object.entries(PLACES)) {
     if (pid === 'home') continue;
+    if (pid === 'well' && night && ashWellPending()) {   // 感情线：Asher 事件2待触发时，井边夜里可见
+      html += `<button class="cell" data-place="well">${p.name}</button>`;
+      continue;
+    }
     const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
     if (night && !who.length) continue;   // 夜里没人的铺子不开门
     const label = who.length ? `<span class="pwho">${who.map(n => n.name).join('·')}</span>` : '';
@@ -106,6 +111,7 @@ function homeHtml() {
   html += `<div class="sec-title">同住</div>`;
   html += npcCard(npcDef('asher'));
   html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
+  if (G.evF.ashPact) html += `<div class="dim" style="margin:2px">他床边多了个自己钉的架子，放着你的弓。</div>`;   /* 感情线：等你长大（约定档） */
   html += `<div class="sec-title">背包</div><div class="bag">`;
   for (const [k, v] of Object.entries(G.bag)) {
     html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}<div class="dim">${(ITEMS[k] || {}).d || ''}</div></div>`;
@@ -179,6 +185,13 @@ function npcSheet(id) {
   const lnow = locOf(n, G.node);
   const locName = lnow === 'home' ? (n.livesWithYou ? '你家' : '家里') : (PLACES[lnow] ? PLACES[lnow].name : '前线');
   html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${locName}</div>`;
+  /* 感情线：Leo 帮问被拒后闭馆三天，敲门只有一条门缝 */
+  if (id === 'leo' && G.evF.leoClosedUntil && G.day < G.evF.leoClosedUntil) {
+    html += `<div class="line">门开了一条缝。</div>`;
+    html += `<div class="line"><b>Leo</b>：「我就知道会这样。」</div>`;
+    openModal('人物档案', html);
+    return;
+  }
   html += `<div class="bio">${n.bio}</div>`;
   if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
@@ -202,6 +215,14 @@ function npcSheet(id) {
       const noGy = (G.bag.黄金玉 || 0) < 1;
       extras += `<button class="btn line ib ${noGy ? 'dis' : ''}" data-act="repair" ${noGy ? 'disabled' : ''}>修补（2·黄金玉）${noGy ? '·没有黄金玉' : ''}</button>`;
     }
+  }
+  /* 感情线：Levi 两个专属按钮（一次性，走完队列就不再出现） */
+  if (id === 'levi') {
+    const nk = nextEv('levi');
+    if (nk === 'lev3' && EV_GATES.lev3() && loveReady('levi'))
+      extras += `<button class="btn line ib" data-act="levbtn" data-k="lev3">约他去森林帮忙（2·时段）</button>`;
+    if (nk === 'lev4' && EV_GATES.lev4() && loveReady('levi'))
+      extras += `<button class="btn line ib" data-act="levbtn" data-k="lev4">命令他歇一天（1·时段）</button>`;
   }
   /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
   const fp = funPools(n, s);
@@ -233,6 +254,19 @@ function tradeSheet(id) {
 /* ---------- 结果弹窗 / 结算 ---------- */
 function resultSheet(lines) {
   openModal('　', lines.map(l => `<div class="line">${l}</div>`).join('') + `<div class="actrow2"><button class="btn" data-act="close-res">继续</button></div>`);
+}
+
+/* ---------- 感情线事件弹窗（第一批）：台词+选项按钮；无选项的看完继续（夜里事件继续=入睡结算） ---------- */
+function evSheet(r) {
+  let html = (r.lines || []).map(l => `<div class="line">${l}</div>`).join('');
+  if (r.ev && r.ev.choices) {
+    html += `<div class="actrow2">${r.ev.choices.map(c =>
+      `<button class="btn" data-act="evc" data-ev="${r.ev.key}" data-c="${c.k}">${c.t}</button>`).join('')}</div>`;
+  } else {
+    if (r.settle) V.pendingSettle = true;
+    html += `<div class="actrow2"><button class="btn" data-act="close-res">继续</button></div>`;
+  }
+  openModal('　', html);
 }
 
 function settlementSheet() {
@@ -331,10 +365,23 @@ document.addEventListener('click', e => {
   if (tab) { V.tab = tab.dataset.t; V.place = null; closeModal(); render(); return; }
 
   const nm = e.target.closest('[data-npc]');
-  if (nm && !e.target.closest('[data-act]')) { npcSheet(nm.dataset.npc); return; }
+  if (nm && !e.target.closest('[data-act]')) {
+    /* 感情线：夜里出门找人/去铺子，计一次夜里出门（Asher 事件2的引子；家里和骑士不算） */
+    if (nm.classList.contains('npc-card') && G.node >= DAY_NODES && nm.dataset.npc !== 'knight' && nm.dataset.npc !== 'asher') markNightOut();
+    npcSheet(nm.dataset.npc);
+    return;
+  }
 
   const pl = e.target.closest('[data-place]');
-  if (pl) { V.place = pl.dataset.place || null; render(); return; }
+  if (pl) {
+    V.place = pl.dataset.place || null;
+    if (pl.dataset.place && G.node >= DAY_NODES) markNightOut();
+    render();
+    /* 感情线：白天进图书馆撞见（Leo 事件2/3）；夜里去井边撞见（Asher 事件2） */
+    if (V.place === 'library') { const ev = enterEvPending(); if (ev) evSheet(ev); }
+    if (V.place === 'well' && G.node >= DAY_NODES) { const ev = wellEvPending(); if (ev) evSheet(ev); }
+    return;
+  }
 
   const ch = e.target.closest('[data-chron]');
   if (ch) { chronDetail(+ch.dataset.chron); return; }
@@ -375,12 +422,29 @@ document.addEventListener('click', e => {
     if (act.disabled) return;
     const r = interact(id, act.dataset.ia);
     if (r.duel) { duelSheet(); return; }
+    if (r.ev) { evSheet(r); return; }                       // 感情线：带选项的事件弹窗
     resultSheet(r.lines);
     if (G.over) { render(); return; }
     if (r.settled) {
       if (act.dataset.ia === 'fun') V.pendingSettle = true;   // 枕边话先看完，点继续再结算
       else setTimeout(settlementSheet, 10);
     }
+    else render();
+    return;
+  }
+  if (a === 'evc') {                                          // 感情线：事件选项结算
+    const res = loveChoice(act.dataset.ev, act.dataset.c);
+    resultSheet(res.lines);
+    if (G.over) { render(); return; }
+    if (res.settled) V.pendingSettle = true;
+    else render();
+    return;
+  }
+  if (a === 'levbtn') {                                       // 感情线：Levi 专属按钮
+    const r = levButton(act.dataset.k);
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) setTimeout(settlementSheet, 10);
     else render();
     return;
   }
@@ -422,7 +486,12 @@ document.addEventListener('click', e => {
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
   if (a === 'heal') { const r = healPotion(); resultSheet(r.lines); if (!r.blocked) render(); return; }
-  if (a === 'rest') { restNow(); settlementSheet(); render(); return; }
+  if (a === 'rest') {
+    const r = restNow();
+    if (r.ev) evSheet(r.ev);                                  // 感情线：夜里在家的事件（Asher），看完/选完再入睡结算
+    else { settlementSheet(); render(); }
+    return;
+  }
   if (a === 'save') { save(); toast('已保存。'); return; }
   if (a === 'reload') { if (load()) { V.place = null; closeModal(); render(); toast('已读档。'); } return; }
   if (a === 'newgame') {

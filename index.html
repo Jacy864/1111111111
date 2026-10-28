@@ -3130,6 +3130,7 @@ function morningLoveTick() {
   /* 告白排到位后，数日内某天轮到他的生日（40%/天） */
   if (nextEv('asher') === 'ashC' && EV_GATES.ashC() && !G.evF.bdayToday && Math.random() < 0.4) {
     G.evF.bdayToday = true;
+    G.evF.bdayMark = G.day;               // 打上当天戳：loveNightFeed 只撤隔夜未用的
     addFeed('morn', '今天是 Asher 的生日。全村给他过了，蛋糕是 Olivia 的，酒是 Jasper 出的。');
   }
 }
@@ -3152,7 +3153,7 @@ function loveNightFeed() {
     F.leoLineDead = true;
     addFeed('major', '[[leo]]把窗边那把椅子搬回了原位。');
   }
-  delete F.bdayToday;                             // 生日当晚没在家睡：告白改日再轮
+  if (F.bdayToday && F.bdayMark !== G.day) delete F.bdayToday;   // 生日旗标隔夜未用才撤（当晚没在家睡：改日再轮）
 }
 
 const _genMorningLove = genMorning;

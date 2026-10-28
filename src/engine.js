@@ -1168,11 +1168,11 @@ function levButton(key) {
 function vivInfoText() {
   const k = G.npc.knight, kn = G.knight;
   if (kn.core || kn.cond < 100 || k.l >= 30) {
-    const est = kn.core ? '芯已经露了。剩下的日子要一天一天数。'
-      : kn.cond >= 65 ? '裂得还不深。撑到月底不难。'
-      : kn.cond >= 35 ? '再这么裂两回，就要见芯了。'
-      : '缝已经能塞进指头了。';
-    return `[[vivienne]]清点着蜡烛，压低了声音：「那瓷的，昨晚又添了新口子。${est}」`;
+    const est = rnd(kn.core ? VIV_KNIGHT_EST.core
+      : kn.cond >= 65 ? VIV_KNIGHT_EST.light
+      : kn.cond >= 35 ? VIV_KNIGHT_EST.mid
+      : VIV_KNIGHT_EST.heavy);
+    return `[[vivienne]]清点着蜡烛，压低了声音：「${est}」`;
   }
   const cands = NPCS.filter(n => n.secretHint && n.id !== 'lee' && n.id !== 'vivienne' && G.npc[n.id].f < 50);
   if (cands.length && Math.random() < 0.75) {

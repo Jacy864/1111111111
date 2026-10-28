@@ -2826,7 +2826,7 @@ function runChatEv(id, key) {
     return {
       lines: [
         '她把你叫住了。',
-        '<b>Vivienne</b>：「我这里有一条你正想要的消息。价钱是老价钱。一整晚。」',
+        '<b>Vivienne</b>：「你要的东西我这里有。这次也照旧，拿一晚来换。」',
       ],
       ev: { key: 'viv2', choices: [{ k: 'y', t: '答应（把今晚给她）' }, { k: 'n', t: '摇头' }] },
     };
@@ -3037,9 +3037,9 @@ function loveChoice(key, c) {
       F.leoClosedUntil = G.day + 4;              // 闭馆三天，第四天重开
       const lines = [
         '你把话带到了。',
-        '<b>Alice</b>：「回去告诉他，书我不借了。人也别等。」',
+        '<b>Alice</b>：「你替我把书还了。跟他说，往后我不去了。」',
       ];
-      if (G.npc.alice.l > G.npc.leo.l) lines.push('<b>Alice</b>：「他让你来问的？……他是不是有别人了。」');
+      if (G.npc.alice.l > G.npc.leo.l) lines.push('<b>Alice</b>：「他不敢自己来。他喜欢的是你，你不知道？」');
       lines.push('当天，图书馆关了门。');
       return { lines };
     }

@@ -395,7 +395,7 @@ const NPCS = [
     bio: '村里的牧师。傲慢，直接，欲望从不遮掩。全村的忏悔都进她的耳朵，所以她什么都知道。',
     secretHint: '她知道的，比你告诉她的多。',
     loc: ['church', 'church', 'church', 'home', 'home'],
-    noTrade: true,
+    trade: { buy: [['兔皮', 2]] },
     chat: { low: [
       '早啊孩子。今天的风真大，愿主保佑你平安。',
       '祈祷书放这里。有需要随时可以来。',
@@ -474,7 +474,7 @@ const NPCS = [
     bio: '英俊，说话慢，句句带商量的口气。田里的活谁求都帮。挨了骂挨了打，反而踏实来劲。',
     secretHint: '挨了打，他眼睛是亮的。',
     loc: ['field', 'field', 'farm', 'home', 'home'],
-    trade: { sell: [['小麦', 2], ['羊毛', 3], ['奶酪', 4]], buy: [['胡萝卜', 2], ['土豆', 2]], easy: true },
+
     chat: { low: [
       '收成还凑合。要帮忙言语一声就行。',
       '羊奶今天多挤了些，你要不要拎一罐。',
@@ -629,7 +629,7 @@ const NPCS = [
     bio: '村里的图书管理员，常年待在图书馆里。阴湿，社恐，体弱，怕吵，说话轻还磕绊，但不绕弯子。',
     secretHint: '你借过的书，他都单独收在里间一格。',
     loc: ['library', 'library', 'library', 'library', 'library'],
-    trade: { sell: [['纸张', 2], ['书', 9]], buy: [['稀有花', 15], ['纸张', 1]], hard: true },
+    trade: { buy: [['稀有花', 15]], hard: true },
     chat: { low: [
       '登记本……放这里。',
       '押金……一个安娜币。',
@@ -730,7 +730,7 @@ const NPCS = [
     bio: '野性，漂亮，慷慨。讲不通的事就用拳头讲。田里两片地都是她的。',
     secretHint: '全村只有她打闹打得过你。',
     loc: ['field', 'field', 'field', 'home', 'home'],
-    trade: { sell: [['胡萝卜', 2], ['小麦', 1]], buy: [['蘑菇', 3], ['卷心菜', 2]], easy: true },
+    trade: { buy: [['蘑菇', 3], ['小麦', 1]], easy: true },
     chat: [
       '胡萝卜自己拔，别客气。钱看着给。',
       '昨天野猪拱了田埂，被我揍跑了。猪肉没吃着，亏。',
@@ -740,7 +740,7 @@ const NPCS = [
       '有事说事。动手是因为说不过。说了你别学。',
       '我娘说我在村里待不长。她错了。我哪也不去。',
     ],
-    flirt: ['哟。今天嘴挺甜。胡萝卜多送你一根。', '会说话就多说点。我爱听。'],
+    flirt: [],
     tease: ['来。放马过来。你那点力气也就够挠痒。', '就这。就这就倒。'],
     hit: ['行啊你。来真的。'],
     cold: ['稀客啊。胡萝卜都熟第二茬了。'],
@@ -750,7 +750,7 @@ const NPCS = [
     bio: '冷峻，话少，常年把自己锁在锻造室。兵器打得好，脸色不好。',
     secretHint: '她夜里有时从后门搬东西进去。',
     loc: ['forge', 'forge', 'forge', 'home', 'home'],
-    trade: { sell: [['箭矢', 5]], buy: [['铁矿', 5], ['怪躯壳', 8]], hard: true },
+    trade: { sell: [['箭矢', 5]], buy: [['铁矿', 5], ['怪躯壳', 8], ['骨头', 1]], hard: true },
     chat: [
       '兵器看好了就走。锻造室热。',
       '矿有力气自己挖。我只收成品。',
@@ -760,7 +760,7 @@ const NPCS = [
       '这村里的东西，够用就行。我打的每一把都没名字。名字是给人用的。',
       '你觉得铁和骨头像吗。淬火之后，都脆。',
     ],
-    flirt: ['说这个之前，先把那块铁递给我。', '锻造室不适合说这种话。明天再说一遍，我考虑听。'],
+    flirt: [],
     tease: ['别碰工具。出去。'],
     hit: ['你找死。'],
     cold: ['哦。还知道来。'],
@@ -1017,7 +1017,7 @@ const NPCS = [
     bio: '温柔，稳重，耐心。炉子从早烧到晚，蛋糕给全村人吃。',
     secretHint: '后厨有个袋子，谁也不许碰。',
     loc: ['bakery', 'bakery', 'bakery', 'home', 'home'],
-    trade: { sell: [['蛋糕', 3], ['熟食', 2]], buy: [['生肉', 3], ['奶酪', 3], ['鱼', 3], ['腐肉', 4]] },
+    trade: { buy: [['生肉', 3], ['鱼', 3], ['腐肉', 4], ['水果', 1]] },
     chat: [
       '新出炉的，拿一个尝。不算钱。',
       '火候这东西急不来。人也一样。',
@@ -1027,7 +1027,7 @@ const NPCS = [
       '有的东西吃了一次，就戒不掉。你不懂最好。',
       '这个村子对谁都好。就是对我太好了点。',
     ],
-    flirt: ['嘴上有糖霜。别擦，就这样好看。', '你天天来，我该给你留专座了。'],
+    flirt: [],
     tease: ['哎，面粉。沾你身上了。活该，谁让你闹。'],
     hit: ['你怎么下这么重的手。去 Isabel 那看看吧。'],
     cold: ['蛋糕给你留了三天。今天最后一天了。'],
@@ -1037,7 +1037,7 @@ const NPCS = [
     bio: '温柔，善良，手巧，性子稳。白天驻钟楼修表，什么坏了都能修，村里的事到他手里都能稳稳解决。',
     secretHint: '有人问他这身手艺是跟谁学的，他笑一笑，把话岔到钟表上去。',
     loc: ['belltower', 'belltower', 'belltower', 'home', 'home'],
-    trade: { sell: [['钟表', 20], ['指南针', 12], ['银钉', 3]], buy: [['木板', 2], ['木材', 1]], easy: true },
+    trade: { buy: [['木板', 2], ['木材', 1], ['羊毛', 2]], easy: true },
     chat: { low: [  /* 友0-30：旧占位 3 条，台词库重写时替换 */
       '钟今天慢了半秒。调好了。',
       '零件这种东西，越旧越合用。人也差不多。',
@@ -2363,7 +2363,7 @@ function interact(id, type) {
   } }
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
-    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
+    rel(id, 'f', 2); if (!SISTERS.includes(id)) rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
     const stress = knightStressRoll(place, false);
     if (stress) {
       lines.push(resolveNames(stress));
@@ -2571,6 +2571,8 @@ function doExplore(zone, act) {
       G.bag.蘑菇 = (G.bag.蘑菇 || 0) + 2;
       G.bag.水果 = (G.bag.水果 || 0) + 1;
       if (Math.random() < 0.5) { G.bag.木材 = (G.bag.木材 || 0) + 1; got.push('木材×1'); }
+      if (Math.random() < 0.15) { G.bag.药材 = (G.bag.药材 || 0) + 1; got.push('药材×1'); }   // 供货 Isabel 收购（拍板 #40）
+      if (Math.random() < 0.12) { G.bag.木板 = (G.bag.木板 || 0) + 1; got.push('木板×1'); }   // 供货 Jacob 收购（拍板 #40）
       lines.push(rnd(EXP_TEXT.gather), '拾获：' + got.join('、'));
     }
     youFeed('gather');
@@ -2728,6 +2730,8 @@ function nap() {
 }
 
 /* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */
+/* 三姐妹纯友情线（拍板 #38/#40）：爱情值锁 0——无暧昧池＋打闹不涨爱情 */
+const SISTERS = ['alice', 'bess', 'olivia'];
 /* 每人一条顺序事件队列（LOVE_SEQ），一天一人最多触发一个（loveReady）。
    触发方式：闲聊顶替（EV_CHAT）/ 白天进图书馆撞见（Leo）/ 夜里去井边撞见（Asher）/
    夜里在家休息时自动（Asher 一串）/ Levi 两个专属按钮。
@@ -3149,7 +3153,7 @@ function loveNightFeed() {
     delete F.leviBasket;
   }
   /* Leo 断线：帮问被拒后 30 天没再理他 */
-  if (F.leoAskRejected && !F.leoLineDead && G.day - G.npc.leo.last >= 30) {
+  if (F.leoAskRejected && !F.leoLineDead && !(G.love.leo && G.love.leo.n >= LOVE_SEQ.leo.length) && G.day - G.npc.leo.last >= 30) {
     F.leoLineDead = true;
     addFeed('major', '[[leo]]把窗边那把椅子搬回了原位。');
   }
@@ -3367,11 +3371,11 @@ function npcSheet(id) {
   html += `<div class="sec-sub">互动</div>`;
   html += `<div class="actrow2">`;
   html += btn('chat', `闲聊（1）`);
-  html += btn('flirt', `暧昧（2）`, s.f < 40);
+  if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
   html += btn('tease', `打闹（2）`);
   if (!n.noAttack) html += btn('hit', '攻击（2）');
   html += `</div>`;
-  if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   let extras = '';
   if (id === 'knight') {
     const noFlower = (G.bag.花 || 0) < 1;

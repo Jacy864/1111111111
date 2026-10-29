@@ -539,7 +539,7 @@ function interact(id, type) {
   } }
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
-    rel(id, 'f', 2); rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
+    rel(id, 'f', 2); if (!SISTERS.includes(id)) rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
     const stress = knightStressRoll(place, false);
     if (stress) {
       lines.push(resolveNames(stress));
@@ -747,6 +747,8 @@ function doExplore(zone, act) {
       G.bag.蘑菇 = (G.bag.蘑菇 || 0) + 2;
       G.bag.水果 = (G.bag.水果 || 0) + 1;
       if (Math.random() < 0.5) { G.bag.木材 = (G.bag.木材 || 0) + 1; got.push('木材×1'); }
+      if (Math.random() < 0.15) { G.bag.药材 = (G.bag.药材 || 0) + 1; got.push('药材×1'); }   // 供货 Isabel 收购（拍板 #40）
+      if (Math.random() < 0.12) { G.bag.木板 = (G.bag.木板 || 0) + 1; got.push('木板×1'); }   // 供货 Jacob 收购（拍板 #40）
       lines.push(rnd(EXP_TEXT.gather), '拾获：' + got.join('、'));
     }
     youFeed('gather');
@@ -904,6 +906,8 @@ function nap() {
 }
 
 /* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */
+/* 三姐妹纯友情线（拍板 #38/#40）：爱情值锁 0——无暧昧池＋打闹不涨爱情 */
+const SISTERS = ['alice', 'bess', 'olivia'];
 /* 每人一条顺序事件队列（LOVE_SEQ），一天一人最多触发一个（loveReady）。
    触发方式：闲聊顶替（EV_CHAT）/ 白天进图书馆撞见（Leo）/ 夜里去井边撞见（Asher）/
    夜里在家休息时自动（Asher 一串）/ Levi 两个专属按钮。
@@ -1306,6 +1310,7 @@ function morningLoveTick() {
   /* 告白排到位后，数日内某天轮到他的生日（40%/天） */
   if (nextEv('asher') === 'ashC' && EV_GATES.ashC() && !G.evF.bdayToday && Math.random() < 0.4) {
     G.evF.bdayToday = true;
+    G.evF.bdayMark = G.day;               // 打上当天戳：loveNightFeed 只撤隔夜未用的
     addFeed('morn', '今天是 Asher 的生日。全村给他过了，蛋糕是 Olivia 的，酒是 Jasper 出的。');
   }
 }
@@ -1324,11 +1329,11 @@ function loveNightFeed() {
     delete F.leviBasket;
   }
   /* Leo 断线：帮问被拒后 30 天没再理他 */
-  if (F.leoAskRejected && !F.leoLineDead && G.day - G.npc.leo.last >= 30) {
+  if (F.leoAskRejected && !F.leoLineDead && !(G.love.leo && G.love.leo.n >= LOVE_SEQ.leo.length) && G.day - G.npc.leo.last >= 30) {
     F.leoLineDead = true;
     addFeed('major', '[[leo]]把窗边那把椅子搬回了原位。');
   }
-  delete F.bdayToday;                             // 生日当晚没在家睡：告白改日再轮
+  if (F.bdayToday && F.bdayMark !== G.day) delete F.bdayToday;   // 生日旗标隔夜未用才撤（当晚没在家睡：改日再轮）
 }
 
 const _genMorningLove = genMorning;

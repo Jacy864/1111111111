@@ -202,11 +202,11 @@ function npcSheet(id) {
   html += `<div class="sec-sub">互动</div>`;
   html += `<div class="actrow2">`;
   html += btn('chat', `闲聊（1）`);
-  html += btn('flirt', `暧昧（2）`, s.f < 40);
+  if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
   html += btn('tease', `打闹（2）`);
   if (!n.noAttack) html += btn('hit', '攻击（2）');
   html += `</div>`;
-  if (s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   let extras = '';
   if (id === 'knight') {
     const noFlower = (G.bag.花 || 0) < 1;

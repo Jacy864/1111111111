@@ -277,6 +277,7 @@ function settleDay() {
   else if (G.hurt === 1) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
+  G.escortUsedDay = false; G.arrowsShotNight = 0;   // 拍板 #41：护送每天一次 / 夜射每晚三箭
   genMorning();
   knightWear();
   possessTick();                        /* 占有欲每晚结算 */
@@ -632,6 +633,29 @@ function doPlaceAction(place, act) {
     youFeed('water');
     return { lines: ['你打了一桶水。不费什么力气。'], settled: advanceNode() === 'settled' };
   }
+  if (act === 'shoot') {
+    /* 钟楼夜射（拍板 #41，翻 2026-10-27 夜间禁战案·仅此一处）：每箭精力2+箭矢1，
+       命中 60%+武力×1% 封顶100%，每晚至多3箭；命中掉落怪躯壳/腐肉/骨头（4:4:2） */
+    if (place !== 'belltower' || G.node < DAY_NODES) return { lines: ['白天怪物不进城，钟楼下没有影子。'], blocked: true };
+    if ((G.arrowsShotNight || 0) >= 3) return { lines: ['钟楼下的影子散尽了，今晚没得射了。'], blocked: true };
+    if ((G.bag.箭矢 || 0) < 1) return { lines: ['箭袋空了。'], blocked: true };
+    const err = canDo('shoot'); if (err) return { lines: [err], blocked: true };
+    G.energy -= COST.shoot;
+    G.bag.箭矢--; if (G.bag.箭矢 <= 0) delete G.bag.箭矢;
+    G.arrowsShotNight = (G.arrowsShotNight || 0) + 1;
+    const slines = ['你搭箭，对着钟楼下的影子开弓。'];
+    if (Math.random() < Math.min(1, 0.6 + G.force * 0.01)) {
+      const r = Math.random(); let got;
+      if (r < 0.4) { G.bag.怪躯壳 = (G.bag.怪躯壳 || 0) + 1; got = '怪躯壳×1'; }
+      else if (r < 0.8) { G.bag.腐肉 = (G.bag.腐肉 || 0) + 1; got = '腐肉×1'; }
+      else { G.bag.骨头 = (G.bag.骨头 || 0) + 1; got = '骨头×1'; }
+      slines.push('正中。怪物栽倒在钟楼下。', '拾获：' + got);
+    } else {
+      slines.push('箭扎进空处。影子缩回了墙根。');
+    }
+    G.dayLog.push('夜里在钟楼放箭');
+    return { lines: slines };
+  }
   if (act === 'pray') {
     const err = canDo('pray'); if (err) return { lines: [err], blocked: true };
     rel('vivienne', 'f', 1);
@@ -736,8 +760,29 @@ function doExplore(zone, act) {
 
   /* 遇怪：这个节点改成战斗 */
   if (zone !== 'plain' && act !== 'train' && Math.random() < rate) {
-    lines.push(...monsterFight(false));
-    if (G.over) return { lines };                      // 战死野外，直接进结局
+    /* 骑士遇怪护送（拍板 #41）：爱≥60 三成击杀、掉落归你；爱40-59 五成吓退、无掉落；每天最多救一次。
+       台词池感性模型回流前为空池，触发只显示系统句 */
+    const kl = G.npc.knight.l;
+    const esc = !G.escortUsedDay
+      ? ((kl >= 60 && Math.random() < 0.3) ? 'kill' : (kl >= 40 && Math.random() < 0.5) ? 'scare' : null)
+      : null;
+    if (esc) {
+      G.escortUsedDay = true;
+      lines.push('怪物的影子从林子里压出来。');
+      if (esc === 'kill') {
+        const m = 1 + (Math.random() < 0.5 ? 1 : 0);
+        G.bag.腐肉 = (G.bag.腐肉 || 0) + m; G.bag.骨头 = (G.bag.骨头 || 0) + 1;
+        lines.push('剑光比你反应快。骑士收剑入鞘，把能捡的指给你。');
+        if (KNIGHT_ESCORT_KILL.length) lines.push(`<b>骑士</b>：「${rnd(KNIGHT_ESCORT_KILL)}」`);
+        lines.push(`拾获：腐肉×${m}、骨头×1`);
+      } else {
+        lines.push('一道白影先你一步落在它面前。是骑士。怪物退回了暗处。');
+        if (KNIGHT_ESCORT_SCARE.length) lines.push(`<b>骑士</b>：「${rnd(KNIGHT_ESCORT_SCARE)}」`);
+      }
+    } else {
+      lines.push(...monsterFight(false));
+      if (G.over) return { lines };                    // 战死野外，直接进结局
+    }
   } else if (act === 'gather') {
     if (Math.random() < 0.08) {
       G.bag.稀有花 = (G.bag.稀有花 || 0) + 1;

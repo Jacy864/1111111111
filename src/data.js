@@ -1225,6 +1225,10 @@ const KNIGHT_ESCORT = [
   '怪物不过来。它们认得我。',
   '这里的石头和我一样，缺了都要靠人来补。',
 ];
+/* 骑士遇怪护送台词（拍板 #41）：吓退档5条 / 击杀档5条——感性模型生成后回流；
+   空池期间触发只显示系统句（开场/击杀/吓退三句在 engine.js doExplore 实写） */
+const KNIGHT_ESCORT_SCARE = [];
+const KNIGHT_ESCORT_KILL = [];
 /* Vivienne 情报·骑士损耗判词（2026-10-28 感性模型生成，言审改五处入池；四档各三条随机） */
 const VIV_KNIGHT_EST = {
   light: [
@@ -1367,7 +1371,7 @@ const ENDINGS = {
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2 };
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */

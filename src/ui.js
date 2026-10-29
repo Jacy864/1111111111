@@ -40,7 +40,7 @@ function villageHtml() {
   if (V.place) return placeHtml(V.place);
   const night = G.node >= DAY_NODES;
   let html = `<div class="sec-title">去哪</div>`;
-  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）、图书馆（Leo 守着灯）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。骑士在前线。</div>`;
+  if (night) html += `<div class="night-note">夜里怪物横行，全村闭户。村里房屋互通，想去谁家从下面进。<br>还开着门的铺子：炼药房（Isabel 睡沙发）、图书馆（Leo 守着灯）${G.nightJacobAtTower ? '、钟楼（Jacob 今夜没回家）' : ''}。钟楼的门夜里不锁，上楼能朝楼下的影子放箭。骑士在前线。</div>`;
   if (G.knight.core) {
     const left = Math.max(0, G.knight.doomEnd - G.day);
     html += `<div class="card doom"><div class="b">骑士碎在了村口。还能撑 ${left} 天。</div><div class="dim">胸口的裂缝露着玉色的芯。金粉还能吊住他——白天挖到黄金玉就补，一天都别断。夜里怪物还会来，他带伤出去赶，每赶一夜裂得深一分。皇帝的信使三十天后到。</div></div>`;
@@ -50,6 +50,10 @@ function villageHtml() {
     if (pid === 'home') continue;
     if (pid === 'well' && night && ashWellPending()) {   // 感情线：Asher 事件2待触发时，井边夜里可见
       html += `<button class="cell" data-place="well">${p.name}</button>`;
+      continue;
+    }
+    if (pid === 'belltower' && night) {                  // 钟楼夜射（拍板 #41）：夜里钟楼始终上得去
+      html += `<button class="cell" data-place="belltower">钟楼${G.nightJacobAtTower ? '<span class="pwho">Jacob</span>' : ''}</button>`;
       continue;
     }
     const who = NPCS.filter(n => locOf(n, G.node) === pid && (G.node < DAY_NODES || (n.nightStay || n.id === 'jacob' && G.nightJacobAtTower)));
@@ -80,6 +84,11 @@ function placeHtml(pid) {
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
   if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+  if (pid === 'belltower' && G.node >= DAY_NODES) {   // 钟楼夜射（拍板 #41）
+    const sn = G.arrowsShotNight || 0;
+    const tag = sn >= 3 ? '·今晚没得射了' : ((G.bag.箭矢 || 0) < 1 ? '·箭袋空了' : `·${sn}/3`);
+    acts += `<button class="btn" data-act="shoot">放箭（精力2·箭1${tag}）</button>`;
+  }
   if (acts) html += `<div class="actrow2">${acts}</div>`;
   if (!who.length) html += `<div class="dim">这里现在没有人。</div>`;
   else html += who.map(n => npcCard(n)).join('');
@@ -462,7 +471,7 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
-  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study') {
+  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot') {
     const r = doPlaceAction(V.place, a);
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);

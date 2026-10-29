@@ -2592,7 +2592,7 @@ function doExplore(zone, act) {
        台词池感性模型回流前为空池，触发只显示系统句 */
     const kl = G.npc.knight.l;
     const esc = !G.escortUsedDay
-      ? ((kl >= 60 && Math.random() < 0.3) ? 'kill' : (kl >= 40 && Math.random() < 0.5) ? 'scare' : null)
+      ? ((kl >= 60 && Math.random() < 0.3) ? 'kill' : (kl >= 40 && kl < 60 && Math.random() < 0.5) ? 'scare' : null)
       : null;
     if (esc) {
       G.escortUsedDay = true;

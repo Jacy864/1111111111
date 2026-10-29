@@ -1992,6 +1992,9 @@ function npcAt(place, node) {
   return NPCS.filter(n => locOf(n, node) === place).map(n => n.id);
 }
 
+/* 村里动态（拍板 #43）：每节点 2-4 条；专属池 + 通用组合句常驻掺入；
+   句子近期去重（12 条滚动窗口，session 级不进存档）＋一人一节点最多 2 条 */
+let SIM_RECENT = [];
 function genSimEvents(node) {
   if (node >= DAY_NODES) return;          // 夜间不生成 NPC 街面事件
   const ashBlue = !!(G.evF && G.evF.ashBlueUntil && G.day < G.evF.ashBlueUntil);  // 家人档头三天：Asher 躲着不出播报
@@ -2002,29 +2005,34 @@ function genSimEvents(node) {
     const ok = m.need.every(id => locOf(npcDef(id), node) === m.where);
     if (ok) for (const t of m.ev) pool.push(t);
   }
-  const count = Math.min(pool.length, 1 + Math.floor(Math.random() * 3)); // 每节点 1-3 条
-  const used = new Set();
-  for (let i = 0; i < count && pool.length; i++) {
-    const t = rnd(pool);
-    if (used.has(t) && used.size < pool.length) { i--; continue; }
-    used.add(t);
+  /* 通用掺入候选：白天在村里的任何人（不含前线骑士、Asher 躲避期）——
+     通用句无场景绑定，不同地点的两人「路过遇上」也成立（#41 配对清单同概念） */
+  const cands = NPCS.filter(n => locOf(n, node) !== 'front' && !(ashBlue && n.id === 'asher')).map(n => n.id);
+  const count = Math.min(2 + Math.floor(Math.random() * 3), 4);   // 每节点 2-4 条
+  const picked = {};                       // 人物限次：一人一节点 ≤2 条（按独特涉及算，同句多次提及算 1）
+  const usedTexts = new Set();
+  for (let made = 0, tries = 0; made < count && tries < 40; tries++) {
+    let t = null;
+    if (pool.length && Math.random() < 0.6) {          // 专属优先，六成
+      t = rnd(pool);
+      if (usedTexts.has(t) || SIM_RECENT.includes(t)) continue;   // 同节点＋近期窗口都不重
+      if ([...new Set(extractNames(t))].some(id => (picked[id] || 0) >= 2)) continue;
+      SIM_RECENT.push(t);
+      if (SIM_RECENT.length > 12) SIM_RECENT.shift();
+    } else if (cands.length >= 2) {                    // 通用掺入：村里任意两人
+      const a = cands[Math.floor(Math.random() * cands.length)];
+      let b = a, guard = 0;
+      while (b === a && guard++ < 8) b = cands[Math.floor(Math.random() * cands.length)];
+      if (b === a) continue;
+      if ((picked[a] || 0) >= 2 || (picked[b] || 0) >= 2) continue;
+      t = rnd(GENERIC_EVENTS).replace(/\[\[a\]\]/g, `[[${a}]]`).replace(/\[\[b\]\]/g, `[[${b}]]`);
+      if (usedTexts.has(t)) continue;                   // 通用池小，只做同节点去重
+    } else if (!pool.length) break;                     // 两头都没货，收工
+    else continue;
+    usedTexts.add(t);
+    for (const id of new Set(extractNames(t))) picked[id] = (picked[id] || 0) + 1;
     addFeed('sim', t);
-  }
-  /* 兜底：共处但没专属事件的二人 */
-  if (used.size === 0) {
-    const byPlace = {};
-    for (const p of ['plaza', 'field', 'bakery', 'library']) {
-      const ids = npcAt(p, node).filter(x => !(ashBlue && x === 'asher'));
-      if (ids.length >= 2) byPlace[p] = ids;
-    }
-    const ps = Object.keys(byPlace);
-    if (ps.length) {
-      const p = rnd(ps), ids = byPlace[p];
-      const a = ids[Math.floor(Math.random() * ids.length)];
-      let b = a; while (b === a && ids.length > 1) b = rnd(ids);
-      const t = rnd(GENERIC_EVENTS).replace(/\[\[a\]\]/g, `[[${a}]]`).replace(/\[\[b\]\]/g, `[[${b}]]`);
-      addFeed('sim', t);
-    }
+    made++;
   }
   /* 感情线记档解锁的村民播报（一天最多一条） */
   if (G._loveSimDay !== G.day) {

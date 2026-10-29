@@ -629,7 +629,7 @@ const NPCS = [
     bio: '村里的图书管理员，常年待在图书馆里。阴湿，社恐，体弱，怕吵，说话轻还磕绊，但不绕弯子。',
     secretHint: '你借过的书，他都单独收在里间一格。',
     loc: ['library', 'library', 'library', 'library', 'library'],
-    trade: { buy: [['稀有花', 15]], hard: true },
+    trade: { sell: [['纸张', 2]], buy: [['稀有花', 15]], hard: true },   // 纸张回架：手绘本原料（拍板 #42）
     chat: { low: [
       '登记本……放这里。',
       '押金……一个安娜币。',
@@ -1037,7 +1037,7 @@ const NPCS = [
     bio: '温柔，善良，手巧，性子稳。白天驻钟楼修表，什么坏了都能修，村里的事到他手里都能稳稳解决。',
     secretHint: '有人问他这身手艺是跟谁学的，他笑一笑，把话岔到钟表上去。',
     loc: ['belltower', 'belltower', 'belltower', 'home', 'home'],
-    trade: { buy: [['木板', 2], ['木材', 1], ['羊毛', 2]], easy: true },
+    trade: { sell: [['银钉', 3]], buy: [['木板', 2], ['木材', 1], ['羊毛', 2]], easy: true },   // 银钉回架：项链原料（拍板 #42）
     chat: { low: [  /* 友0-30：旧占位 3 条，台词库重写时替换 */
       '钟今天慢了半秒。调好了。',
       '零件这种东西，越旧越合用。人也差不多。',
@@ -1485,6 +1485,13 @@ const ITEMS = {
   腐肉: { d: '怪物身上割的。居然有人收。' },
   骨头: { d: '怪物的骨头，比牲口的沉。' },
   怪躯壳: { d: '完整剥下来的怪物躯壳。沉。' },
+  金粉: { d: '矿里筛出的细金粉，捏一点，指尖发亮。' },
+  宝石: { d: '矿洞深处挖出的原石，还没打磨。' },
+  编制小猫: { d: '照着图纸编的小猫，耳朵一只竖一只塌。' },
+  小帽子: { d: '亲手编的小帽子，浆洗过，定着型。' },
+  泥金手绘本: { d: '自己描的手绘本，边角描了金。' },
+  宝石项链: { d: '原石镶在银钉上。你做过的最贵重的东西。' },
+  弹弓: { d: '皮筋绷得紧紧的，树杈打磨过，不硌手。' },
   黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。' },
 };
 
@@ -1597,6 +1604,26 @@ const KNIGHT_ESCORT = [
    空池期间触发只显示系统句（开场/击杀/吓退三句在 engine.js doExplore 实写） */
 const KNIGHT_ESCORT_SCARE = [];
 const KNIGHT_ESCORT_KILL = [];
+
+/* ---------- 礼物手作系统（拍板 #42）：图纸→制作→送礼 ---------- */
+/* 图纸共 6 张，在图书馆学（blueprint）；学过按配方在家制作（craft）。out 支持多件（箭矢×3） */
+const CRAFT = {
+  cat:      { name: '编制小猫',   mats: { 羊毛: 2 } },
+  hat:      { name: '小帽子',     mats: { 羊毛: 1, 水: 1 } },
+  book:     { name: '泥金手绘本', mats: { 纸张: 1, 金粉: 1, 水: 1 } },
+  necklace: { name: '宝石项链',   mats: { 宝石: 1, 银钉: 1 } },
+  sling:    { name: '弹弓',       mats: { 木材: 2, 兔皮: 1 } },
+  arrows:   { name: '箭矢',       out: 3, mats: { 铁矿: 1, 木材: 2 } },
+};
+
+/* 送礼加分表（友+；拍板 #42 定稿：删负分块，收礼不降好感，全表最低 +1） */
+const GIFT_SCORE = {
+  编制小猫:   { vivienne: 2, levi: 5, leo: 4, asher: 10, alice: 5, bess: 2, isabel: 4, jasper: 10, jacob: 4, lee: 11, olivia: 10, knight: 12 },
+  小帽子:     { vivienne: 4, levi: 10, leo: 4, asher: 6, alice: 7, bess: 3, isabel: 3, jasper: 11, jacob: 4, lee: 5, olivia: 6, knight: 5 },
+  泥金手绘本: { vivienne: 8, levi: 6, leo: 13, asher: 5, alice: 4, bess: 5, isabel: 12, jasper: 7, jacob: 8, lee: 3, olivia: 6, knight: 6 },
+  宝石项链:   { vivienne: 17, levi: 9, leo: 7, asher: 7, alice: 10, bess: 14, isabel: 8, jasper: 14, jacob: 7, lee: 6, olivia: 9, knight: 7 },
+  弹弓:       { vivienne: 2, levi: 3, leo: 2, asher: 13, alice: 5, bess: 7, isabel: 1, jasper: 4, jacob: 13, lee: 14, olivia: 3, knight: 5 },
+};
 /* Vivienne 情报·骑士损耗判词（2026-10-28 感性模型生成，言审改五处入池；四档各三条随机） */
 const VIV_KNIGHT_EST = {
   light: [
@@ -1740,7 +1767,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2 };
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1 };
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };
@@ -1876,6 +1903,7 @@ function newGame() {
     noPropose: {},          // 告白被拒过的人：不再开口
     weather: 0,             // 今日天气：0晴 1雨（每天早晨掷，约四天一雨）
     nightOut: 0,            // 你夜里出门次数（在村里走动合法；Asher 事件2的引子）
+    blueprints: {},         // 已学图纸（拍板 #42）：CRAFT key→true
   };
   for (const n of NPCS) G.npc[n.id] = { f: n.initF, l: 0, p: 0, last: 1, coldPending: false };
   addFeed('major', '你把家安在了村口以北。第一天，从上午开始。');
@@ -1914,6 +1942,9 @@ function load() {
       G.npc[k].funDay = G.npc[k].funDay || 0;
       G.npc[k].teases = G.npc[k].teases || 0;
     }
+    /* 礼物手作批字段迁移（拍板 #42）：已学图纸 + 每人每日送礼戳 */
+    G.blueprints = G.blueprints || {};
+    for (const k in G.npc) G.npc[k].giftDay = G.npc[k].giftDay || 0;
     G.duel = null;                                      // 残局清理：决斗弹窗不做恢复
     if (G.over) G.over = { t: G.over.t, day: G.over.day, v: G.over.v || '' };
     return true;
@@ -2445,8 +2476,36 @@ function giveFlower() {
   return { lines, settled: adv === 'settled' };
 }
 
+/* ---------- 送礼（拍板 #42）：手作礼物＋稀有花；每人每天一份，精力1、占时间格、算理过TA ---------- */
+const GIFT_ITEMS = ['编制小猫', '小帽子', '泥金手绘本', '宝石项链', '弹弓', '稀有花'];
+function doGift(id, item) {
+  const def = npcDef(id), st = G.npc[id];
+  if (st.giftDay === G.day) return { lines: ['今天已经送过TA一份了。明天再来。'], blocked: true };
+  if ((G.bag[item] || 0) < 1) return { lines: [`手里没有${item}。`], blocked: true };
+  const err = canDo('gift'); if (err) return { lines: [err], blocked: true };
+  G.bag[item]--; if (G.bag[item] <= 0) delete G.bag[item];
+  st.giftDay = G.day; st.last = G.day;               // 算理过TA：与闲聊同记，隔日吃醋不误触
+  const lines = [];
+  if (item === '稀有花') {
+    /* 稀有花（爱情信物）：全员爱+6；骑士爱+9；Leo 再友+3；三姐妹转友+3（姐妹锁不破） */
+    lines.push('你把稀有花送了出去。');
+    if (SISTERS.includes(id)) rel(id, 'f', 3);
+    else if (id === 'knight') rel(id, 'l', 9);
+    else { rel(id, 'l', 6); if (id === 'leo') rel(id, 'f', 3); }
+  } else {
+    const score = (GIFT_SCORE[item] && GIFT_SCORE[item][id]) || 1;
+    rel(id, 'f', score);
+    lines.push(score >= 9 ? 'TA捧着它，半天没说出话。'
+      : score >= 4 ? 'TA拿在手里翻来覆去看了很久。'
+      : 'TA收下了，没多说什么。');
+  }
+  G.energy -= COST.gift; G.dayLog.push(`给${def.name}送了${item}`);
+  const adv = advanceNode();
+  return { lines, settled: adv === 'settled' };
+}
+
 /* ---------- 场所行动 ---------- */
-function doPlaceAction(place, act) {
+function doPlaceAction(place, act, sub) {
   if (act === 'pickflower') {
     if (G.flowersPickedDay >= 2) return { lines: ['今天的野花摘够了，明天再来。'], blocked: true };
     const err = canDo('pickflower'); if (err) return { lines: [err], blocked: true };
@@ -2483,6 +2542,45 @@ function doPlaceAction(place, act) {
     }
     G.dayLog.push('夜里在钟楼放箭');
     return { lines: slines };
+  }
+  if (act === 'blueprint') {
+    /* 图书馆学图纸（拍板 #42）：每张精力1、占时间格，一张只描一次 */
+    if (place !== 'library') return { lines: ['图纸只在图书馆能学。'], blocked: true };
+    const c = CRAFT[sub];
+    if (!c) return { lines: ['没有这张图纸。'], blocked: true };
+    if (G.blueprints[sub]) return { lines: ['这张图纸你已经描过了。'], blocked: true };
+    const err = canDo('blueprint'); if (err) return { lines: [err], blocked: true };
+    G.blueprints[sub] = true;
+    G.energy -= COST.blueprint; G.dayLog.push(`描了〈${c.name}〉的图纸`);
+    return { lines: [`你把〈${c.name}〉的图纸描了下来。`, `学会制作：${c.name}`], settled: advanceNode() === 'settled' };
+  }
+  if (act === 'craft') {
+    /* 在家照图纸制作（拍板 #42）：精力2、占时间格；缺料直接退，不扣精力 */
+    if (place !== 'home') return { lines: ['得回家安安静静做。'], blocked: true };
+    const c = CRAFT[sub];
+    if (!c || !G.blueprints[sub]) return { lines: ['还没学会这个的做法。'], blocked: true };
+    const err = canDo('craft'); if (err) return { lines: [err], blocked: true };
+    const lack = [];
+    for (const m in c.mats) { const need = c.mats[m] - (G.bag[m] || 0); if (need > 0) lack.push(`${m}×${need}`); }
+    if (lack.length) return { lines: [`材料不够：还差${lack.join('、')}。`], blocked: true };
+    for (const m in c.mats) { G.bag[m] -= c.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
+    const n = c.out || 1;
+    G.bag[c.name] = (G.bag[c.name] || 0) + n;
+    G.energy -= COST.craft; G.dayLog.push(n > 1 ? `做了${c.name}×${n}` : `做了${c.name}`);
+    return { lines: [`照着图纸，你做完了〈${c.name}〉。`, `入手：${c.name}×${n}`], settled: advanceNode() === 'settled' };
+  }
+  if (act === 'helpfarm') {
+    /* 农田帮工换粮（拍板 #42）：白天 Levi 在田时，精力3 → 小麦×1 + 70% 羊毛×1 + Levi 友+2 */
+    if (place !== 'field') return { lines: ['这里没有要帮的农活。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['天黑了，田里没活。'], blocked: true };
+    if (locOf(npcDef('levi'), G.node) !== 'field') return { lines: ['Levi 不在田里，没人派活。'], blocked: true };
+    const err = canDo('helpfarm'); if (err) return { lines: [err], blocked: true };
+    G.bag.小麦 = (G.bag.小麦 || 0) + 1;
+    let got = '小麦×1';
+    if (Math.random() < 0.7) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got += '、羊毛×1'; }
+    rel('levi', 'f', 2);
+    G.energy -= COST.helpfarm; G.dayLog.push('在农田帮了半天工');
+    return { lines: ['你帮 Levi 干了半天农活。他话不多，活交得清楚。', `拾获：${got}`], settled: advanceNode() === 'settled' };
   }
   if (act === 'pray') {
     const err = canDo('pray'); if (err) return { lines: [err], blocked: true };
@@ -2654,6 +2752,8 @@ function doExplore(zone, act) {
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     const got = [`铁矿×${n}`];
     if (Math.random() < 0.15) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    if (Math.random() < 0.12) { G.bag.金粉 = (G.bag.金粉 || 0) + 1; got.push('金粉×1'); }   // 手绘本原料（拍板 #42）
+    if (Math.random() < 0.06) { G.bag.宝石 = (G.bag.宝石 || 0) + 1; got.push('宝石×1'); }   // 项链原料（拍板 #42）
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineNear), '拾获：' + got.join('、'));
     if (escort) {
       lines.push(resolveNames('你往近矿走。[[knight]]在界石那里跟上了你，走到洞口就站住。'));
@@ -2667,6 +2767,8 @@ function doExplore(zone, act) {
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     const got = [`铁矿×${n}`];
     if (Math.random() < 0.55) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    if (Math.random() < 0.20) { G.bag.金粉 = (G.bag.金粉 || 0) + 1; got.push('金粉×1'); }   // 手绘本原料（拍板 #42）
+    if (Math.random() < 0.12) { G.bag.宝石 = (G.bag.宝石 || 0) + 1; got.push('宝石×1'); }   // 项链原料（拍板 #42）
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));
     youFeed('mine');
   } else if (act === 'train') {
@@ -3301,7 +3403,15 @@ function placeHtml(pid) {
   if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
-  if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+  if (pid === 'library' && who.some(n => n.id === 'leo')) {
+    acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+    /* 学图纸（拍板 #42）：未学的逐张列出，一张精力1、占时间格 */
+    for (const [k, c] of Object.entries(CRAFT)) {
+      if (!G.blueprints[k]) acts += `<button class="btn" data-act="blueprint" data-k="${k}">学图纸·〈${c.name}〉（精力1）</button>`;
+    }
+  }
+  if (pid === 'field' && G.node < DAY_NODES && locOf(npcDef('levi'), G.node) === 'field')
+    acts += `<button class="btn" data-act="helpfarm">帮工换粮（精力3·小麦+）</button>`;   // 帮工（拍板 #42）：羊毛70%随行
   if (pid === 'belltower' && G.node >= DAY_NODES) {   // 钟楼夜射（拍板 #41）
     const sn = G.arrowsShotNight || 0;
     const tag = sn >= 3 ? '·今晚没得射了' : ((G.bag.箭矢 || 0) < 1 ? '·箭袋空了' : `·${sn}/3`);
@@ -3339,6 +3449,20 @@ function homeHtml() {
   html += npcCard(npcDef('asher'));
   html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
   if (G.evF.ashPact) html += `<div class="dim" style="margin:2px">他床边多了个自己钉的架子，放着你的弓。</div>`;   /* 感情线：等你长大（约定档） */
+  /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
+  const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
+  html += `<div class="sec-title">制作</div>`;
+  if (learned.length) {
+    html += `<div class="actrow2">`;
+    for (const k of learned) {
+      const c = CRAFT[k];
+      const mats = Object.entries(c.mats).map(([m, q]) => `${m}×${q}`).join('·');
+      html += `<button class="btn" data-act="craft" data-k="${k}">做·${c.name}${c.out ? '×' + c.out : ''}（精力2·${mats}）</button>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div class="dim" style="margin:6px 2px">图书馆里能描到一些图纸。</div>`;
+  }
   html += `<div class="sec-title">背包</div><div class="bag">`;
   for (const [k, v] of Object.entries(G.bag)) {
     html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}<div class="dim">${(ITEMS[k] || {}).d || ''}</div></div>`;
@@ -3462,6 +3586,14 @@ function npcSheet(id) {
       extras += `<button class="btn line ib dis" disabled>寻欢（还不到那一步）</button>`;
   }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
+  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
+  const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+  if (s.giftDay === G.day)
+    extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
+  else if (!giftables.length)
+    extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
+  else
+    extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
 }
@@ -3476,6 +3608,18 @@ function tradeSheet(id) {
   html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;
   html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
   openModal(`交易 · ${n.name}`, html);
+}
+
+/* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */
+function giftSheet(id) {
+  const n = npcDef(id);
+  const list = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+  let html = `<div class="dim">送给 ${n.name}。今天只有这一份的机会。</div><div class="trade">`;
+  html += list.length ? list.map(it =>
+    `<button class="btn tb" data-act="give" data-id="${id}" data-item="${it}">${it}×${G.bag[it]}</button>`).join('')
+    : `<div class="dim">没有能送的东西。</div>`;
+  html += `</div>`;
+  openModal(`送礼 · ${n.name}`, html);
 }
 
 /* ---------- 结果弹窗 / 结算 ---------- */
@@ -3645,6 +3789,13 @@ document.addEventListener('click', e => {
   }
   if (a === 'star') { G.stars[id] = !G.stars[id]; save(); npcSheet(id); render(); return; }
   if (a === 'trade') { tradeSheet(id); return; }
+  if (a === 'gift') { giftSheet(id); return; }
+  if (a === 'give') {
+    const r = doGift(id, act.dataset.item);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10); else render();
+    return;
+  }
   if (a === 'ia') {
     if (act.disabled) return;
     const r = interact(id, act.dataset.ia);
@@ -3689,8 +3840,9 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
-  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot') {
-    const r = doPlaceAction(V.place, a);
+  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot'
+    || a === 'blueprint' || a === 'craft' || a === 'helpfarm') {
+    const r = doPlaceAction(a === 'craft' ? 'home' : V.place, a, act.dataset.k);
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();

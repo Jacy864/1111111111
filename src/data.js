@@ -261,7 +261,7 @@ const NPCS = [
     bio: '村里的图书管理员，常年待在图书馆里。阴湿，社恐，体弱，怕吵，说话轻还磕绊，但不绕弯子。',
     secretHint: '你借过的书，他都单独收在里间一格。',
     loc: ['library', 'library', 'library', 'library', 'library'],
-    trade: { buy: [['稀有花', 15]], hard: true },
+    trade: { sell: [['纸张', 2]], buy: [['稀有花', 15]], hard: true },   // 纸张回架：手绘本原料（拍板 #42）
     chat: { low: [
       '登记本……放这里。',
       '押金……一个安娜币。',
@@ -669,7 +669,7 @@ const NPCS = [
     bio: '温柔，善良，手巧，性子稳。白天驻钟楼修表，什么坏了都能修，村里的事到他手里都能稳稳解决。',
     secretHint: '有人问他这身手艺是跟谁学的，他笑一笑，把话岔到钟表上去。',
     loc: ['belltower', 'belltower', 'belltower', 'home', 'home'],
-    trade: { buy: [['木板', 2], ['木材', 1], ['羊毛', 2]], easy: true },
+    trade: { sell: [['银钉', 3]], buy: [['木板', 2], ['木材', 1], ['羊毛', 2]], easy: true },   // 银钉回架：项链原料（拍板 #42）
     chat: { low: [  /* 友0-30：旧占位 3 条，台词库重写时替换 */
       '钟今天慢了半秒。调好了。',
       '零件这种东西，越旧越合用。人也差不多。',
@@ -1117,6 +1117,13 @@ const ITEMS = {
   腐肉: { d: '怪物身上割的。居然有人收。' },
   骨头: { d: '怪物的骨头，比牲口的沉。' },
   怪躯壳: { d: '完整剥下来的怪物躯壳。沉。' },
+  金粉: { d: '矿里筛出的细金粉，捏一点，指尖发亮。' },
+  宝石: { d: '矿洞深处挖出的原石，还没打磨。' },
+  编制小猫: { d: '照着图纸编的小猫，耳朵一只竖一只塌。' },
+  小帽子: { d: '亲手编的小帽子，浆洗过，定着型。' },
+  泥金手绘本: { d: '自己描的手绘本，边角描了金。' },
+  宝石项链: { d: '原石镶在银钉上。你做过的最贵重的东西。' },
+  弹弓: { d: '皮筋绷得紧紧的，树杈打磨过，不硌手。' },
   黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。' },
 };
 
@@ -1229,6 +1236,26 @@ const KNIGHT_ESCORT = [
    空池期间触发只显示系统句（开场/击杀/吓退三句在 engine.js doExplore 实写） */
 const KNIGHT_ESCORT_SCARE = [];
 const KNIGHT_ESCORT_KILL = [];
+
+/* ---------- 礼物手作系统（拍板 #42）：图纸→制作→送礼 ---------- */
+/* 图纸共 6 张，在图书馆学（blueprint）；学过按配方在家制作（craft）。out 支持多件（箭矢×3） */
+const CRAFT = {
+  cat:      { name: '编制小猫',   mats: { 羊毛: 2 } },
+  hat:      { name: '小帽子',     mats: { 羊毛: 1, 水: 1 } },
+  book:     { name: '泥金手绘本', mats: { 纸张: 1, 金粉: 1, 水: 1 } },
+  necklace: { name: '宝石项链',   mats: { 宝石: 1, 银钉: 1 } },
+  sling:    { name: '弹弓',       mats: { 木材: 2, 兔皮: 1 } },
+  arrows:   { name: '箭矢',       out: 3, mats: { 铁矿: 1, 木材: 2 } },
+};
+
+/* 送礼加分表（友+；拍板 #42 定稿：删负分块，收礼不降好感，全表最低 +1） */
+const GIFT_SCORE = {
+  编制小猫:   { vivienne: 2, levi: 5, leo: 4, asher: 10, alice: 5, bess: 2, isabel: 4, jasper: 10, jacob: 4, lee: 11, olivia: 10, knight: 12 },
+  小帽子:     { vivienne: 4, levi: 10, leo: 4, asher: 6, alice: 7, bess: 3, isabel: 3, jasper: 11, jacob: 4, lee: 5, olivia: 6, knight: 5 },
+  泥金手绘本: { vivienne: 8, levi: 6, leo: 13, asher: 5, alice: 4, bess: 5, isabel: 12, jasper: 7, jacob: 8, lee: 3, olivia: 6, knight: 6 },
+  宝石项链:   { vivienne: 17, levi: 9, leo: 7, asher: 7, alice: 10, bess: 14, isabel: 8, jasper: 14, jacob: 7, lee: 6, olivia: 9, knight: 7 },
+  弹弓:       { vivienne: 2, levi: 3, leo: 2, asher: 13, alice: 5, bess: 7, isabel: 1, jasper: 4, jacob: 13, lee: 14, olivia: 3, knight: 5 },
+};
 /* Vivienne 情报·骑士损耗判词（2026-10-28 感性模型生成，言审改五处入池；四档各三条随机） */
 const VIV_KNIGHT_EST = {
   light: [
@@ -1372,7 +1399,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2 };
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1 };
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };

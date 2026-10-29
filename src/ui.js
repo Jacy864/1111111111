@@ -83,7 +83,15 @@ function placeHtml(pid) {
   if (pid === 'plaza') acts += `<button class="btn" data-act="pickflower">摘野花（精力1${G.flowersPickedDay >= 2 ? '·今日已够' : ''}）</button>`;
   if (pid === 'well') acts += `<button class="btn" data-act="water">打水（精力0）</button>`;
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
-  if (pid === 'library' && who.some(n => n.id === 'leo')) acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+  if (pid === 'library' && who.some(n => n.id === 'leo')) {
+    acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+    /* 学图纸（拍板 #42）：未学的逐张列出，一张精力1、占时间格 */
+    for (const [k, c] of Object.entries(CRAFT)) {
+      if (!G.blueprints[k]) acts += `<button class="btn" data-act="blueprint" data-k="${k}">学图纸·〈${c.name}〉（精力1）</button>`;
+    }
+  }
+  if (pid === 'field' && G.node < DAY_NODES && locOf(npcDef('levi'), G.node) === 'field')
+    acts += `<button class="btn" data-act="helpfarm">帮工换粮（精力3·小麦+）</button>`;   // 帮工（拍板 #42）：羊毛70%随行
   if (pid === 'belltower' && G.node >= DAY_NODES) {   // 钟楼夜射（拍板 #41）
     const sn = G.arrowsShotNight || 0;
     const tag = sn >= 3 ? '·今晚没得射了' : ((G.bag.箭矢 || 0) < 1 ? '·箭袋空了' : `·${sn}/3`);
@@ -121,6 +129,20 @@ function homeHtml() {
   html += npcCard(npcDef('asher'));
   html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
   if (G.evF.ashPact) html += `<div class="dim" style="margin:2px">他床边多了个自己钉的架子，放着你的弓。</div>`;   /* 感情线：等你长大（约定档） */
+  /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
+  const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
+  html += `<div class="sec-title">制作</div>`;
+  if (learned.length) {
+    html += `<div class="actrow2">`;
+    for (const k of learned) {
+      const c = CRAFT[k];
+      const mats = Object.entries(c.mats).map(([m, q]) => `${m}×${q}`).join('·');
+      html += `<button class="btn" data-act="craft" data-k="${k}">做·${c.name}${c.out ? '×' + c.out : ''}（精力2·${mats}）</button>`;
+    }
+    html += `</div>`;
+  } else {
+    html += `<div class="dim" style="margin:6px 2px">图书馆里能描到一些图纸。</div>`;
+  }
   html += `<div class="sec-title">背包</div><div class="bag">`;
   for (const [k, v] of Object.entries(G.bag)) {
     html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}<div class="dim">${(ITEMS[k] || {}).d || ''}</div></div>`;
@@ -244,6 +266,14 @@ function npcSheet(id) {
       extras += `<button class="btn line ib dis" disabled>寻欢（还不到那一步）</button>`;
   }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
+  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
+  const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+  if (s.giftDay === G.day)
+    extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
+  else if (!giftables.length)
+    extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
+  else
+    extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
 }
@@ -258,6 +288,18 @@ function tradeSheet(id) {
   html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;
   html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
   openModal(`交易 · ${n.name}`, html);
+}
+
+/* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */
+function giftSheet(id) {
+  const n = npcDef(id);
+  const list = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+  let html = `<div class="dim">送给 ${n.name}。今天只有这一份的机会。</div><div class="trade">`;
+  html += list.length ? list.map(it =>
+    `<button class="btn tb" data-act="give" data-id="${id}" data-item="${it}">${it}×${G.bag[it]}</button>`).join('')
+    : `<div class="dim">没有能送的东西。</div>`;
+  html += `</div>`;
+  openModal(`送礼 · ${n.name}`, html);
 }
 
 /* ---------- 结果弹窗 / 结算 ---------- */
@@ -427,6 +469,13 @@ document.addEventListener('click', e => {
   }
   if (a === 'star') { G.stars[id] = !G.stars[id]; save(); npcSheet(id); render(); return; }
   if (a === 'trade') { tradeSheet(id); return; }
+  if (a === 'gift') { giftSheet(id); return; }
+  if (a === 'give') {
+    const r = doGift(id, act.dataset.item);
+    resultSheet(r.lines);
+    if (r.settled) setTimeout(settlementSheet, 10); else render();
+    return;
+  }
   if (a === 'ia') {
     if (act.disabled) return;
     const r = interact(id, act.dataset.ia);
@@ -471,8 +520,9 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
-  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot') {
-    const r = doPlaceAction(V.place, a);
+  if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot'
+    || a === 'blueprint' || a === 'craft' || a === 'helpfarm') {
+    const r = doPlaceAction(a === 'craft' ? 'home' : V.place, a, act.dataset.k);
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();

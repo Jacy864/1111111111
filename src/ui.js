@@ -281,8 +281,10 @@ function npcSheet(id) {
 function tradeSheet(id) {
   const n = npcDef(id), t = n.trade;
   let html = `<div class="dim">${n.name}的摊子。</div><div class="trade">`;
-  html += `<div class="sec-sub">TA 卖</div>`;
-  for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
+  if (t.sell) {                        // 缺陷B修复：只收购不出售的摊主（Vivienne/Alice/Olivia）没有 t.sell，整段跳过
+    html += `<div class="sec-sub">TA 卖</div>`;
+    for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
+  }
   html += `<div class="sec-sub">TA 收（你有才显示）</div>`;
   const buys = t.buy.filter(([item]) => (G.bag[item] || 0) > 0);
   html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;

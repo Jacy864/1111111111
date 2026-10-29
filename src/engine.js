@@ -1020,8 +1020,8 @@ settleDay = function () { coldCheck(); _settleDay(); };
 /* ---------- 家：休息/午休 ---------- */
 function restNow() {
   const ev = restLoveEvent();          // 感情线：夜里在家的事件（Asher 一串）优先于入睡结算
+  settleDay();                         // 缺陷A修复：夜话只推迟结算弹窗的展示，结算本身照常走（看完/选完再弹「一天结束」）
   if (ev) return { ev };
-  settleDay();
   return { settled: true };
 }
 function nap() {

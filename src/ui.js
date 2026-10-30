@@ -149,7 +149,7 @@ function homeHtml() {
   }
   html += `<div class="sec-title">背包</div><div class="bag">`;
   for (const [k, v] of Object.entries(G.bag)) {
-    html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}<div class="dim">${(ITEMS[k] || {}).d || ''}</div></div>`;
+    html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}</div>`;   /* 言拍板 2026-10-30：格子只留名称数量，描述/来路点开才看（词条弹窗） */
   }
   html += `</div>`;
   return html;

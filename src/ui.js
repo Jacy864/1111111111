@@ -138,15 +138,15 @@ function homeHtml() {
   /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
   const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
   html += `<div class="sec-title">制作</div>`;
-  if (learned.length) {
+  if (learned.length || G.node < DAY_NODES) {
     html += `<div class="actrow2">`;
     for (const k of learned) {
       html += `<button class="btn" data-act="craftq" data-k="${k}">${CRAFT[k].name}</button>`;   /* 言拍板 2026-10-30：按钮只留名称，详情点开再看 */
     }
+    if (G.node < DAY_NODES) html += `<button class="btn ghost" data-act="craftq" data-k="cake">和 Asher 做蛋糕</button>`;   /* 言拍板 2026-10-30：白天灰显可点，进去看要什么材料、缺什么 */
     html += `</div>`;
-  } else {
-    html += `<div class="dim" style="margin:6px 2px">图书馆里能描到一些图纸。</div>`;
   }
+  if (!learned.length) html += `<div class="dim" style="margin:6px 2px">图书馆里能描到一些图纸。</div>`;
   html += `<div class="sec-title">背包</div><div class="bag">`;
   for (const [k, v] of Object.entries(G.bag)) {
     html += `<div class="bag-item" data-item="${k}"><b>${k}</b>×${v}</div>`;   /* 言拍板 2026-10-30：格子只留名称数量，描述/来路点开才看（词条弹窗） */
@@ -332,21 +332,37 @@ function qtyHtml() {
   openModal(`${buy ? '买' : '卖'}多少？ · ${q.item}`, html);
 }
 
+/* 材料行（制作/蛋糕弹窗共用）：名称可点看来路；言拍板 2026-10-30 全黑不用红 */
+function matsHtml(need) {
+  const lack = [];
+  const html = Object.entries(need).map(([m, q]) => {
+    const have = G.bag[m] || 0;
+    if (have < q) lack.push(`${m}×${q - have}`);
+    return `<div class="line"><span class="ilink" data-act="itemq" data-k="${m}">${m}</span> ×${q} <span class="dim">（你有${have}）</span>${have < q ? ` <b>还差${q - have}</b>` : ''}</div>`;
+  }).join('');
+  return { html, lack };
+}
+
 /* ---------- 制作详情弹窗（言拍板 2026-10-30）：点开才看清精力和材料，确认再动手 ---------- */
 /* 材料名可点 → 弹该材料指引（哪里能弄到）；指引不平铺，点开才看（言拍板 2026-10-30 第二轮） */
 function craftSheet(k) {
+  if (k === 'cake') { cakeSheet(); return; }   // 白天灰蛋糕按钮也走这，分流到蛋糕弹窗
   const c = CRAFT[k]; if (!c) return;
   V.craftBack = k;
-  const lack = [];
-  const mats = Object.entries(c.mats).map(([m, q]) => {
-    const have = G.bag[m] || 0;
-    if (have < q) lack.push(`${m}×${q - have}`);
-    return `<div class="line"><span class="ilink" data-act="itemq" data-k="${m}">${m}</span> ×${q} <span class="dim">（你有${have}）</span>${have < q ? ` <b style="color:var(--red)">还差${q - have}</b>` : ''}</div>`;
-  }).join('');
+  const { html: mats, lack } = matsHtml(c.mats);
   openModal(`制作 · ${c.name}`, `<div class="dim">精力2 · 占一个时间格${c.out ? ` · 做一份得${c.name}×${c.out}` : ''}</div>${mats}<div class="actrow2">${
     lack.length ? `<button class="btn dis" disabled>材料不够·还差${lack.join('、')}</button>`
       : `<button class="btn" data-act="craft" data-k="${k}">制作（精力2）</button>`
   }</div>`);
+}
+
+/* ---------- 蛋糕材料预览（言拍板 2026-10-30）：白天灰按钮点开看要什么、缺什么，天黑才能真做 ---------- */
+function cakeSheet() {
+  V.craftBack = 'cake';
+  const { html: mats, lack } = matsHtml({ 小麦: 1, 水果: 1 });
+  openModal('和 Asher 做蛋糕', `<div class="dim">夜里在家才能做 · 精力1 · Asher 友+3 · 每天一次 · 当场分掉</div>${mats}<div class="actrow2"><button class="btn dis" disabled>${
+    lack.length ? `还差${lack.join('、')}，天黑也做不了` : '材料齐了，天黑回家做'
+  }</button></div>`);
 }
 
 /* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */

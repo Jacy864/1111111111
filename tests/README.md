@@ -15,6 +15,6 @@ cd .. && bash build.sh
 cd tests && NODE_PATH=/home/lenovo/ucampus/node_modules timeout 90 node ui-test.js
 pkill -f "http.server 8899"
 ```
-34 步：开机/物品词条/Levi 卖羊毛/八摊主渲染（缺陷B回归）/花送礼/做蛋糕/制作弹窗（材料名可点看来路）/夜话不卡天/零报错。
+37 步：开机/物品词条/Levi 卖羊毛/八摊主渲染（缺陷B回归）/花送礼/做蛋糕/制作弹窗（材料名可点看来路）/白天灰蛋糕/夜话不卡天/零报错。
 
 改了 src/ 之后两套都要跑。EXE 路径如变，用环境变量 EXE 覆盖。

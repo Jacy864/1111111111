@@ -98,7 +98,7 @@ button { font-family: inherit; }
 }
 .sec-sub::before { content: ""; width: 6px; height: 6px; background: var(--red); flex: none; }
 .dim { color: var(--ink-3); font-size: 13px; }
-.ilink { color: var(--red); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }   /* 弹窗里可点开看指引的物品名 */
+.ilink { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }   /* 弹窗里可点开看指引的物品名（言拍板：黑色，不用红） */
 .back {
   background: none; border: none; color: var(--ink-2); font-size: 14px; font-weight: 500;
   margin: 0 0 4px -8px; cursor: pointer; padding: 12px 8px; min-height: 44px;
@@ -197,6 +197,7 @@ button { font-family: inherit; }
 .btn.warn { background: transparent; color: var(--red); box-shadow: inset 0 0 0 1.5px var(--red); }
 .btn.warn:active { background: var(--red-wash); }
 .btn.dis { background: var(--wash); color: var(--ink-3); pointer-events: none; }
+.btn.ghost { background: var(--wash); color: var(--ink-3); }   /* 言拍板 2026-10-30：灰但可点（白天蛋糕看材料用） */
 .btn.line { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
 .btn.line:active { background: var(--wash); }
 .btn.line.dis { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--hair); color: var(--ink-3); }

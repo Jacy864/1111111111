@@ -149,6 +149,23 @@ function t(name, cond, extra) {
     t('U11c 制作入包·材料扣掉', r11.got === 1 && r11.wood === 0, JSON.stringify(r11));
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
 
+    /* U12 白天灰蛋糕（言拍板 2026-10-30）：制作区可见，点开看要什么材料、缺什么 */
+    await ev(() => { G.node = 0; G.bag['小麦'] = 1; delete G.bag['水果']; render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="craftq"][data-k="cake"]', { timeout: 15000 });
+    await page.locator('[data-act="craftq"][data-k="cake"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    body = await $txt('#modal-body');
+    t('U12 白天蛋糕·材料与缺项', body.includes('小麦 ×1') && body.includes('水果 ×1') && body.includes('还差1') && body.includes('天黑'), body.slice(0, 80));
+    await page.locator('[data-act="itemq"][data-k="水果"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    body = await $txt('#modal-body');
+    t('U12b 蛋糕材料可点看来路', body.includes('从哪来'));
+    await page.locator('#modal-body [data-act="craftq"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U12c 返回蛋糕弹窗', (await $txt('#modal-title')).includes('做蛋糕'));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

@@ -135,6 +135,14 @@ function t(name, cond, extra) {
     await page.waitForTimeout(200);
     body = await $txt('#modal-body');
     t('U11b 弹窗见精力与材料', body.includes('精力2') && body.includes('木材 ×2') && body.includes('兔皮 ×1'), body.slice(0, 60));
+    /* U11d 材料名可点 → 指引弹窗（哪里能弄到）→ 返回制作 */
+    await page.locator('[data-act="itemq"][data-k="木材"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    body = await $txt('#modal-body');
+    t('U11d 点材料名看来路', body.includes('从哪来') && body.includes('森林'), body.slice(0, 60));
+    await page.locator('#modal-body [data-act="craftq"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U11e 返回制作弹窗', !!(await page.$('#modal-body [data-act="craft"]')));
     await page.locator('[data-act="craft"][data-k="sling"]').click({ timeout: 15000 });
     await page.waitForTimeout(300);
     const r11 = await ev(() => ({ got: G.bag['弹弓'] || 0, wood: G.bag['木材'] || 0 }));

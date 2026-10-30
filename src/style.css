@@ -98,6 +98,7 @@ button { font-family: inherit; }
 }
 .sec-sub::before { content: ""; width: 6px; height: 6px; background: var(--red); flex: none; }
 .dim { color: var(--ink-3); font-size: 13px; }
+.ilink { color: var(--red); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }   /* 弹窗里可点开看指引的物品名 */
 .back {
   background: none; border: none; color: var(--ink-2); font-size: 14px; font-weight: 500;
   margin: 0 0 4px -8px; cursor: pointer; padding: 12px 8px; min-height: 44px;

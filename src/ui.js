@@ -289,6 +289,7 @@ function itemSheet(k) {
   let html = `<div class="line">${it.d || ''}</div>`;
   if (it.s) html += `<div class="sec-sub">从哪来</div><div class="li">· ${it.s}</div>`;
   if (it.u) html += `<div class="sec-sub">有什么用</div><div class="li">· ${it.u}</div>`;
+  if (V.craftBack) html += `<div class="actrow2"><button class="btn" data-act="craftq" data-k="${V.craftBack}">返回制作</button></div>`;   // 从制作弹窗点进来的：看完来路一键回去接着做
   openModal(k, html);
 }
 
@@ -332,13 +333,15 @@ function qtyHtml() {
 }
 
 /* ---------- 制作详情弹窗（言拍板 2026-10-30）：点开才看清精力和材料，确认再动手 ---------- */
+/* 材料名可点 → 弹该材料指引（哪里能弄到）；指引不平铺，点开才看（言拍板 2026-10-30 第二轮） */
 function craftSheet(k) {
   const c = CRAFT[k]; if (!c) return;
+  V.craftBack = k;
   const lack = [];
   const mats = Object.entries(c.mats).map(([m, q]) => {
     const have = G.bag[m] || 0;
     if (have < q) lack.push(`${m}×${q - have}`);
-    return `<div class="line">${m} ×${q} <span class="dim">（你有${have}）</span>${have < q ? ` <b style="color:var(--red)">还差${q - have}</b>` : ''}</div>`;
+    return `<div class="line"><span class="ilink" data-act="itemq" data-k="${m}">${m}</span> ×${q} <span class="dim">（你有${have}）</span>${have < q ? ` <b style="color:var(--red)">还差${q - have}</b>` : ''}</div>`;
   }).join('');
   openModal(`制作 · ${c.name}`, `<div class="dim">精力2 · 占一个时间格${c.out ? ` · 做一份得${c.name}×${c.out}` : ''}</div>${mats}<div class="actrow2">${
     lack.length ? `<button class="btn dis" disabled>材料不够·还差${lack.join('、')}</button>`
@@ -393,7 +396,7 @@ function openModal(title, html) {
   $('#modal-body').innerHTML = html;
   $('#modal-mask').classList.add('show');
 }
-function closeModal() { $('#modal-mask').classList.remove('show'); }
+function closeModal() { $('#modal-mask').classList.remove('show'); V.craftBack = null; }
 let toastTimer = null;
 function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -591,6 +594,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'craftq') { craftSheet(act.dataset.k); return; }
+  if (a === 'itemq') { itemSheet(act.dataset.k); return; }   // 制作弹窗里点材料名 → 看哪里能弄到
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot'
     || a === 'blueprint' || a === 'craft' || a === 'helpfarm') {
     const r = doPlaceAction(a === 'craft' ? 'home' : V.place, a, act.dataset.k);

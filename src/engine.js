@@ -376,7 +376,7 @@ function doTouch(id, act) {
   const st = G.npc[id];
   if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) return { lines: ['还没到那一步。'], blocked: true };
   if (t.night && G.node < DAY_NODES) return { lines: ['这个要等夜里。'], blocked: true };
-  if (t.afterRestore && id === 'lee' && !st.restored) return { lines: ['他还分不清这些。'], blocked: true };   // 恢复前 Lee 无亲脸颊/依偎（言拍板 2026-10-30）
+  if (t.afterRestore && id === 'lee' && !st.restored) return { lines: ['他还分不清这些。'], blocked: true };   // 恢复前 Lee 肢体互动全锁（言拍板 2026-10-30 翻案 #61：四按钮全拦）
   G.touch = G.touch || {};
   const key = id + '.' + act;
   if (G.touch[key] === G.day) return { lines: ['今天已经亲近过了，再要就腻了。'], blocked: true };

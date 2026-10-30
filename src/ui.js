@@ -229,7 +229,7 @@ function npcSheet(id) {
     return;
   }
   html += `<div class="bio">${n.bio}</div>`;
-  if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
+  if (n.secretHint && s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;   /* 空秘密不显示（#64：Bess 撤案后置空） */
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
   if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
   if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }

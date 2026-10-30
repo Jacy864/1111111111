@@ -805,7 +805,7 @@ const NPCS = [
   },
   { id: 'bess', name: 'Bess', job: '锻造师傅', initF: 8,
     bio: '冷脸，话少，说话像下单。兵器打得极好，自己也知道。护短。',
-    secretHint: '骑士每个月来一趟，她关起门给它修甲，不许人看。',
+    secretHint: '',   /* 2026-10-31 #64 撤案：原「骑士每月来一趟她修甲」违核心设定——村民不离村、黄金玉只在矿洞、骑士的伤唯一修理人是 Gloria（玩家），村民不可能修它。新秘密待言定，置空＝档案页不显示＋村播报自动跳过 */
     loc: ['forge', 'forge', 'forge', 'home', 'home'],
     trade: { sell: [['箭矢', 5]], buy: [['铁矿', 5], ['怪躯壳', 8], ['骨头', 1]], hard: true },
     chat: [  /* 平铺旧占位 3 条，闲聊三档（7/9/6）等帅姐版台词包回流时整包替换 */
@@ -4010,7 +4010,7 @@ function npcSheet(id) {
     return;
   }
   html += `<div class="bio">${n.bio}</div>`;
-  if (s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;
+  if (n.secretHint && s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;   /* 空秘密不显示（#64：Bess 撤案后置空） */
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
   if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
   if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }

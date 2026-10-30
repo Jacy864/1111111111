@@ -27,6 +27,7 @@
 
 ## 4. 开发流程（不变）
 
-- 改 src/ 后必须 `bash build.sh`；构建后复制 index.html 到 `/mnt/c/Users/lenovo/Desktop/小游戲/`
+- 改 src/ 后必须 `bash build.sh`；构建后复制 index.html 到 `/mnt/c/Users/lenovo/Desktop/開發相關/小游戲/`（注意：在「開發相關」文件夹里面，**不是**桌面根目录）
+- **禁止在桌面根目录新建「小游戲」文件夹**（2026-10-30 教训：照旧规则里的错路径投放，在桌面根目录平白多出一个文件夹，正确投放点一直是「開發相關」里面那个；投放前拿不准就先 `ls /mnt/c/Users/lenovo/Desktop/開發相關/小游戲/` 确认目标存在）
 - 改完直接 git commit（中文一行式）+ push origin main，不用问
 - 游戏文本过 §8.6 防八股铁律；台词成句交言指定的感性模型，Claude 只写结构与约束

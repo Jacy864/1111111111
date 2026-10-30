@@ -757,29 +757,30 @@ function doPlaceAction(place, act, sub) {
 }
 
 /* ---------- 交易 ---------- */
-function tradeBuy(id, item, price) {
-  if (G.coins < price) return { lines: ['钱不够。'], blocked: true };
-  const err = canDo('trade'); if (err) return { lines: [err], blocked: true };
-  G.coins -= price;
-  G.bag[item] = (G.bag[item] || 0) + (item === '箭矢' ? 5 : 1);
+/* 交易改版（言拍板 2026-10-30）：买卖可选数量；交易不再消耗精力（重伤+1也不适用），时间照常流逝 */
+function tradeBuy(id, item, price, qty) {
+  qty = Math.max(1, qty | 0);
+  if (G.coins < price * qty) return { lines: ['钱不够。'], blocked: true };
+  G.coins -= price * qty;
+  G.bag[item] = (G.bag[item] || 0) + (item === '箭矢' ? 5 : 1) * qty;
   const def = npcDef(id); rel(id, 'f', 1);
-  G.energy -= COST.trade; G.dayLog.push(`从${def.name}那买了${item}`);
-  youFeed('buy', { id, item });
+  G.dayLog.push(`从${def.name}那买了${item}${qty > 1 ? '×' + qty : ''}`);
+  youFeed('buy', { id, item: qty > 1 ? `${item}×${item === '箭矢' ? 5 * qty : qty}` : item });
   const l = def.easy ? '「拿好。」' : def.hard ? '「钱货两清。」' : '「还要别的吗。」';
-  return { lines: [`买到了${item}${item === '箭矢' ? '×5' : ''}（−${price} 安娜币）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
+  return { lines: [`买到了${item}${item === '箭矢' ? '×' + 5 * qty : ''}（−${price * qty} 安娜币）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
-function tradeSell(id, item, price) {
-  if ((G.bag[item] || 0) < 1) return { lines: ['你没有这个。'], blocked: true };
-  const err = canDo('trade'); if (err) return { lines: [err], blocked: true };
-  G.bag[item]--; if (G.bag[item] <= 0) delete G.bag[item];
+function tradeSell(id, item, price, qty) {
+  qty = Math.max(1, qty | 0);
+  if ((G.bag[item] || 0) < qty) return { lines: ['你没有这个。'], blocked: true };
+  G.bag[item] -= qty; if (G.bag[item] <= 0) delete G.bag[item];
   const def = npcDef(id);
-  let p = price;
-  if (G.npc[id].f >= 60) { p = Math.ceil(price * 1.2); }
-  G.coins += p; rel(id, 'f', 1);
-  G.energy -= COST.trade; G.dayLog.push(`卖给了${def.name}${item}`);
-  youFeed('sell', { id, item });
+  const per = G.npc[id].f >= 60 ? Math.ceil(price * 1.2) : price;   // 熟人价按件计
+  const total = per * qty;
+  G.coins += total; rel(id, 'f', 1);
+  G.dayLog.push(`卖给了${def.name}${item}${qty > 1 ? '×' + qty : ''}`);
+  youFeed('sell', { id, item: qty > 1 ? `${item}×${qty}` : item });
   const l = G.npc[id].f >= 60 ? '「给你的价，别跟人说。」' : def.easy ? '「下次还拿来。」' : '「嗯。」';
-  return { lines: [`卖出了${item}（+${p} 安娜币${p > price ? '，熟人价' : ''}）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
+  return { lines: [`卖出了${item}${qty > 1 ? '×' + qty : ''}（+${total} 安娜币${per > price ? '，熟人价' : ''}）`, `<b>${def.name}</b>：${l}`], settled: advanceNode() === 'settled' };
 }
 
 /* ---------- 探险（批二） ---------- */

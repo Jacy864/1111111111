@@ -271,7 +271,7 @@ function npcSheet(id) {
     else
       extras += `<button class="btn line ib dis" disabled>寻欢（还不到那一步）</button>`;
   }
-  if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（1）</button>`;
+  if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（精力0）</button>`;
   /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
   const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
   if (s.giftDay === G.day)
@@ -299,15 +299,38 @@ function tradeSheet(id) {
   let html = `<div class="dim">${n.name}的摊子。</div><div class="trade">`;
   if (t.sell) {                        // 缺陷B修复：只收购不出售的摊主（Vivienne/Alice/Olivia）没有 t.sell，整段跳过
     html += `<div class="sec-sub">TA 卖</div>`;
-    for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
+    for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="qbuy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
   }
   html += `<div class="sec-sub">TA 收（你有才显示）</div>`;
   const buys = (t.buy || []).filter(([item]) => (G.bag[item] || 0) > 0);   // 只卖不收的摊主（Levi 卖羊毛）兼容
   html += (t.buy || []).length
-    ? (buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`)
+    ? (buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="qsell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`)
     : `<div class="dim">TA 不收东西。</div>`;
   html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
   openModal(`交易 · ${n.name}`, html);
+}
+
+/* ---------- 数量选择弹窗（言拍板 2026-10-30）：点摊子上的东西后选买/卖几个 ---------- */
+function qtySheet(id, item, price, mode) {
+  const buy = mode === 'buy';
+  const max = buy ? Math.max(1, Math.floor(G.coins / price)) : Math.max(1, G.bag[item] || 0);
+  V.qty = { id, item, price, mode, n: 1, max };
+  qtyHtml();
+}
+function qtyHtml() {
+  const q = V.qty; if (!q) return;
+  const buy = q.mode === 'buy';
+  const per = !buy && G.npc[q.id].f >= 60 ? Math.ceil(q.price * 1.2) : q.price;   // 卖出按熟人价预览
+  const isArrow = q.item === '箭矢';
+  let html = `<div class="dim">${buy ? '从TA这买' : '卖给TA'}：${q.item}${isArrow ? '（一份5支）' : ''} · 单价${per}币</div><div class="trade" style="text-align:center">`;
+  html += `<button class="btn tb" data-act="qminus" ${q.n <= 1 ? 'disabled' : ''}>−</button>`;
+  html += ` <span class="line" style="display:inline-block;min-width:3em"><b>${q.n}</b> / ${q.max}</span> `;
+  html += `<button class="btn tb" data-act="qplus" ${q.n >= q.max ? 'disabled' : ''}>＋</button>`;
+  html += `</div><div class="actrow2">`;
+  if (buy) html += `<button class="btn" data-act="buy" data-id="${q.id}" data-item="${q.item}" data-p="${q.price}" data-q="${q.n}">买 ${q.n} ${isArrow ? '份' : '个'} · ${q.price * q.n} 安娜币</button>`;
+  else html += `<button class="btn" data-act="sell" data-id="${q.id}" data-item="${q.item}" data-p="${q.price}" data-q="${q.n}">卖 ${q.n} 个 · ${per * q.n} 安娜币${per > q.price ? '（熟人价）' : ''}</button>`;
+  html += `</div>`;
+  openModal(`${buy ? '买' : '卖'}多少？ · ${q.item}`, html);
 }
 
 /* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */
@@ -529,11 +552,22 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
+  if (a === 'qbuy' || a === 'qsell') {
+    qtySheet(id, act.dataset.item, +act.dataset.p, a === 'qbuy' ? 'buy' : 'sell');
+    return;
+  }
+  if (a === 'qminus' || a === 'qplus') {
+    if (!V.qty) return;
+    V.qty.n = Math.min(V.qty.max, Math.max(1, V.qty.n + (a === 'qplus' ? 1 : -1)));
+    qtyHtml();
+    return;
+  }
   if (a === 'buy' || a === 'sell') {
-    const r = a === 'buy' ? tradeBuy(id, act.dataset.item, +act.dataset.p) : tradeSell(id, act.dataset.item, +act.dataset.p);
-    resultSheet(r.lines);
-    if (r.settled) setTimeout(settlementSheet, 10);
-    else if (a === 'buy') tradeSheet(id); else { closeModal(); render(); }
+    const qty = Math.max(1, +act.dataset.q || 1);
+    const r = a === 'buy' ? tradeBuy(id, act.dataset.item, +act.dataset.p, qty) : tradeSell(id, act.dataset.item, +act.dataset.p, qty);
+    if (r.settled) { resultSheet(r.lines); setTimeout(settlementSheet, 10); return; }
+    toast(r.lines[0]);
+    tradeSheet(id); render();          // 买/卖完留在摊子弹窗原地刷新（拍板 2026-10-30）
     return;
   }
   if (a === 'repair') {

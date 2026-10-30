@@ -1399,7 +1399,7 @@ const ENDINGS = {
 };
 
 /* 互动精力消耗 */
-const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
+const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 0, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
   gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */

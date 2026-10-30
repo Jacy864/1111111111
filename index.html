@@ -1680,8 +1680,8 @@ const CRAFT = {
 const TOUCH = {
   pat:    { name: '摸摸头', f: 30, l: 30, dF: 1 },
   hug:    { name: '拥抱',   f: 60, l: 60, dF: 1 },
-  kiss:   { name: '亲脸颊', l: 60,      dL: 1 },
-  cuddle: { name: '依偎',   l: 90, night: true, dL: 1 },   // 限夜里（夜里大家都在家）
+  kiss:   { name: '亲脸颊', l: 60,      dL: 1, afterRestore: true },   // afterRestore：Lee 恢复前锁（言拍板 2026-10-30）
+  cuddle: { name: '依偎',   l: 90, night: true, dL: 1, afterRestore: true },   // 限夜里（夜里大家都在家）
 };
 /* 第一批开放（言拍板：先样本后铺满）：Asher＋骑士＋Alice；其余 9 人等台词铺满再开 */
 const TOUCH_OPEN = ['asher', 'knight', 'alice'];
@@ -2383,6 +2383,7 @@ function doTouch(id, act) {
   const st = G.npc[id];
   if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) return { lines: ['还没到那一步。'], blocked: true };
   if (t.night && G.node < DAY_NODES) return { lines: ['这个要等夜里。'], blocked: true };
+  if (t.afterRestore && id === 'lee' && !st.restored) return { lines: ['他还分不清这些。'], blocked: true };   // 恢复前 Lee 无亲脸颊/依偎（言拍板 2026-10-30）
   G.touch = G.touch || {};
   const key = id + '.' + act;
   if (G.touch[key] === G.day) return { lines: ['今天已经亲近过了，再要就腻了。'], blocked: true };
@@ -3818,6 +3819,7 @@ function npcSheet(id) {
       const st = G.npc[id];
       if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) continue;   // 未解锁不显示（言拍板：隐藏到解锁）
       if (t.night && G.node < DAY_NODES) continue;                     // 依偎只在夜里出现
+      if (t.afterRestore && id === 'lee' && !st.restored) continue;    // 恢复前 Lee 无亲脸颊/依偎（言拍板 2026-10-30）
       const used = ((G.touch || {})[id + '.' + k] === G.day);
       extras += used
         ? `<button class="btn line ib dis" disabled>${t.name}·今天过了</button>`

@@ -1084,7 +1084,7 @@ const MORNING_POOL = [
 /* 物品（背包显示用；带 sellTo 的可在对应 NPC 处出售） */
 const ITEMS = {
   小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。', s: '农田帮工（Levi 在田时），一次一份。', u: '卖 Alice，1 币一份。' },
-  胡萝卜: { d: 'Alice 的田里成筐出。' },
+  /* 胡萝卜、蛋糕物品已删（言拍板 2026-10-30 第十二场）：胡萝卜全游戏无用途删除；蛋糕不做出物品、台词里的蛋糕是 Olivia 炉子的背景 */
   土豆: { d: '顶饱的过冬粮。' },
   蘑菇: { d: '森林里捡的。', s: '森林采集，一次两个。', u: '卖 Alice，3 币一个。' },
   卷心菜: { d: '结结实实一颗。' },
@@ -1104,7 +1104,6 @@ const ITEMS = {
   指南针: { d: 'Jacob 的活。' },
   银钉: { d: 'Jacob 打的小零件，修表用。', s: 'Jacob 的摊子卖，3 币一枚。', u: '做宝石项链的料。' },
   木板: { d: '建筑材料。', s: '森林采集，12% 机会。', u: '卖 Jacob，2 币。' },
-  蛋糕: { d: 'Olivia 的新出炉。' },
   熟食: { d: '垫肚子用。' },
   花: { d: '广场边摘的。有人会喜欢。', s: '广场边摘，一天两朵。', u: '送人的礼，骑士最吃这套。' },
   弓: { d: '你吃饭的家伙。弦是自己换的。', s: '开档自带。', u: '打猎的行头。带着就行，不消耗。' },
@@ -1401,7 +1400,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1 };
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };

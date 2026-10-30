@@ -129,6 +129,12 @@ function homeHtml() {
   html += npcCard(npcDef('asher'));
   html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
   if (G.evF.ashPact) html += `<div class="dim" style="margin:2px">他床边多了个自己钉的架子，放着你的弓。</div>`;   /* 感情线：等你长大（约定档） */
+  /* 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场）：夜里在家，小麦1+水果1+精力1，友+3，每天一次 */
+  if (G.node >= DAY_NODES) html += `<div class="actrow2">${
+    G.cakeDay === G.day ? `<button class="btn dis" disabled>做蛋糕·今天做过了</button>`
+      : ((G.bag['小麦'] || 0) >= 1 && (G.bag['水果'] || 0) >= 1) ? `<button class="btn" data-act="bake">和 Asher 做蛋糕（小麦1·水果1·精力1）</button>`
+      : `<button class="btn dis" disabled>和 Asher 做蛋糕·缺小麦或水果</button>`
+  }</div>`;
   /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
   const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
   html += `<div class="sec-title">制作</div>`;
@@ -561,6 +567,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
+  if (a === 'bake') { const r = bakeCake(); resultSheet(r.lines); if (!r.blocked) render(); return; }   // 和 Asher 做蛋糕（言拍板 2026-10-30）
   if (a === 'heal') { const r = healPotion(); resultSheet(r.lines); if (!r.blocked) render(); return; }
   if (a === 'rest') {
     const r = restNow();

@@ -1034,6 +1034,30 @@ function nap() {
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
 }
 
+/* ---------- 家：和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） ---------- */
+/* 夜里在家才做得了（他白天不在家）；小麦1+水果1+精力1；Asher 友+3；每天一次；当场分掉不出物品 */
+const CAKE_OPEN = [
+  '灶上坐了水。Asher 负责看火，你负责和面。',
+  '面粉沾了他一手。他看了看，接着揉。',
+];
+function bakeCake() {
+  if (G.node < DAY_NODES) return { lines: ['他白天不在家，做不了。天黑他回来再说。'], blocked: true };
+  if (G.cakeDay === G.day) return { lines: ['今天做过一次了。灶还热着。'], blocked: true };
+  const lack = [];
+  if ((G.bag['小麦'] || 0) < 1) lack.push('小麦×1');
+  if ((G.bag['水果'] || 0) < 1) lack.push('水果×1');
+  if (lack.length) return { lines: [`材料不够：还差${lack.join('、')}。`], blocked: true };
+  const err = canDo('bake'); if (err) return { lines: [err], blocked: true };
+  G.bag['小麦']--; if (G.bag['小麦'] <= 0) delete G.bag['小麦'];
+  G.bag['水果']--; if (G.bag['水果'] <= 0) delete G.bag['水果'];
+  G.cakeDay = G.day;
+  G.energy -= COST.bake;
+  rel('asher', 'f', 3);
+  G.dayLog.push('和 Asher 做了蛋糕');
+  addFeed('you', '你和[[asher]]做了蛋糕，站在灶边分着吃了。', ['asher']);
+  return { lines: [rnd(CAKE_OPEN), '蛋糕不大，你们站在灶边一人一半吃完了。', '<b>Asher</b>：「比 Olivia 的甜。」'] };
+}
+
 /* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */
 /* 三姐妹纯友情线（拍板 #38/#40）：爱情值锁 0——无暧昧池＋打闹不涨爱情 */
 const SISTERS = ['alice', 'bess', 'olivia'];

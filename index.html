@@ -1452,7 +1452,7 @@ const MORNING_POOL = [
 /* 物品（背包显示用；带 sellTo 的可在对应 NPC 处出售） */
 const ITEMS = {
   小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。', s: '农田帮工（Levi 在田时），一次一份。', u: '卖 Alice，1 币一份。' },
-  胡萝卜: { d: 'Alice 的田里成筐出。' },
+  /* 胡萝卜、蛋糕物品已删（言拍板 2026-10-30 第十二场）：胡萝卜全游戏无用途删除；蛋糕不做出物品、台词里的蛋糕是 Olivia 炉子的背景 */
   土豆: { d: '顶饱的过冬粮。' },
   蘑菇: { d: '森林里捡的。', s: '森林采集，一次两个。', u: '卖 Alice，3 币一个。' },
   卷心菜: { d: '结结实实一颗。' },
@@ -1472,7 +1472,6 @@ const ITEMS = {
   指南针: { d: 'Jacob 的活。' },
   银钉: { d: 'Jacob 打的小零件，修表用。', s: 'Jacob 的摊子卖，3 币一枚。', u: '做宝石项链的料。' },
   木板: { d: '建筑材料。', s: '森林采集，12% 机会。', u: '卖 Jacob，2 币。' },
-  蛋糕: { d: 'Olivia 的新出炉。' },
   熟食: { d: '垫肚子用。' },
   花: { d: '广场边摘的。有人会喜欢。', s: '广场边摘，一天两朵。', u: '送人的礼，骑士最吃这套。' },
   弓: { d: '你吃饭的家伙。弦是自己换的。', s: '开档自带。', u: '打猎的行头。带着就行，不消耗。' },
@@ -1769,7 +1768,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 1, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1 };
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };
@@ -2891,6 +2890,30 @@ function nap() {
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
 }
 
+/* ---------- 家：和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） ---------- */
+/* 夜里在家才做得了（他白天不在家）；小麦1+水果1+精力1；Asher 友+3；每天一次；当场分掉不出物品 */
+const CAKE_OPEN = [
+  '灶上坐了水。Asher 负责看火，你负责和面。',
+  '面粉沾了他一手。他看了看，接着揉。',
+];
+function bakeCake() {
+  if (G.node < DAY_NODES) return { lines: ['他白天不在家，做不了。天黑他回来再说。'], blocked: true };
+  if (G.cakeDay === G.day) return { lines: ['今天做过一次了。灶还热着。'], blocked: true };
+  const lack = [];
+  if ((G.bag['小麦'] || 0) < 1) lack.push('小麦×1');
+  if ((G.bag['水果'] || 0) < 1) lack.push('水果×1');
+  if (lack.length) return { lines: [`材料不够：还差${lack.join('、')}。`], blocked: true };
+  const err = canDo('bake'); if (err) return { lines: [err], blocked: true };
+  G.bag['小麦']--; if (G.bag['小麦'] <= 0) delete G.bag['小麦'];
+  G.bag['水果']--; if (G.bag['水果'] <= 0) delete G.bag['水果'];
+  G.cakeDay = G.day;
+  G.energy -= COST.bake;
+  rel('asher', 'f', 3);
+  G.dayLog.push('和 Asher 做了蛋糕');
+  addFeed('you', '你和[[asher]]做了蛋糕，站在灶边分着吃了。', ['asher']);
+  return { lines: [rnd(CAKE_OPEN), '蛋糕不大，你们站在灶边一人一半吃完了。', '<b>Asher</b>：「比 Olivia 的甜。」'] };
+}
+
 /* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */
 /* 三姐妹纯友情线（拍板 #38/#40）：爱情值锁 0——无暧昧池＋打闹不涨爱情 */
 const SISTERS = ['alice', 'bess', 'olivia'];
@@ -3460,6 +3483,12 @@ function homeHtml() {
   html += npcCard(npcDef('asher'));
   html += `<div class="dim" style="margin:6px 2px">他白天在图书馆、广场或农田，天黑回来睡第二张床。</div>`;
   if (G.evF.ashPact) html += `<div class="dim" style="margin:2px">他床边多了个自己钉的架子，放着你的弓。</div>`;   /* 感情线：等你长大（约定档） */
+  /* 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场）：夜里在家，小麦1+水果1+精力1，友+3，每天一次 */
+  if (G.node >= DAY_NODES) html += `<div class="actrow2">${
+    G.cakeDay === G.day ? `<button class="btn dis" disabled>做蛋糕·今天做过了</button>`
+      : ((G.bag['小麦'] || 0) >= 1 && (G.bag['水果'] || 0) >= 1) ? `<button class="btn" data-act="bake">和 Asher 做蛋糕（小麦1·水果1·精力1）</button>`
+      : `<button class="btn dis" disabled>和 Asher 做蛋糕·缺小麦或水果</button>`
+  }</div>`;
   /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
   const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
   html += `<div class="sec-title">制作</div>`;
@@ -3892,6 +3921,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'nap') { const r = nap(); resultSheet(r.lines); if (!r.blocked) render(); return; }
+  if (a === 'bake') { const r = bakeCake(); resultSheet(r.lines); if (!r.blocked) render(); return; }   // 和 Asher 做蛋糕（言拍板 2026-10-30）
   if (a === 'heal') { const r = healPotion(); resultSheet(r.lines); if (!r.blocked) render(); return; }
   if (a === 'rest') {
     const r = restNow();

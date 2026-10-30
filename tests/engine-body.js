@@ -136,6 +136,26 @@ t('T15 存档 round-trip', () => {
   ok(okLoad, '读回'); eq(G.coins, 77); eq(G.bag['羊毛'], 3);
 });
 
+t('T17 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场）', () => {
+  fresh();
+  G.bag['小麦'] = 1; G.bag['水果'] = 1;
+  ok(bakeCake().blocked, '白天他不在家，拦');
+  G.node = 3;
+  delete G.bag['小麦'];
+  ok(bakeCake().blocked, '缺小麦，拦');
+  G.bag['小麦'] = 1;
+  const f0 = G.npc.asher.f; const e0 = G.energy; const d0 = G.day;
+  const r = bakeCake();
+  ok(!r.blocked, '做成');
+  eq(G.npc.asher.f - f0, 3, '友+3');
+  eq(e0 - G.energy, 1, '精力1');
+  eq(G.day, d0, '夜里互动不翻页');
+  eq(G.bag['小麦'], undefined, '小麦耗尽删键');
+  eq(G.bag['水果'], undefined, '水果耗尽删键');
+  G.bag['小麦'] = 1; G.bag['水果'] = 1;
+  ok(bakeCake().blocked, '每天一次');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {
   const endings = {};

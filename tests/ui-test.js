@@ -109,6 +109,19 @@ function t(name, cond, extra) {
     const r8 = await ev(() => ({ day: G.day, node: G.node }));
     t('U8c 一夜过去进第2天清晨', r8.day === 2 && r8.node === 0, JSON.stringify(r8));
 
+    /* U10 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） */
+    await ev(() => { G.node = 3; G.bag['小麦'] = 1; G.bag['水果'] = 1; G.cakeDay = 0; render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="bake"]', { timeout: 15000 });
+    const fa = await ev(() => G.npc.asher.f);
+    await page.locator('[data-act="bake"]').click({ timeout: 15000 });
+    await page.waitForSelector('#modal-mask.show', { timeout: 15000 });
+    body = await $txt('#modal-body');
+    t('U10 做蛋糕·台词出现', body.includes('一人一半') && body.includes('比 Olivia 的甜'));
+    const r10 = await ev(() => ({ f: G.npc.asher.f, again: !!document.querySelector('[data-act="bake"]') }));
+    t('U10b Asher友好+3·当天按钮收回', r10.f === fa + 3 && !r10.again);
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

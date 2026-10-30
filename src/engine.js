@@ -70,6 +70,7 @@ function load() {
     G.stats.hunts = G.stats.hunts || 0;
     G.stats.kills = G.stats.kills || 0;
     G.stats.gy = G.stats.gy || 0;
+    G.mineDry = G.mineDry || 0;   // 矿越挖越熟：连续空镐计数（言拍板 2026-10-30），老档补默认
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
@@ -824,6 +825,13 @@ const EXP_ACT_NAME = { gather: '采集', hunt: '打猎', fish: '钓鱼', dive: '
 
 /* ---------- 夜间世界规则（言拍板 2026-10-27）：夜里怪物横行，全村闭户，Gloria 也不出门 ---------- */
 
+/* 矿越挖越熟（言拍板 2026-10-30）：连续空镐每镐 +6%、封顶 +30%；出玉清零、跨天保留；不粗暴抬基础概率 */
+function mineRoll(base) {
+  const p = base + Math.min(0.30, (G.mineDry || 0) * 0.06);
+  if (Math.random() < p) { G.mineDry = 0; return true; }
+  G.mineDry = (G.mineDry || 0) + 1; return false;
+}
+
 function doExplore(zone, act) {
   const z = EXPLORE[zone];
   if (G.node >= DAY_NODES) return { lines: ['夜里怪物横行，出不了门。等天亮。'], blocked: true };   // 夜间世界规则（言拍板 2026-10-27）
@@ -906,7 +914,7 @@ function doExplore(zone, act) {
     const n = 1 + (Math.random() < 0.5 ? 1 : 0) + (escort ? 1 : 0);
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     const got = [`铁矿×${n}`];
-    if (Math.random() < 0.15) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    if (mineRoll(0.15) || (escort && Math.random() < 0.2)) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }   // 护送时他帮你多看一眼矿壁（言拍板 2026-10-30）
     if (Math.random() < 0.12) { G.bag.金粉 = (G.bag.金粉 || 0) + 1; got.push('金粉×1'); }   // 手绘本原料（拍板 #42）
     if (Math.random() < 0.06) { G.bag.宝石 = (G.bag.宝石 || 0) + 1; got.push('宝石×1'); }   // 项链原料（拍板 #42）
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineNear), '拾获：' + got.join('、'));
@@ -921,7 +929,7 @@ function doExplore(zone, act) {
     const n = 2 + Math.floor(Math.random() * 2);
     G.bag.铁矿 = (G.bag.铁矿 || 0) + n;
     const got = [`铁矿×${n}`];
-    if (Math.random() < 0.55) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
+    if (mineRoll(0.55)) { G.bag.黄金玉 = (G.bag.黄金玉 || 0) + 1; G.stats.gy++; got.push('黄金玉×1'); }
     if (Math.random() < 0.20) { G.bag.金粉 = (G.bag.金粉 || 0) + 1; got.push('金粉×1'); }   // 手绘本原料（拍板 #42）
     if (Math.random() < 0.12) { G.bag.宝石 = (G.bag.宝石 || 0) + 1; got.push('宝石×1'); }   // 项链原料（拍板 #42）
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));

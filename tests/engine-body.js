@@ -156,6 +156,25 @@ t('T17 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场）', () => {
   ok(bakeCake().blocked, '每天一次');
 });
 
+/* ============ 六b、矿越挖越熟＋骑士护送（言拍板 2026-10-30） ============ */
+t('T18 矿越挖越熟：空镐递增、封顶、出玉清零', () => {
+  fresh();
+  G.node = 0; G.energy = 20;
+  fix(0.5); doExplore('mine', 'minenear');                       // p=0.15，0.5 不中
+  eq(G.mineDry, 1, '空一镐，干涸+1');
+  G.mineDry = 6; fix(0.4); doExplore('mine', 'minefar');         // p=0.55+封顶0.30=0.85，0.4 中
+  eq(G.mineDry, 0, '出玉清零');
+  eq(G.bag['黄金玉'], 1, '深矿出玉');
+});
+t('T19 骑士护送多看一眼矿壁：主roll空手、护送额外roll出玉', () => {
+  fresh();
+  G.node = 0; G.energy = 20; G.npc.knight.f = 60;
+  /* seq：escort判定0.0成立 → 遇怪(忽略) → 铁矿n → 主roll0.9空手 → 护送额外0.1命中 */
+  seq(0.0, 0.9, 0.9, 0.9, 0.1); doExplore('mine', 'minenear');
+  eq(G.bag['黄金玉'], 1, '护送加成出玉');
+  eq(G.mineDry, 1, '主roll空手照常计数');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {
   const endings = {};

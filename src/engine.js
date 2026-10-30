@@ -630,7 +630,7 @@ function giveFlower() {
 }
 
 /* ---------- 送礼（拍板 #42）：手作礼物＋稀有花；每人每天一份，精力1、占时间格、算理过TA ---------- */
-const GIFT_ITEMS = ['编制小猫', '小帽子', '泥金手绘本', '宝石项链', '弹弓', '稀有花'];
+const GIFT_ITEMS = ['编制小猫', '小帽子', '泥金手绘本', '宝石项链', '弹弓', '稀有花', '花'];
 function doGift(id, item) {
   const def = npcDef(id), st = G.npc[id];
   if (st.giftDay === G.day) return { lines: ['今天已经送过TA一份了。明天再来。'], blocked: true };
@@ -882,6 +882,7 @@ function doExplore(zone, act) {
       G.bag.生肉 = (G.bag.生肉 || 0) + meat;
       const got = [`生肉×${meat}`];
       if (Math.random() < 0.4) { G.bag.兔皮 = (G.bag.兔皮 || 0) + 1; got.push('兔皮×1'); }
+      if (Math.random() < 0.35) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got.push('羊毛×1'); }   // 羊毛渠道（言拍板 2026-10-30）：打猎捎带
       lines.push(rnd(EXP_TEXT.huntWin), '拾获：' + got.join('、'));
       G.stats.hunts++;
       if (Math.random() < 0.4) G.force++;

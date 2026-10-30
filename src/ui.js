@@ -278,6 +278,16 @@ function npcSheet(id) {
   openModal('人物档案', html);
 }
 
+/* ---------- 物品词条（言拍板 2026-10-30）：点背包里的东西，看从哪来、有什么用 ---------- */
+function itemSheet(k) {
+  const it = ITEMS[k];
+  if (!it) return;
+  let html = `<div class="line">${it.d || ''}</div>`;
+  if (it.s) html += `<div class="sec-sub">从哪来</div><div class="li">· ${it.s}</div>`;
+  if (it.u) html += `<div class="sec-sub">有什么用</div><div class="li">· ${it.u}</div>`;
+  openModal(k, html);
+}
+
 function tradeSheet(id) {
   const n = npcDef(id), t = n.trade;
   let html = `<div class="dim">${n.name}的摊子。</div><div class="trade">`;
@@ -286,8 +296,10 @@ function tradeSheet(id) {
     for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
   }
   html += `<div class="sec-sub">TA 收（你有才显示）</div>`;
-  const buys = t.buy.filter(([item]) => (G.bag[item] || 0) > 0);
-  html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;
+  const buys = (t.buy || []).filter(([item]) => (G.bag[item] || 0) > 0);   // 只卖不收的摊主（Levi 卖羊毛）兼容
+  html += (t.buy || []).length
+    ? (buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`)
+    : `<div class="dim">TA 不收东西。</div>`;
   html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
   openModal(`交易 · ${n.name}`, html);
 }
@@ -440,7 +452,7 @@ document.addEventListener('click', e => {
   if (ch) { chronDetail(+ch.dataset.chron); return; }
 
   const it = e.target.closest('[data-item]');
-  if (it && !e.target.closest('[data-act]')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
+  if (it && !e.target.closest('[data-act]') && !it.classList.contains('bag-item')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }   // 背包物品走下面的完整词条，不走这句提示
 
   const ex = e.target.closest('[data-exp]');
   if (ex) {
@@ -452,6 +464,9 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
+
+  const bi = e.target.closest('.bag-item');            // 物品词条（言拍板 2026-10-30）：点背包里的东西看来路
+  if (bi && bi.dataset.item) { itemSheet(bi.dataset.item); return; }
 
   const act = e.target.closest('[data-act]');
   if (!act) {

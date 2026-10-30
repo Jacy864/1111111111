@@ -378,7 +378,7 @@ const PLACES = {
   plaza:    { name: '广场',   outdoor: true,  desc: '村子中心，井也在这。骑士白天多站在这里。' },
   well:     { name: '井',     outdoor: true,  desc: '全村的水都从这来。打水不费力气。' },
   field:    { name: '农田',   outdoor: true,  desc: '四片田。Gloria 一片，Alice 两片，Levi 一片。' },
-  farm:     { name: '养殖场', outdoor: true,  desc: 'Levi 的羊都在这。羊毛和奶制品的稳定来源。' },
+  farm:     { name: '养殖场', outdoor: true,  desc: 'Levi 的羊都在这。他下午过来照看，要羊毛找他买。' },
   church:   { name: '教堂',   outdoor: false, desc: 'Vivienne 的地盘。可以祈祷。' },
   library:  { name: '图书馆', outdoor: false, desc: 'Leo 守着。可以借书、坐一天学习。' },
   forge:    { name: '锻造室', outdoor: false, desc: 'Bess 的锻造室，热得烤人。兵器是她的手艺。' },
@@ -474,6 +474,7 @@ const NPCS = [
     bio: '英俊，说话慢，句句带商量的口气。田里的活谁求都帮。挨了骂挨了打，反而踏实来劲。',
     secretHint: '挨了打，他眼睛是亮的。',
     loc: ['field', 'field', 'farm', 'home', 'home'],
+    trade: { sell: [['羊毛', 3]] },   /* 羊毛渠道（言拍板 2026-10-30）：Levi 本人在摊上卖，只卖不收 */
 
     chat: { low: [
       '收成还凑合。要帮忙言语一声就行。',
@@ -1450,49 +1451,49 @@ const MORNING_POOL = [
 
 /* 物品（背包显示用；带 sellTo 的可在对应 NPC 处出售） */
 const ITEMS = {
-  小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。' },
+  小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。', s: '农田帮工（Levi 在田时），一次一份。', u: '卖 Alice，1 币一份。' },
   胡萝卜: { d: 'Alice 的田里成筐出。' },
   土豆: { d: '顶饱的过冬粮。' },
-  蘑菇: { d: '森林里捡的。' },
+  蘑菇: { d: '森林里捡的。', s: '森林采集，一次两个。', u: '卖 Alice，3 币一个。' },
   卷心菜: { d: '结结实实一颗。' },
-  羊毛: { d: '养殖场的稳定产出。' },
+  羊毛: { d: '养殖场的稳定产出。', s: '打猎三五成机会捎带；Levi 的摊子卖 3 币一份；农田帮工也有七成机会得。', u: '做编制小猫、小帽子的料；卖 Jacob 2 币。' },
   奶酪: { d: 'Levi 加工的。' },
-  生肉: { d: '打猎所得。Olivia 收。' },
-  纸张: { d: 'Leo 造的纸。' },
+  生肉: { d: '打猎所得。Olivia 收。', s: '平原打猎，一次 2-4 块。', u: '卖 Olivia，3 币一块。' },
+  纸张: { d: 'Leo 造的纸。', s: 'Leo 的摊子卖，2 币一张。', u: '做泥金手绘本的料。' },
   书: { d: '图书馆的书。看完放回原架。' },
-  稀有花: { d: '森林最深处才有。Leo 出高价，骑士也喜欢。' },
-  铁矿: { d: '矿洞产出。Bess 收。' },
-  药材: { d: '森林采集。Isabel 收。' },
-  治疗药水: { d: 'Isabel 的招牌。' },
+  稀有花: { d: '森林最深处才有。Leo 出高价，骑士也喜欢。', s: '森林采集，一成的运气。', u: '送人（爱情信物）；Leo 收，15 币。' },
+  铁矿: { d: '矿洞产出。Bess 收。', s: '矿洞，近矿薄、深矿厚。', u: '做箭矢的料；卖 Bess 5 币。' },
+  药材: { d: '森林采集。Isabel 收。', s: '森林采集，15% 机会。', u: '卖 Isabel，4 币。' },
+  治疗药水: { d: 'Isabel 的招牌。', s: 'Isabel 的摊子卖，8 币一瓶。', u: '受了伤，在家服一瓶。' },
   毒药: { d: '用途你自己想。' },
-  箭矢: { d: '配你那张弓。放出去就捡不回来。' },
+  箭矢: { d: '配你那张弓。放出去就捡不回来。', s: '开档自带 10 支；Bess 摊 5 币 5 支；家做（铁矿1＋木材2，出 3 支）。', u: '打猎、钟楼夜射用，放出去就捡不回来。' },
   剑: { d: 'Bess 的手艺，比自造的好。' },
   钟表: { d: 'Jacob 的活。走得很准。' },
   指南针: { d: 'Jacob 的活。' },
-  银钉: { d: 'Jacob 打的小零件，修表用。' },
-  木板: { d: '建筑材料。' },
+  银钉: { d: 'Jacob 打的小零件，修表用。', s: 'Jacob 的摊子卖，3 币一枚。', u: '做宝石项链的料。' },
+  木板: { d: '建筑材料。', s: '森林采集，12% 机会。', u: '卖 Jacob，2 币。' },
   蛋糕: { d: 'Olivia 的新出炉。' },
   熟食: { d: '垫肚子用。' },
-  花: { d: '广场边摘的。有人会喜欢。' },
-  弓: { d: '你吃饭的家伙。弦是自己换的。' },
-  水: { d: '井里打的，凉。' },
+  花: { d: '广场边摘的。有人会喜欢。', s: '广场边摘，一天两朵。', u: '送人的礼，骑士最吃这套。' },
+  弓: { d: '你吃饭的家伙。弦是自己换的。', s: '开档自带。', u: '打猎的行头。带着就行，不消耗。' },
+  水: { d: '井里打的，凉。', s: '村里的井，免费打。', u: '做小帽子、泥金手绘本的料。' },
   旧地图: { d: '你带来的物件之一。边角磨白了。' },
   铜哨: { d: '你带来的物件之一。吹起来很响。' },
-  鱼: { d: '水里的。Olivia 收。' },
-  水果: { d: '林子里的野果。垫肚子。' },
-  木材: { d: '捡的枯木。烧火打家具都行。' },
-  兔皮: { d: '打猎的副产物。先囤着。' },
-  腐肉: { d: '怪物身上割的。居然有人收。' },
-  骨头: { d: '怪物的骨头，比牲口的沉。' },
-  怪躯壳: { d: '完整剥下来的怪物躯壳。沉。' },
-  金粉: { d: '矿里筛出的细金粉，捏一点，指尖发亮。' },
-  宝石: { d: '矿洞深处挖出的原石，还没打磨。' },
-  编制小猫: { d: '照着图纸编的小猫，耳朵一只竖一只塌。' },
-  小帽子: { d: '亲手编的小帽子，浆洗过，定着型。' },
-  泥金手绘本: { d: '自己描的手绘本，边角描了金。' },
-  宝石项链: { d: '原石镶在银钉上。你做过的最贵重的东西。' },
-  弹弓: { d: '皮筋绷得紧紧的，树杈打磨过，不硌手。' },
-  黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。' },
+  鱼: { d: '水里的。Olivia 收。', s: '钓鱼，一次 1-2 条。', u: '卖 Olivia，3 币。' },
+  水果: { d: '林子里的野果。垫肚子。', s: '森林采集，一次一个。', u: '卖 Olivia，1 币。' },
+  木材: { d: '捡的枯木。烧火打家具都行。', s: '森林采集，一半机会捎一根。', u: '做弹弓、箭矢的料；卖 Jacob 1 币。' },
+  兔皮: { d: '打猎的副产物。先囤着。', s: '平原打猎，四成机会。', u: '做弹弓的料；卖 Vivienne 2 币。' },
+  腐肉: { d: '怪物身上割的。居然有人收。', s: '杀怪六成掉；骑士替你杀的也归你；钟楼夜射。', u: '卖 Olivia，4 币。' },
+  骨头: { d: '怪物的骨头，比牲口的沉。', s: '杀怪五成掉；护送击杀、钟楼夜射也有。', u: '卖 Bess，1 币。' },
+  怪躯壳: { d: '完整剥下来的怪物躯壳。沉。', s: '杀怪 15% 掉；钟楼夜射也有。', u: '卖 Bess，8 币。' },
+  金粉: { d: '矿里筛出的细金粉，捏一点，指尖发亮。', s: '近矿 12%、深矿 20%。', u: '做泥金手绘本的料；也能补骑士的轻伤。' },
+  宝石: { d: '矿洞深处挖出的原石，还没打磨。', s: '近矿 6%、深矿 12%。', u: '做宝石项链的料。' },
+  编制小猫: { d: '照着图纸编的小猫，耳朵一只竖一只塌。', s: '家里照图纸做（羊毛×2）。', u: '送人的礼。' },
+  小帽子: { d: '亲手编的小帽子，浆洗过，定着型。', s: '家里照图纸做（羊毛×1＋水×1）。', u: '送人的礼。' },
+  泥金手绘本: { d: '自己描的手绘本，边角描了金。', s: '家里照图纸做（纸张×1＋金粉×1＋水×1）。', u: '送人的礼。' },
+  宝石项链: { d: '原石镶在银钉上。你做过的最贵重的东西。', s: '家里照图纸做（宝石×1＋银钉×1）。', u: '送人的礼。' },
+  弹弓: { d: '皮筋绷得紧紧的，树杈打磨过，不硌手。', s: '家里照图纸做（木材×2＋兔皮×1）。', u: '送人的礼。' },
+  黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。', s: '近矿 15%、深矿 55%。', u: '修骑士胸口核心的唯一材料。' },
 };
 
 /* ---------- 探险区域（批二） ---------- */
@@ -1623,6 +1624,7 @@ const GIFT_SCORE = {
   泥金手绘本: { vivienne: 8, levi: 6, leo: 13, asher: 5, alice: 4, bess: 5, isabel: 12, jasper: 7, jacob: 8, lee: 3, olivia: 6, knight: 6 },
   宝石项链:   { vivienne: 17, levi: 9, leo: 7, asher: 7, alice: 10, bess: 14, isabel: 8, jasper: 14, jacob: 7, lee: 6, olivia: 9, knight: 7 },
   弹弓:       { vivienne: 2, levi: 3, leo: 2, asher: 13, alice: 5, bess: 7, isabel: 1, jasper: 4, jacob: 13, lee: 14, olivia: 3, knight: 5 },
+  花:         { vivienne: 2, levi: 2, leo: 1, asher: 3, alice: 3, bess: 1, isabel: 2, jasper: 2, jacob: 1, lee: 2, olivia: 3, knight: 6 },   /* 言拍板 2026-10-30：花入送礼，骑士最高（档案「喜欢花朵」） */
 };
 /* Vivienne 情报·骑士损耗判词（2026-10-28 感性模型生成，言审改五处入池；四档各三条随机） */
 const VIV_KNIGHT_EST = {
@@ -2485,7 +2487,7 @@ function giveFlower() {
 }
 
 /* ---------- 送礼（拍板 #42）：手作礼物＋稀有花；每人每天一份，精力1、占时间格、算理过TA ---------- */
-const GIFT_ITEMS = ['编制小猫', '小帽子', '泥金手绘本', '宝石项链', '弹弓', '稀有花'];
+const GIFT_ITEMS = ['编制小猫', '小帽子', '泥金手绘本', '宝石项链', '弹弓', '稀有花', '花'];
 function doGift(id, item) {
   const def = npcDef(id), st = G.npc[id];
   if (st.giftDay === G.day) return { lines: ['今天已经送过TA一份了。明天再来。'], blocked: true };
@@ -2737,6 +2739,7 @@ function doExplore(zone, act) {
       G.bag.生肉 = (G.bag.生肉 || 0) + meat;
       const got = [`生肉×${meat}`];
       if (Math.random() < 0.4) { G.bag.兔皮 = (G.bag.兔皮 || 0) + 1; got.push('兔皮×1'); }
+      if (Math.random() < 0.35) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got.push('羊毛×1'); }   // 羊毛渠道（言拍板 2026-10-30）：打猎捎带
       lines.push(rnd(EXP_TEXT.huntWin), '拾获：' + got.join('、'));
       G.stats.hunts++;
       if (Math.random() < 0.4) G.force++;
@@ -3606,6 +3609,16 @@ function npcSheet(id) {
   openModal('人物档案', html);
 }
 
+/* ---------- 物品词条（言拍板 2026-10-30）：点背包里的东西，看从哪来、有什么用 ---------- */
+function itemSheet(k) {
+  const it = ITEMS[k];
+  if (!it) return;
+  let html = `<div class="line">${it.d || ''}</div>`;
+  if (it.s) html += `<div class="sec-sub">从哪来</div><div class="li">· ${it.s}</div>`;
+  if (it.u) html += `<div class="sec-sub">有什么用</div><div class="li">· ${it.u}</div>`;
+  openModal(k, html);
+}
+
 function tradeSheet(id) {
   const n = npcDef(id), t = n.trade;
   let html = `<div class="dim">${n.name}的摊子。</div><div class="trade">`;
@@ -3614,8 +3627,10 @@ function tradeSheet(id) {
     for (const [item, price] of t.sell) html += `<button class="btn tb" data-act="buy" data-id="${id}" data-item="${item}" data-p="${price}">${item}${item === '箭矢' ? '×5' : ''} · ${price}币</button>`;
   }
   html += `<div class="sec-sub">TA 收（你有才显示）</div>`;
-  const buys = t.buy.filter(([item]) => (G.bag[item] || 0) > 0);
-  html += buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`;
+  const buys = (t.buy || []).filter(([item]) => (G.bag[item] || 0) > 0);   // 只卖不收的摊主（Levi 卖羊毛）兼容
+  html += (t.buy || []).length
+    ? (buys.length ? buys.map(([item, price]) => `<button class="btn tb" data-act="sell" data-id="${id}" data-item="${item}" data-p="${price}">${item}×${G.bag[item]} · ${price}币${G.npc[id].f >= 60 ? '+' : ''}</button>`).join('') : `<div class="dim">你没有TA收的东西。</div>`)
+    : `<div class="dim">TA 不收东西。</div>`;
   html += `</div><div class="dim" style="margin-top:6px">关系好的话，收价会往上抬一点。</div>`;
   openModal(`交易 · ${n.name}`, html);
 }
@@ -3768,7 +3783,7 @@ document.addEventListener('click', e => {
   if (ch) { chronDetail(+ch.dataset.chron); return; }
 
   const it = e.target.closest('[data-item]');
-  if (it && !e.target.closest('[data-act]')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }
+  if (it && !e.target.closest('[data-act]') && !it.classList.contains('bag-item')) { toast((ITEMS[it.dataset.item] || {}).d || ''); return; }   // 背包物品走下面的完整词条，不走这句提示
 
   const ex = e.target.closest('[data-exp]');
   if (ex) {
@@ -3780,6 +3795,9 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
+
+  const bi = e.target.closest('.bag-item');            // 物品词条（言拍板 2026-10-30）：点背包里的东西看来路
+  if (bi && bi.dataset.item) { itemSheet(bi.dataset.item); return; }
 
   const act = e.target.closest('[data-act]');
   if (!act) {

@@ -280,6 +280,7 @@ function npcSheet(id) {
       const st = G.npc[id];
       if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) continue;   // 未解锁不显示（言拍板：隐藏到解锁）
       if (t.night && G.node < DAY_NODES) continue;                     // 依偎只在夜里出现
+      if (t.afterRestore && id === 'lee' && !st.restored) continue;    // 恢复前 Lee 无亲脸颊/依偎（言拍板 2026-10-30）
       const used = ((G.touch || {})[id + '.' + k] === G.day);
       extras += used
         ? `<button class="btn line ib dis" disabled>${t.name}·今天过了</button>`

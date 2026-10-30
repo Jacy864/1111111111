@@ -196,6 +196,18 @@ t('T21 姐妹线亲脸颊拦（爱恒0）；依偎夜里限定＋爱门槛＋每
   eq(G.npc.knight.l, 91, '爱+1');
   ok(doTouch('knight', 'cuddle').blocked, '当天第二次拦');
 });
+t('T22 恢复前 Lee 锁亲脸颊/依偎、摸头照常（言拍板 2026-10-30）', () => {
+  fresh();
+  TOUCH_OPEN.push('lee');                    // 测试构造：模拟 Lee 开放后的状态
+  G.npc.lee.f = 40; G.npc.lee.l = 80;
+  ok(!doTouch('lee', 'pat').blocked, '恢复前摸头可用（被照顾向）');
+  ok(doTouch('lee', 'kiss').blocked, '恢复前亲脸颊拦');
+  G.node = 3;
+  ok(doTouch('lee', 'cuddle').blocked, '恢复前依偎拦');
+  G.npc.lee.restored = true;
+  ok(!doTouch('lee', 'kiss').blocked, '恢复后亲脸颊解开');
+  TOUCH_OPEN.pop();
+});
 
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {

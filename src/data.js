@@ -1310,8 +1310,8 @@ const CRAFT = {
 const TOUCH = {
   pat:    { name: '摸摸头', f: 30, l: 30, dF: 1 },
   hug:    { name: '拥抱',   f: 60, l: 60, dF: 1 },
-  kiss:   { name: '亲脸颊', l: 60,      dL: 1 },
-  cuddle: { name: '依偎',   l: 90, night: true, dL: 1 },   // 限夜里（夜里大家都在家）
+  kiss:   { name: '亲脸颊', l: 60,      dL: 1, afterRestore: true },   // afterRestore：Lee 恢复前锁（言拍板 2026-10-30）
+  cuddle: { name: '依偎',   l: 90, night: true, dL: 1, afterRestore: true },   // 限夜里（夜里大家都在家）
 };
 /* 第一批开放（言拍板：先样本后铺满）：Asher＋骑士＋Alice；其余 9 人等台词铺满再开 */
 const TOUCH_OPEN = ['asher', 'knight', 'alice'];

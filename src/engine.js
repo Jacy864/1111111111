@@ -193,7 +193,7 @@ function genMorning() {
   addFeed('morn', rnd(MORNING_POOL));
   const kn = G.npc.knight;
   if (kn && kn.l >= 60 && G.stats.flowers > 0) {
-    addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，他说：「她给的。」');
+    addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，它说：「她给的。」');
   }
 }
 
@@ -391,9 +391,9 @@ function doTouch(id, act) {
 /* ---------- 骑士：修补（黄金玉×1·精力2） ---------- */
 function repairKnight() {
   const kn = G.knight;
-  if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里他不让你碰那道缝。「天亮。」' : '夜里他在前线。等天亮。'], blocked: true };
+  if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里它不让你碰那道缝。「天亮。」' : '夜里它在前线。等天亮。'], blocked: true };
   const cap = kn.core ? 50 : 100;                       // 终末之月：半死之躯修不满
-  if (!kn.core && kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (!kn.core && kn.cond >= 100) return { lines: ['它浑身完好，没有要补的地方。'], blocked: true };
   if (kn.core && kn.cond >= cap) return { lines: ['裂缝还合着，不用补。这块黄金玉省下来，夜里裂开再填。'], blocked: true };
   if (kn.repairedToday) return { lines: ['今天补过了。金粉要吃进瓷里才作数，急不来。'], blocked: true };
   if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
@@ -408,7 +408,7 @@ function repairKnight() {
     '你把黄金玉碾成粉，调了水，一点一点按进裂缝。',
     `<b>骑士</b>：「${rnd(tier)}」`,
   ];
-  if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
+  if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。它抬了抬右臂，关节里没有声音了。');
   if (kn.core) lines.push('裂缝合上了大半。剩下的缝，不够今天的金粉填。');
   addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
   G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
@@ -578,7 +578,7 @@ function interact(id, type) {
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
     rel(id, 'f', 2); if (!SISTERS.includes(id)) rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
-    const stress = knightStressRoll(place, false);
+    const stress = id === 'knight' ? null : knightStressRoll(place, false);   /* 2026-10-30 言拍板：闹的对象就是骑士本人时不再拦——不能拦自己 */
     if (stress) {
       lines.push(resolveNames(stress));
       rel('knight', 'f', -2); G.npc.knight.p = clamp(G.npc.knight.p + 1, 0, 100);
@@ -980,7 +980,7 @@ function duelMove(m) {
   const reason = G.duel ? G.duel.reason : 'npcHit';
   G.duel = null;
   const k = G.npc.knight, kn = G.knight;
-  const lines = [resolveNames(DUEL_TEXT.scene[reason] || DUEL_TEXT.scene.npcHit)];
+  const lines = m === 'ctimeout' ? [resolveNames(DUEL_TEXT.scene[reason] || DUEL_TEXT.scene.npcHit)] : [];   /* 开场句对剑弹窗已播过，结果不重播；超时判负隔了确认窗，保留交代场面 */
   kn.duelFlag = true;
 
   if (m === 'a') {                                      // 防御：挨一下，关系掉
@@ -1006,7 +1006,7 @@ function duelMove(m) {
   } else if (m === 'c') {                               // 下死手（限时确认后）
     lines.push(DUEL_TEXT.cGo);
     if (Math.random() < clamp(0.15 + G.force * 0.045, 0.05, 0.85)) {
-      lines.push('他看着你，一直看到瓷白碎开。');
+      lines.push('它看着你，一直看到瓷白碎开。');
       endGame('E3');
       return { lines, over: true };
     }
@@ -1019,7 +1019,7 @@ function duelMove(m) {
     G.hurt = 2; G.energy = 0;
     rel('knight', 'f', -10); rel('knight', 'l', -10);
   } else {                                              // ctimeout：犹豫败北，不死
-    lines.push(DUEL_TEXT.cFail, '剑背把你扫倒在地。他收剑走了，没有再看你。');
+    lines.push(DUEL_TEXT.cFail, '剑背把你扫倒在地。它收剑走了，没有再看你。');
     G.hurt = Math.min(2, G.hurt + 1);
     rel('knight', 'f', -5);
     addFeed('major', '你跟[[knight]]对了一剑，输了。');
@@ -1357,7 +1357,7 @@ function levButton(key) {
 /* Vivienne 的消息：按进度自动挑（骑士损耗 > 村民秘密 > Lee 胡话） */
 function vivInfoText() {
   const k = G.npc.knight, kn = G.knight;
-  if (kn.core || kn.cond < 100 || k.l >= 30) {
+  if (kn.core || kn.cond < 90) {   /* 2026-10-30 言拍板：完好（90+）不提骑士，真有伤才报；分档与状态栏四档对齐 */
     const est = rnd(kn.core ? VIV_KNIGHT_EST.core
       : kn.cond >= 65 ? VIV_KNIGHT_EST.light
       : kn.cond >= 35 ? VIV_KNIGHT_EST.mid

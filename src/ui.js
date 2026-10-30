@@ -213,6 +213,7 @@ function npcSheet(id) {
     toast('星标后，播报只显示与TA有关的事。星标不影响世界运转。');
   }
   const night = G.node >= DAY_NODES;
+  const knNight = id === 'knight' && night;   /* 2026-10-30 言拍板：夜里骑士只留寻欢，它在前线，其他白天再来 */
   let html = `<div class="sheet-head">
     <b class="sheet-name">${n.name}</b>
     <button class="star ${G.stars[id] ? 'on' : ''}" data-act="star" data-id="${id}">${G.stars[id] ? '★ 已星标' : '☆ 星标'}</button>
@@ -234,16 +235,19 @@ function npcSheet(id) {
   if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }
   /* 互动：基础四人组 2×2；送花/交易等进「更多」 */
   const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
-  html += `<div class="sec-sub">互动</div>`;
-  html += `<div class="actrow2">`;
-  html += btn('chat', `闲聊（1）`);
-  if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
-  html += btn('tease', `打闹（2）`);
-  if (!n.noAttack) html += btn('hit', '攻击（2）');
-  html += `</div>`;
-  if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  if (knNight) html += `<div class="dim" style="margin:4px 2px">骑士在前线杀怪，天亮前后经过村口。</div>`;
+  else {
+    html += `<div class="sec-sub">互动</div>`;
+    html += `<div class="actrow2">`;
+    html += btn('chat', `闲聊（1）`);
+    if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
+    html += btn('tease', `打闹（2）`);
+    if (!n.noAttack) html += btn('hit', '攻击（2）');
+    html += `</div>`;
+    if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  }
   let extras = '';
-  if (id === 'knight') {
+  if (id === 'knight' && !knNight) {
     const noFlower = (G.bag.花 || 0) < 1;
     extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
     if (G.knight.cond < 100) {
@@ -282,14 +286,16 @@ function npcSheet(id) {
         : `<button class="btn line ib" data-act="touch" data-id="${id}" data-k="${k}">${t.name}</button>`;
     }
   }
-  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
-  const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
-  if (s.giftDay === G.day)
-    extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
-  else if (!giftables.length)
-    extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
-  else
-    extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
+  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格（夜里骑士不送，白天再来） */
+  if (!knNight) {
+    const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+    if (s.giftDay === G.day)
+      extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
+    else if (!giftables.length)
+      extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
+    else
+      extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
+  }
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
 }

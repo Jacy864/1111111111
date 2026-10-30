@@ -849,13 +849,13 @@ const NPCS = [
       '你今天要是没什么事，就陪我坐会，我刚好熬完一锅药，懒得动弹。',
     ] },
     deep: [
-      '我以前总觉得，站在广场上那个永远不会坏、也不会离开的东西最让人安心，可他终究是个瓷做的死物。',
+      '我以前总觉得，站在广场上那个永远不会坏、也不会离开的东西最让人安心，可它终究是个瓷做的死物。',
       '我每天躺在这里看着天花板，以为自己谁都不在乎，可现在只要门外有脚步声，我就猜是不是你来了。',
-      '我试过把你和他放在一块想，可他连看都没看过我一眼，而你每次进来都会顺手帮我关门。',
+      '我试过把你和它放在一块想，可它连看都没看过我一眼，而你每次进来都会顺手帮我关门。',
       '我什么都知道，也懒得去抢什么，可我现在发现自己越来越想把你留在身边，这让我也挺慌的。',
     ],
     flirt: { low: [
-      '你昨天路过广场的时候看没看，他身上那块瓷皮是不是又掉了。',
+      '你昨天路过广场的时候看没看，它身上那块瓷皮是不是又掉了。',
       '我有时候看着广场那边，有时候看着你，你们俩一个不会流血，一个天天带伤回来，真不知道谁更让人费心。',
       '你今天身上一股铁锈味，跟广场上那个金属疙瘩一模一样，不过你过来点让我闻闻。',
     ], mid: [
@@ -863,7 +863,7 @@ const NPCS = [
       '我以前以为自己喜欢的是那个不会倒下的骑士，可我现在手心里记着的，全是你上次握我手时的温度。',
       '我知道自己在想什么，我也懒得骗自己，我现在心里有两个声音在吵，吵得我头疼。',
     ], high: [
-      '别提广场上那个东西了，他是个好傀儡，可我要的是能陪我躺在这的活人。',
+      '别提广场上那个东西了，它是个好傀儡，可我要的是能陪我躺在这的活人。',
       '以前我觉得谁都一样，现在你一天不来，我连这沙发都躺得不舒服，心里空落落的。',
       '我把那些没用的小心思都扔了，我现在眼里只有你，你可不能反悔。',
     ] },
@@ -1369,7 +1369,7 @@ const NPCS = [
         '你知道我不懂花的含义。但如果是你给我的，它就是有意义的东西。',
       ],
     },
-    /* 偶遇/寻欢/有实后——待接（与 Lee 同模式：批三骑士线/寻欢系统实装时接线） */
+    /* fun* 寻欢已接线（批四）；loverSneak 有实后混入闲聊池；meet 偶遇待偶遇系统接线 */
     after: {
       meet: [
         '你也在这边采矿吗。这里的矿石比较硬，拿来，我帮你凿开。',
@@ -1405,14 +1405,16 @@ const NPCS = [
         '今晚把屋里的灯早点熄了。我清理完前线的怪物，就绕去后窗找你，别锁窗户。',
         'Asher刚刚问我为什么总在你房里待到天黑。我骗他说是在帮你修补顶棚，你等会儿别说漏了。',
       ],
-      loverOpen: [  /* 有实后·恋人版 */
-        '你的手贴进我衣服里很暖和。再往下放一点也没关系，我想记住你摸过的地方。',
-        '今天的矿石我已经帮你凿好运回去了。白天你什么都不用做，多留点体力等我今晚回来。',
-        '如果今晚外面的怪物死得快，我杀完就立刻回你床上，一刻也不多等。',
-        '他们都知道我每天天亮从你屋里出来。让他们看去吧，我本来就是你的。',
-        '你昨晚在我身上留下的那些咬痕和指印，我一点都不想洗，就想这么带去前线。',
-      ],
     },
+    /* 2026-10-30 言拍板：有实后·恋人版 5 条从 after.loverOpen 挪到引擎实读的顶栏（Jacob 同位）——
+       骑士告白实装（感情线第三轮）那天起自动生效；在那之前不出场 */
+    afterRealLover: [
+      '你的手贴进我衣服里很暖和。再往下放一点也没关系，我想记住你摸过的地方。',
+      '今天的矿石我已经帮你凿好运回去了。白天你什么都不用做，多留点体力等我今晚回来。',
+      '如果今晚外面的怪物死得快，我杀完就立刻回你床上，一刻也不多等。',
+      '他们都知道我每天天亮从你屋里出来。让他们看去吧，我本来就是你的。',
+      '你昨晚在我身上留下的那些咬痕和指印，我一点都不想洗，就想这么带去前线。',
+    ],
   },
 ];
 
@@ -1548,7 +1550,7 @@ const ITEMS = {
   泥金手绘本: { d: '自己描的手绘本，边角描了金。', s: '家里照图纸做（纸张×1＋金粉×1＋水×1）。', u: '送人的礼。' },
   宝石项链: { d: '原石镶在银钉上。你做过的最贵重的东西。', s: '家里照图纸做（宝石×1＋银钉×1）。', u: '送人的礼。' },
   弹弓: { d: '皮筋绷得紧紧的，树杈打磨过，不硌手。', s: '家里照图纸做（木材×2＋兔皮×1）。', u: '送人的礼。' },
-  黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。', s: '近矿一成半、深矿过半。连着空手几镐，矿越挖越熟，出玉的机会悄悄涨。骑士陪着下近矿时，他帮你多看一眼矿壁。', u: '修骑士胸口核心的唯一材料。' },
+  黄金玉: { d: '矿洞里才有。近矿偶见，深处成脉。比钻石韧，整块凿下来也不碎。', s: '近矿一成半、深矿过半。连着空手几镐，矿越挖越熟，出玉的机会悄悄涨。骑士陪着下近矿时，它帮你多看一眼矿壁。', u: '修骑士胸口核心的唯一材料。' },
 };
 
 /* ---------- 探险区域（批二） ---------- */
@@ -1625,7 +1627,7 @@ const KNIGHT_COND = [
   [90, '完好', '瓷面整块，天亮时反光。'],
   [65, '轻微裂痕', '小臂和肩甲上有发丝细的缝。'],
   [35, '明显损伤', '胸甲缺了一角，腰侧的缝能塞进指甲。'],
-  [0, '严重碎裂', '裂缝爬满了后背。他站得还是直的。'],
+  [0, '严重碎裂', '裂缝爬满了后背。它站得还是直的。'],
 ];
 const KNIGHT_WEAR_LIGHT = [
   '[[knight]]天亮回村，小臂上新了一道白痕。它说：「没事。夜里的东西比这脆。」',
@@ -1818,10 +1820,10 @@ const DUEL_TEXT = {
     knightHit: '你朝它挥的手还没落下来，剑已经横在了你们中间。',
   },
   aStop: '剑在你颈侧停住，剑刃贴着皮肤。「走。」',
-  aHurt: '剑背把你扫倒在地。他收剑，转身，站在原地没有再动。',
-  bWin: '你硬接了他的三剑，第四剑磕开了他的手腕。他退了半步，垂下剑。你们都在流血。',
-  bLose: '你被剑面拍在墙上，滑坐下去，肋骨响了两声。他站在原地，剑垂下去，没有再动。',
-  cGo: '你看准了他收剑的那半寸。这半寸里只有一次机会。',
+  aHurt: '剑背把你扫倒在地。它收剑，转身，站在原地没有再动。',
+  bWin: '你硬接了它的三剑，第四剑磕开了它的手腕。它退了半步，垂下剑。你们都在流血。',
+  bLose: '你被剑面拍在墙上，滑坐下去，肋骨响了两声。它站在原地，剑垂下去，没有再动。',
+  cGo: '你看准了它收剑的那半寸。这半寸里只有一次机会。',
   cFail: '你犹豫的那一瞬，它先动了。',
   cLose: '它先动了。剑停在你胸口前——最后偏了半寸，削断了你一缕头发。你们都没有再说话。',
 };
@@ -1852,16 +1854,16 @@ const ENDINGS = {
     body: [
       '全村下了葬。皇帝来函：「该骑士已尽力。」',
       '一个月后，皇帝的信使送来新骑士。一模一样的瓷白，一模一样的湖蓝眼睛，一模一样的温柔。',
-      '他向你正式自我介绍：「外来者，你好。我是本村的新任守护者。」',
-      '你递给他一朵花。他礼貌道谢，问：「请问你是？」',
+      '它向你正式自我介绍：「外来者，你好。我是本村的新任守护者。」',
+      '你递给它一朵花。它礼貌道谢，问：「请问你是？」',
     ],
   },
   E2a: {
     title: '第三十个黎明',
-    sub: '他和它们一起停在晨光里。',
+    sub: '它和怪物一起停在晨光里。',
     body: [
-      '三十天里，你每天用金粉吊着他的命。他每天道谢，道谢到最后一晚。',
-      '第三十个黎明，怪物死去的时刻，他和它们一起停在晨光里。',
+      '三十天里，你每天用金粉吊着它的命。它每天道谢，道谢到最后一晚。',
+      '第三十个黎明，怪物死去的时刻，它和怪物一起停在晨光里。',
       '全村下葬。皇帝来函：「该骑士已尽力。」',
     ],
   },
@@ -1869,48 +1871,48 @@ const ENDINGS = {
     title: '界线之外',
     sub: '',
     body: [
-      '第三十个黎明，怪物死在晨光里。他没有停。',
+      '第三十个黎明，怪物死在晨光里。它没有停。',
       '没有御匠的重构，凭着被补了三十天的躯壳，挣脱了皇帝的控纹。',
-      '他跨出村界，第一次站在村庄的边界线外。湖蓝色的眼睛看着你。',
+      '它跨出村界，第一次站在村庄的边界线外。湖蓝色的眼睛看着你。',
       '「外面是什么样的？」',
     ],
-    choice: ['一起走', '他留下'],
-    v0: ['你把家当捆上背。他的手很凉，一直没松。', '（你和他都没再回来。村里人说，北边的官道上有一对怪客，一个瓷白，一个背弓。）'],
-    v1: ['他看了村界很久，然后退回来一步，站回了界线里面。「有人得守着他们。」', '（他自愿留下守护村民。你出村那天，他送到界石，站住，像每一次一样。）'],
+    choice: ['一起走', '它留下'],
+    v0: ['你把家当捆上背。它的手很凉，一直没松。', '（你和它都没再回来。村里人说，北边的官道上有一对怪客，一个瓷白，一个背弓。）'],
+    v1: ['它看了村界很久，然后退回来一步，站回了界线里面。「有人得守着他们。」', '（它自愿留下守护村民。你出村那天，它送到界石，站住，像每一次一样。）'],
   },
   E2c: {
     title: '沉默里凋零',
-    sub: '他拒绝了你的金粉。',
+    sub: '它拒绝了你的金粉。',
     body: [
-      '他不再让你修补。裂缝一天天爬满全身，他在沉默里凋零。',
-      '最后一天，他开口说了一句：「对不起。」',
+      '它不再让你修补。裂缝一天天爬满全身，它在沉默里凋零。',
+      '最后一天，它开口说了一句：「对不起。」',
       '全村下葬。皇帝来函：「该骑士已尽力。」',
     ],
   },
   E3: {
     title: '瓷白碎开',
-    sub: '你亲手打碎了他。',
+    sub: '你亲手打碎了它。',
     bodyLove: [
-      '他没有防御，松开了剑。「动手吧。」',
-      '他看着你，一直看到瓷白碎开。',
+      '它没有防御，松开了剑。「动手吧。」',
+      '它看着你，一直看到瓷白碎开。',
     ],
     bodyFriend: [
-      '他全力应战到最后一刻，死时仍不明白为什么。',
+      '它全力应战到最后一刻，死时仍不明白为什么。',
     ],
     bodyPoss: [
-      '他玉石俱焚，拖着重伤与你同倒。你们都没能站起来。',
+      '它玉石俱焚，拖着重伤与你同倒。你们都没能站起来。',
     ],
     tail: [
-      '皇帝的信使仍会送来新骑士。但村民都知道是谁杀了他。',
+      '皇帝的信使仍会送来新骑士。但村民都知道是谁杀了它。',
       'Asher 再也不来你家睡了。',
     ],
   },
   E4: {
     title: '清除威胁',
-    sub: '剑落下来的那一刻，你想起的是第一次送他的花。',
+    sub: '剑落下来的那一刻，你想起的是第一次送它的花。',
     body: [
       '皇帝来函嘉奖骑士「清除威胁」。',
-      '嘉奖函被他垫在了花盆底下。花盆里的花，是你种的。',
+      '嘉奖函被它垫在了花盆底下。花盆里的花，是你种的。',
     ],
   },
 };
@@ -2198,7 +2200,7 @@ function genMorning() {
   addFeed('morn', rnd(MORNING_POOL));
   const kn = G.npc.knight;
   if (kn && kn.l >= 60 && G.stats.flowers > 0) {
-    addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，他说：「她给的。」');
+    addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，它说：「她给的。」');
   }
 }
 
@@ -2396,9 +2398,9 @@ function doTouch(id, act) {
 /* ---------- 骑士：修补（黄金玉×1·精力2） ---------- */
 function repairKnight() {
   const kn = G.knight;
-  if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里他不让你碰那道缝。「天亮。」' : '夜里他在前线。等天亮。'], blocked: true };
+  if (G.node >= DAY_NODES) return { lines: [kn.core ? '夜里它不让你碰那道缝。「天亮。」' : '夜里它在前线。等天亮。'], blocked: true };
   const cap = kn.core ? 50 : 100;                       // 终末之月：半死之躯修不满
-  if (!kn.core && kn.cond >= 100) return { lines: ['他浑身完好，没有要补的地方。'], blocked: true };
+  if (!kn.core && kn.cond >= 100) return { lines: ['它浑身完好，没有要补的地方。'], blocked: true };
   if (kn.core && kn.cond >= cap) return { lines: ['裂缝还合着，不用补。这块黄金玉省下来，夜里裂开再填。'], blocked: true };
   if (kn.repairedToday) return { lines: ['今天补过了。金粉要吃进瓷里才作数，急不来。'], blocked: true };
   if ((G.bag.黄金玉 || 0) < 1) return { lines: ['手里没有黄金玉。矿洞深处才有。'], blocked: true };
@@ -2413,7 +2415,7 @@ function repairKnight() {
     '你把黄金玉碾成粉，调了水，一点一点按进裂缝。',
     `<b>骑士</b>：「${rnd(tier)}」`,
   ];
-  if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。他抬了抬右臂，关节里没有声音了。');
+  if (!kn.core && kn.cond >= 100) lines.push('瓷面上再看不到缝。它抬了抬右臂，关节里没有声音了。');
   if (kn.core) lines.push('裂缝合上了大半。剩下的缝，不够今天的金粉填。');
   addFeed('you', '你用金粉补上了[[knight]]的裂缝。', ['knight']);
   G.energy -= COST.repair + (G.hurt === 2 ? 1 : 0);
@@ -2583,7 +2585,7 @@ function interact(id, type) {
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {
     rel(id, 'f', 2); if (!SISTERS.includes(id)) rel(id, 'l', 1); G.stats.teases++; st.teases = (st.teases || 0) + 1; youFeed('tease', { id, place: pname });
-    const stress = knightStressRoll(place, false);
+    const stress = id === 'knight' ? null : knightStressRoll(place, false);   /* 2026-10-30 言拍板：闹的对象就是骑士本人时不再拦——不能拦自己 */
     if (stress) {
       lines.push(resolveNames(stress));
       rel('knight', 'f', -2); G.npc.knight.p = clamp(G.npc.knight.p + 1, 0, 100);
@@ -2985,7 +2987,7 @@ function duelMove(m) {
   const reason = G.duel ? G.duel.reason : 'npcHit';
   G.duel = null;
   const k = G.npc.knight, kn = G.knight;
-  const lines = [resolveNames(DUEL_TEXT.scene[reason] || DUEL_TEXT.scene.npcHit)];
+  const lines = m === 'ctimeout' ? [resolveNames(DUEL_TEXT.scene[reason] || DUEL_TEXT.scene.npcHit)] : [];   /* 开场句对剑弹窗已播过，结果不重播；超时判负隔了确认窗，保留交代场面 */
   kn.duelFlag = true;
 
   if (m === 'a') {                                      // 防御：挨一下，关系掉
@@ -3011,7 +3013,7 @@ function duelMove(m) {
   } else if (m === 'c') {                               // 下死手（限时确认后）
     lines.push(DUEL_TEXT.cGo);
     if (Math.random() < clamp(0.15 + G.force * 0.045, 0.05, 0.85)) {
-      lines.push('他看着你，一直看到瓷白碎开。');
+      lines.push('它看着你，一直看到瓷白碎开。');
       endGame('E3');
       return { lines, over: true };
     }
@@ -3024,7 +3026,7 @@ function duelMove(m) {
     G.hurt = 2; G.energy = 0;
     rel('knight', 'f', -10); rel('knight', 'l', -10);
   } else {                                              // ctimeout：犹豫败北，不死
-    lines.push(DUEL_TEXT.cFail, '剑背把你扫倒在地。他收剑走了，没有再看你。');
+    lines.push(DUEL_TEXT.cFail, '剑背把你扫倒在地。它收剑走了，没有再看你。');
     G.hurt = Math.min(2, G.hurt + 1);
     rel('knight', 'f', -5);
     addFeed('major', '你跟[[knight]]对了一剑，输了。');
@@ -3362,7 +3364,7 @@ function levButton(key) {
 /* Vivienne 的消息：按进度自动挑（骑士损耗 > 村民秘密 > Lee 胡话） */
 function vivInfoText() {
   const k = G.npc.knight, kn = G.knight;
-  if (kn.core || kn.cond < 100 || k.l >= 30) {
+  if (kn.core || kn.cond < 90) {   /* 2026-10-30 言拍板：完好（90+）不提骑士，真有伤才报；分档与状态栏四档对齐 */
     const est = rnd(kn.core ? VIV_KNIGHT_EST.core
       : kn.cond >= 65 ? VIV_KNIGHT_EST.light
       : kn.cond >= 35 ? VIV_KNIGHT_EST.mid
@@ -3749,6 +3751,7 @@ function npcSheet(id) {
     toast('星标后，播报只显示与TA有关的事。星标不影响世界运转。');
   }
   const night = G.node >= DAY_NODES;
+  const knNight = id === 'knight' && night;   /* 2026-10-30 言拍板：夜里骑士只留寻欢，它在前线，其他白天再来 */
   let html = `<div class="sheet-head">
     <b class="sheet-name">${n.name}</b>
     <button class="star ${G.stars[id] ? 'on' : ''}" data-act="star" data-id="${id}">${G.stars[id] ? '★ 已星标' : '☆ 星标'}</button>
@@ -3770,16 +3773,19 @@ function npcSheet(id) {
   if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }
   /* 互动：基础四人组 2×2；送花/交易等进「更多」 */
   const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
-  html += `<div class="sec-sub">互动</div>`;
-  html += `<div class="actrow2">`;
-  html += btn('chat', `闲聊（1）`);
-  if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
-  html += btn('tease', `打闹（2）`);
-  if (!n.noAttack) html += btn('hit', '攻击（2）');
-  html += `</div>`;
-  if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  if (knNight) html += `<div class="dim" style="margin:4px 2px">骑士在前线杀怪，天亮前后经过村口。</div>`;
+  else {
+    html += `<div class="sec-sub">互动</div>`;
+    html += `<div class="actrow2">`;
+    html += btn('chat', `闲聊（1）`);
+    if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
+    html += btn('tease', `打闹（2）`);
+    if (!n.noAttack) html += btn('hit', '攻击（2）');
+    html += `</div>`;
+    if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+  }
   let extras = '';
-  if (id === 'knight') {
+  if (id === 'knight' && !knNight) {
     const noFlower = (G.bag.花 || 0) < 1;
     extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
     if (G.knight.cond < 100) {
@@ -3818,14 +3824,16 @@ function npcSheet(id) {
         : `<button class="btn line ib" data-act="touch" data-id="${id}" data-k="${k}">${t.name}</button>`;
     }
   }
-  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
-  const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
-  if (s.giftDay === G.day)
-    extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
-  else if (!giftables.length)
-    extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
-  else
-    extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
+  /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格（夜里骑士不送，白天再来） */
+  if (!knNight) {
+    const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
+    if (s.giftDay === G.day)
+      extras += `<button class="btn line ib dis" disabled>送礼（1）·今天送过了</button>`;
+    else if (!giftables.length)
+      extras += `<button class="btn line ib dis" disabled>送礼（1）·没有能送的</button>`;
+    else
+      extras += `<button class="btn line ib" data-act="gift" data-id="${id}">送礼（1）</button>`;
+  }
   if (extras) html += `<div class="sec-sub">更多</div><div class="actrow2">${extras}</div>`;
   openModal('人物档案', html);
 }

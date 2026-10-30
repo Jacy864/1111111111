@@ -558,7 +558,7 @@ function interact(id, type) {
   if ((type === 'chat' || type === 'flirt') && st.coldPending && def.cold.length) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.cold)}」`);
     st.coldPending = false;
-  } else if ((type === 'chat' || type === 'flirt') && st.l >= 30 && daysSince >= jgap && def.jealous.length) {
+  } else if ((type === 'chat' || type === 'flirt') && (SISTERS.includes(id) ? st.f >= 40 : st.l >= 30) && daysSince >= jgap && def.jealous.length) {   // 姐妹吃醋走友≥40（#38 友谊版），他人仍走爱≥30
     lines.push(`<b>${def.name}</b>：「${rnd(def.jealous)}」`);
   }
 
@@ -572,6 +572,8 @@ function interact(id, type) {
   const pname = (PLACES[place] || {}).name || '前线';
   if (type === 'chat') { rel(id, 'f', 2); G.stats.chats++; youFeed('chat', { id, place: pname }); if (Math.random() < 0.15 && def.deep.length && st.f >= 40) {
     lines.push(`<b>${def.name}</b>：「${rnd(def.deep)}」`); rel(id, 'f', 1);
+  } else if (SISTERS.includes(id) && st.f >= 60 && def.bestie && def.bestie.length && Math.random() < 0.15) {   // 摯友限定（#38）：友 60+ 低概率冒头
+    lines.push(`<b>${def.name}</b>：「${rnd(def.bestie)}」`);
   } }
   if (type === 'flirt') { st.f >= 40 ? (rel(id, 'l', 4), rel(id, 'f', 1), rel(id, 'p', 2)) : rel(id, 'l', 1); youFeed('flirt', { id }); touchLog(id); }
   if (type === 'tease') {

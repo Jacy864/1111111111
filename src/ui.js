@@ -141,9 +141,7 @@ function homeHtml() {
   if (learned.length) {
     html += `<div class="actrow2">`;
     for (const k of learned) {
-      const c = CRAFT[k];
-      const mats = Object.entries(c.mats).map(([m, q]) => `${m}×${q}`).join('·');
-      html += `<button class="btn" data-act="craft" data-k="${k}">做·${c.name}${c.out ? '×' + c.out : ''}（精力2·${mats}）</button>`;
+      html += `<button class="btn" data-act="craftq" data-k="${k}">${CRAFT[k].name}</button>`;   /* 言拍板 2026-10-30：按钮只留名称，详情点开再看 */
     }
     html += `</div>`;
   } else {
@@ -331,6 +329,21 @@ function qtyHtml() {
   else html += `<button class="btn" data-act="sell" data-id="${q.id}" data-item="${q.item}" data-p="${q.price}" data-q="${q.n}">卖 ${q.n} 个 · ${per * q.n} 安娜币${per > q.price ? '（熟人价）' : ''}</button>`;
   html += `</div>`;
   openModal(`${buy ? '买' : '卖'}多少？ · ${q.item}`, html);
+}
+
+/* ---------- 制作详情弹窗（言拍板 2026-10-30）：点开才看清精力和材料，确认再动手 ---------- */
+function craftSheet(k) {
+  const c = CRAFT[k]; if (!c) return;
+  const lack = [];
+  const mats = Object.entries(c.mats).map(([m, q]) => {
+    const have = G.bag[m] || 0;
+    if (have < q) lack.push(`${m}×${q - have}`);
+    return `<div class="line">${m} ×${q} <span class="dim">（你有${have}）</span>${have < q ? ` <b style="color:var(--red)">还差${q - have}</b>` : ''}</div>`;
+  }).join('');
+  openModal(`制作 · ${c.name}`, `<div class="dim">精力2 · 占一个时间格${c.out ? ` · 做一份得${c.name}×${c.out}` : ''}</div>${mats}<div class="actrow2">${
+    lack.length ? `<button class="btn dis" disabled>材料不够·还差${lack.join('、')}</button>`
+      : `<button class="btn" data-act="craft" data-k="${k}">制作（精力2）</button>`
+  }</div>`);
 }
 
 /* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */
@@ -577,6 +590,7 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
+  if (a === 'craftq') { craftSheet(act.dataset.k); return; }
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot'
     || a === 'blueprint' || a === 'craft' || a === 'helpfarm') {
     const r = doPlaceAction(a === 'craft' ? 'home' : V.place, a, act.dataset.k);

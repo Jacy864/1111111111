@@ -55,6 +55,9 @@ function t(name, cond, extra) {
     body = await $txt('#modal-body');
     t('U5 Levi 摊·卖羊毛3币', body.includes('TA 卖') && body.includes('羊毛') && body.includes('3币'));
     t('U5b 只卖不收·显示不收东西', body.includes('TA 不收东西。'));
+    /* U5c 买羊毛（拍板#47改版：点商品→数量弹窗→确认买） */
+    await page.locator('[data-act="qbuy"][data-id="levi"][data-item="羊毛"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="buy"][data-id="levi"][data-item="羊毛"]', { timeout: 15000 });
     await page.locator('[data-act="buy"][data-id="levi"][data-item="羊毛"]').click({ timeout: 15000 });
     await page.waitForTimeout(300);
     const r5 = await ev(() => ({ wool: G.bag['羊毛'] || 0, coins: G.coins }));
@@ -120,6 +123,22 @@ function t(name, cond, extra) {
     t('U10 做蛋糕·台词出现', body.includes('一人一半') && body.includes('比 Olivia 的甜'));
     const r10 = await ev(() => ({ f: G.npc.asher.f, again: !!document.querySelector('[data-act="bake"]') }));
     t('U10b Asher友好+3·当天按钮收回', r10.f === fa + 3 && !r10.again);
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+
+    /* U11 制作弹窗（言拍板 2026-10-30）：按钮只留名称，精力和材料点开才见 */
+    await ev(() => { G.node = 0; G.blueprints.sling = true; G.bag['木材'] = 2; G.bag['兔皮'] = 1; render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="craftq"][data-k="sling"]', { timeout: 15000 });
+    const cb = await $txt('[data-act="craftq"][data-k="sling"]');
+    t('U11 制作按钮只留名称', cb.trim() === '弹弓', JSON.stringify(cb));
+    await page.locator('[data-act="craftq"][data-k="sling"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    body = await $txt('#modal-body');
+    t('U11b 弹窗见精力与材料', body.includes('精力2') && body.includes('木材 ×2') && body.includes('兔皮 ×1'), body.slice(0, 60));
+    await page.locator('[data-act="craft"][data-k="sling"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r11 = await ev(() => ({ got: G.bag['弹弓'] || 0, wood: G.bag['木材'] || 0 }));
+    t('U11c 制作入包·材料扣掉', r11.got === 1 && r11.wood === 0, JSON.stringify(r11));
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
 
     /* U9 全程零报错 */

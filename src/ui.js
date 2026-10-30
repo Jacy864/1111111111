@@ -270,6 +270,18 @@ function npcSheet(id) {
       extras += `<button class="btn line ib dis" disabled>寻欢（还不到那一步）</button>`;
   }
   if (n.trade) extras += `<button class="btn line ib" data-act="trade" data-id="${id}">交易（精力0）</button>`;
+  /* 肢体互动（言拍板 2026-10-30 第十九场）：解锁了才显示，未解锁隐藏；当天用过灰态 */
+  if (TOUCH_OPEN.includes(id)) {
+    for (const [k, t] of Object.entries(TOUCH)) {
+      const st = G.npc[id];
+      if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) continue;   // 未解锁不显示（言拍板：隐藏到解锁）
+      if (t.night && G.node < DAY_NODES) continue;                     // 依偎只在夜里出现
+      const used = ((G.touch || {})[id + '.' + k] === G.day);
+      extras += used
+        ? `<button class="btn line ib dis" disabled>${t.name}·今天过了</button>`
+        : `<button class="btn line ib" data-act="touch" data-id="${id}" data-k="${k}">${t.name}</button>`;
+    }
+  }
   /* 送礼（拍板 #42）：每人每天一份，精力1、占时间格 */
   const giftables = GIFT_ITEMS.filter(it => (G.bag[it] || 0) > 0);
   if (s.giftDay === G.day)
@@ -548,6 +560,12 @@ document.addEventListener('click', e => {
   if (a === 'star') { G.stars[id] = !G.stars[id]; save(); npcSheet(id); render(); return; }
   if (a === 'trade') { tradeSheet(id); return; }
   if (a === 'gift') { giftSheet(id); return; }
+  if (a === 'touch') {   // 肢体互动（言拍板 2026-10-30 第十九场）
+    const r = doTouch(id, act.dataset.k);
+    resultSheet(r.lines);
+    if (!r.blocked) render();
+    return;
+  }
   if (a === 'give') {
     const r = doGift(id, act.dataset.item);
     resultSheet(r.lines);

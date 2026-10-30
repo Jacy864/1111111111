@@ -37,6 +37,7 @@ function newGame() {
     nightJacobAtTower: false,
     hurt: 0,               // 伤势：0完好 1轻伤 2重伤
     loveTouch: [],         // 今日亲密对象（暧昧/寻欢），每晚占有欲结算用
+    touch: {},             // 肢体互动每日记录（言拍板 2026-10-30）
     nightHunted: false,    // （夜间出门已删 2026-10-27，字段留作旧档兼容，恒 false）
     helpedKnight: false,   // （钟楼夜射已删 2026-10-27，字段留作旧档兼容，恒 false）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
@@ -71,6 +72,7 @@ function load() {
     G.stats.kills = G.stats.kills || 0;
     G.stats.gy = G.stats.gy || 0;
     G.mineDry = G.mineDry || 0;   // 矿越挖越熟：连续空镐计数（言拍板 2026-10-30），老档补默认
+    G.touch = G.touch || {};      // 肢体互动每日记录（言拍板 2026-10-30），老档补默认
     G.knight = Object.assign({ cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false }, G.knight || {});
     G.nightHunted = !!G.nightHunted;
     G.helpedKnight = !!G.helpedKnight;
@@ -364,6 +366,26 @@ function knightWear() {
     addFeed('major', rnd(DOOM_TEXT.start));
     addFeed('sim', resolveNames('[[knight]]说：「三十天后，皇帝的信使到。新的人会来。」'));
   }
+}
+
+/* ---------- 肢体互动（言拍板 2026-10-30 第十九场）：摸摸头/拥抱/亲脸颊/依偎 ---------- */
+function doTouch(id, act) {
+  const def = npcDef(id), t = TOUCH[act];
+  if (!def || !t) return { lines: ['……'], blocked: true };
+  if (!TOUCH_OPEN.includes(id)) return { lines: ['TA 还不习惯这样。'], blocked: true };   // 第一批只开 3 人
+  const st = G.npc[id];
+  if (!((t.f && st.f >= t.f) || (t.l && st.l >= t.l))) return { lines: ['还没到那一步。'], blocked: true };
+  if (t.night && G.node < DAY_NODES) return { lines: ['这个要等夜里。'], blocked: true };
+  G.touch = G.touch || {};
+  const key = id + '.' + act;
+  if (G.touch[key] === G.day) return { lines: ['今天已经亲近过了，再要就腻了。'], blocked: true };
+  G.touch[key] = G.day;
+  const pool = (TOUCH_TEXT[id] || {})[act] || [];
+  const lines = [pool.length ? rnd(pool) : 'TA 没有躲开。'];   // 台词池空时用中性句，回流后自动换
+  if (t.dF) { rel(id, 'f', t.dF); lines.push(`友 +${t.dF}`); }
+  if (t.dL) { rel(id, 'l', t.dL); lines.push(`爱 +${t.dL}`); }
+  G.dayLog.push(`跟${def.name}${t.name}`);
+  return { lines };
 }
 
 /* ---------- 骑士：修补（黄金玉×1·精力2） ---------- */

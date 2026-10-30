@@ -166,6 +166,22 @@ function t(name, cond, extra) {
     t('U12c 返回蛋糕弹窗', (await $txt('#modal-title')).includes('做蛋糕'));
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
 
+    /* U13 肢体互动（言拍板 2026-10-30 第十九场）：Alice 姐妹线只见摸头/拥抱，亲脸颊不出现；点摸头友+1 */
+    await ev(() => { G.npc.alice.f = 61; render(); });
+    await page.locator('[data-t="village"]').click({ timeout: 15000 });
+    await page.locator('[data-place="field"]').click({ timeout: 15000 });
+    await page.waitForSelector('.npc-card[data-npc="alice"]', { timeout: 15000 });
+    await page.locator('.npc-card[data-npc="alice"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="touch"][data-id="alice"][data-k="pat"]', { timeout: 15000 });
+    t('U13 解锁的摸头/拥抱显示', !!(await page.$('[data-act="touch"][data-id="alice"][data-k="hug"]')));
+    t('U13b 姐妹线无亲脸颊', !(await page.$('[data-act="touch"][data-id="alice"][data-k="kiss"]')));
+    const fa13 = await ev(() => G.npc.alice.f);
+    await page.locator('[data-act="touch"][data-id="alice"][data-k="pat"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r13 = await ev(() => G.npc.alice.f);
+    t('U13c 摸头友+1', r13 === fa13 + 1, `${fa13}→${r13}`);
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

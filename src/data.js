@@ -1248,6 +1248,24 @@ const CRAFT = {
   arrows:   { name: '箭矢',       out: 3, mats: { 铁矿: 1, 木材: 2 } },
 };
 
+/* ---------- 肢体互动（言拍板 2026-10-30 第十九场）：摸摸头/拥抱/亲脸颊/依偎 ---------- */
+/* 门槛：友 f / 爱 l 满足任一即解锁（未解锁按钮隐藏，言拍板）；姐妹线无爱情值→亲脸颊/依偎自然不出 */
+/* 每人每天一次、不耗精力、不占时间格；收益 +1（摸头/拥抱涨友、亲脸颊/依偎涨爱） */
+const TOUCH = {
+  pat:    { name: '摸摸头', f: 30, l: 30, dF: 1 },
+  hug:    { name: '拥抱',   f: 60, l: 60, dF: 1 },
+  kiss:   { name: '亲脸颊', l: 60,      dL: 1 },
+  cuddle: { name: '依偎',   l: 90, night: true, dL: 1 },   // 限夜里（夜里大家都在家）
+};
+/* 第一批开放（言拍板：先样本后铺满）：Asher＋骑士＋Alice；其余 9 人等台词铺满再开 */
+const TOUCH_OPEN = ['asher', 'knight', 'alice'];
+/* 台词池（每动作 5 句，感性模型生成回流后填；空池期显示系统中性句） */
+const TOUCH_TEXT = {
+  asher:  { pat: [], hug: [], kiss: [], cuddle: [] },
+  knight: { pat: [], hug: [], kiss: [], cuddle: [] },
+  alice:  { pat: [], hug: [] },   // 姐妹线只有摸头/拥抱
+};
+
 /* 送礼加分表（友+；拍板 #42 定稿：删负分块，收礼不降好感，全表最低 +1） */
 const GIFT_SCORE = {
   编制小猫:   { vivienne: 2, levi: 5, leo: 4, asher: 10, alice: 5, bess: 2, isabel: 4, jasper: 10, jacob: 4, lee: 11, olivia: 10, knight: 12 },

@@ -175,6 +175,28 @@ t('T19 骑士护送多看一眼矿壁：主roll空手、护送额外roll出玉',
   eq(G.mineDry, 1, '主roll空手照常计数');
 });
 
+/* ============ 六c、肢体互动（言拍板 2026-10-30 第十九场） ============ */
+t('T20 摸头门槛与每日一次', () => {
+  fresh();
+  G.npc.asher.f = 29;
+  ok(doTouch('asher', 'pat').blocked, '友29 摸头拦');
+  G.npc.asher.f = 30;
+  const r = doTouch('asher', 'pat');
+  ok(!r.blocked, '友30 摸头过');
+  eq(G.npc.asher.f, 31, '友+1');
+  ok(doTouch('asher', 'pat').blocked, '当天第二次拦');
+});
+t('T21 姐妹线亲脸颊拦（爱恒0）；依偎夜里限定＋爱门槛＋每日一次', () => {
+  fresh();
+  ok(doTouch('alice', 'kiss').blocked, '姐妹线爱恒0，亲脸颊拦');
+  G.npc.knight.l = 90;
+  ok(doTouch('knight', 'cuddle').blocked, '白天依偎拦');
+  G.node = 3;
+  ok(!doTouch('knight', 'cuddle').blocked, '夜里依偎过');
+  eq(G.npc.knight.l, 91, '爱+1');
+  ok(doTouch('knight', 'cuddle').blocked, '当天第二次拦');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {
   const endings = {};

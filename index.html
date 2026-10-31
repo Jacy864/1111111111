@@ -288,7 +288,8 @@ button { font-family: inherit; }
   transition: background .12s, transform .12s;
 }
 .chron:active { background: var(--wash); transform: scale(.985); }
-.trade { margin-top: 4px; }
+.trade { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 10px; }   /* 补 flex：.tb 的 45% 两列排版一直没生效，按钮退化成行内堆叠（2026-10-31 言报修：邀人弹窗黏成黑块） */
+.trade .sec-sub, .trade .dim { flex: 1 1 100%; }   /* 摊位弹窗里的「TA卖/TA收」小标签和提示行独占一行，不挤进按钮列 */
 
 /* ---------- 启动页 ---------- */
 .boot {

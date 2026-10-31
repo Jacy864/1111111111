@@ -482,7 +482,7 @@ const NPCS = [
     ],
   },
   { id: 'isabel', name: 'Isabel', job: '炼药师', initF: 10, nightStay: 'alchemy',
-    bio: '村里的炼药师，常年躺在店里的沙发上，能不动就不动。慵懒，随性，说话爱拐弯补一句。药和毒都卖，喜欢熬夜制药。',
+    bio: '村里的炼药师，常年躺在店里的沙发上，能不动就不动。慵懒，随性，说话爱拐弯补一句。什么药都卖，喜欢熬夜制药。',   /* 「药和毒都卖」→去卖毒设定（言拍板 2026-10-31 #74，历史遗留清账）；台词里玩毒趣味保留 */
     secretHint: '她看骑士的眼神和看你的眼神，是同一种。',
     loc: ['alchemy', 'alchemy', 'alchemy', 'alchemy', 'alchemy'],
     trade: { sell: [['治疗药水', 8]], buy: [['药材', 4], ['腐肉', 4]], moody: true },   /* 腐肉@4 收购转入（2026-10-31 拍板：Olivia 拆病后不再收，炼药师收毒原料顺理成章，打怪掉落有去处的经济链保住） */
@@ -1844,7 +1844,7 @@ const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 0, f
   gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
-const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 1.5, lee: 0.6, jasper: 0.5, levi: 0.5 };  /* Jacob 0.6→1.5（言拍板 2026-10-31 #66：新人设占有欲极强，升最高档与神母同级） */
+const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 1.5, lee: 0.6, jasper: 1.0, levi: 0.6 };  /* Jacob 0.6→1.5（#66）；Jasper 0.5→1.0 与骑士同档、Levi 0.5→0.6 与 Bess 同档（言拍板 2026-10-31 #74），其余照收结案 */
 
 /* Vivienne 活报纸台词池（2026-10-31 言稿 17 句入池，拍板 #71：村闻圣堂→教堂/前街→广场听人说、行踪删「去」字、私密告解室改「找我忏悔」、两处开头微调；{x}=当日事实占位，引擎填入前剥尾句号） */
 const VIV_NEWS = {

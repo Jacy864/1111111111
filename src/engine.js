@@ -29,7 +29,7 @@ function newGame() {
   G = {
     day: 1, node: 0,
     energy: MAX_ENERGY, coins: 20, force: 5,
-    bag: { 弓: 1, 箭矢: 10, 生肉: 3 },
+    bag: { 弓: 1, 剑: 1, 箭矢: 10, 生肉: 3 },
     npc: {}, stars: {},
     feed: [], chronicle: [],
     dayLog: [],            // 今天玩家的行动记录
@@ -107,6 +107,9 @@ function load() {
     G.leeClue = G.leeClue || {};
     if (G.npc.lee && G.npc.lee.restored) applyLeeAfter();
     G.npc.lee.clueGiven = G.npc.lee.clueGiven || [];
+    /* 死物品结案（#75，2026-10-31）：钟表/指南针/毒药删除清包；剑补发（开档自带，老档同步） */
+    for (const k of ['钟表', '指南针', '毒药']) delete G.bag[k];
+    G.bag.剑 = G.bag.剑 || 1;
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;

@@ -220,7 +220,7 @@ function npcSheet(id) {
   </div>`;
   const lnow = locOf(n, G.node);
   const locName = lnow === 'home' ? (n.livesWithYou ? '你家' : '家里') : (PLACES[lnow] ? PLACES[lnow].name : '前线');
-  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${locName}</div>`;
+  html += `<div class="dim">${n.job}${n.age ? ' · ' + n.age + '岁' : ''} · ${locName}${G.spouse === id ? ' · 你的伴侣' : ''}</div>`;
   /* 感情线：Leo 帮问被拒后闭馆三天，敲门只有一条门缝 */
   if (id === 'leo' && G.evF.leoClosedUntil && G.day < G.evF.leoClosedUntil) {
     html += `<div class="line">门开了一条缝。</div>`;
@@ -263,6 +263,9 @@ function npcSheet(id) {
     if (nk === 'lev4' && EV_GATES.lev4() && loveReady('levi'))
       extras += `<button class="btn line ib" data-act="levbtn" data-k="lev4">命令他歇一天（1·时段）</button>`;
   }
+  /* 婚姻批（#67）：主动求婚——未婚未订婚且对方可婚就显示，成不成交给引擎判断 */
+  if (!G.spouse && !G.engaged && MARRYABLE.includes(id))
+    extras += `<button class="btn line ib" data-act="propose" data-id="${id}">求婚</button>`;
   /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
   const fp = funPools(n, s);
   if (fp) {
@@ -424,6 +427,19 @@ function settlementSheet() {
   openModal('一天结束', html);
 }
 
+/* 婚姻批（#67）：已婚跟配偶以外的人寻欢——先问一句要不要处理痕迹 */
+function coverSheet(id) {
+  const n = npcDef(id);
+  const lowE = G.energy < COST.fun + 10;                     // 精力腾不出 10 点，痕迹处理不动
+  openModal('　', [
+    `<div class="line">夜还长。${n.name}不是你的伴侣——今晚要小心点吗？</div>`,
+    `<div class="actrow2">`,
+    `<button class="btn" data-act="fun-plain" data-id="${id}">就这一夜（照常）</button>`,
+    `<button class="btn ${lowE ? 'dis' : ''}" data-act="fun-cover" data-id="${id}" ${lowE ? 'disabled' : ''}>处理痕迹（精力-10·不容易被发现）</button>`,
+    `</div>`,
+  ].join(''));
+}
+
 /* ---------- 弹窗 / toast ---------- */
 function openModal(title, html) {
   hideToast();
@@ -526,6 +542,8 @@ document.addEventListener('click', e => {
     /* 感情线：白天进图书馆撞见（Leo 事件2/3）；夜里去井边撞见（Asher 事件2） */
     if (V.place === 'library') { const ev = enterEvPending(); if (ev) evSheet(ev); }
     if (V.place === 'well' && G.node >= DAY_NODES) { const ev = wellEvPending(); if (ev) evSheet(ev); }
+    const mp = marryPlaceEv(V.place);                        /* 婚姻批（#67）：温和型白天在常驻地开口求婚 */
+    if (mp) evSheet(mp);
     return;
   }
 
@@ -557,6 +575,9 @@ document.addEventListener('click', e => {
   const a = act.dataset.act, id = act.dataset.id;
   if (a === 'close-res') {
     if (V.pendingSettle) { V.pendingSettle = false; settlementSheet(); return; }
+    if (G.engaged && G.wedday === G.day && !G.wedShown) {     // 婚姻批（#67）：婚期当天首次关弹窗→婚礼
+      const w = doWedding(); save(); resultSheet(w.lines); return;
+    }
     closeModal(); render(); return;
   }
   if (a === 'feed-toggle') {
@@ -582,6 +603,7 @@ document.addEventListener('click', e => {
   }
   if (a === 'ia') {
     if (act.disabled) return;
+    if (act.dataset.ia === 'fun' && G.spouse && id !== G.spouse) { coverSheet(id); return; }   // 婚姻批（#67）：出轨前先问一句
     const r = interact(id, act.dataset.ia);
     if (r.duel) { duelSheet(); return; }
     if (r.ev) { evSheet(r); return; }                       // 感情线：带选项的事件弹窗
@@ -594,7 +616,28 @@ document.addEventListener('click', e => {
     else render();
     return;
   }
+  if (a === 'fun-plain' || a === 'fun-cover') {              // 婚姻批（#67）：出轨夜的两种过法
+    const r = doFun(id, false, a === 'fun-cover');
+    resultSheet(r.lines);
+    if (G.over) { render(); return; }
+    if (r.settled) V.pendingSettle = true;
+    else render();
+    return;
+  }
+  if (a === 'propose') {                                     // 婚姻批（#67）：主动求婚
+    const r = proposeTo(id);
+    resultSheet(r.lines);
+    if (!r.blocked) { save(); render(); }
+    return;
+  }
   if (a === 'evc') {                                          // 感情线：事件选项结算
+    if (act.dataset.ev.startsWith('mar')) {                   // 婚姻批（#67）：求婚答复（答应/再想想）
+      const res = marryChoice(act.dataset.ev, act.dataset.c);
+      resultSheet(res.lines);
+      if (res.settled) V.pendingSettle = true;
+      else render();
+      return;
+    }
     const res = loveChoice(act.dataset.ev, act.dataset.c);
     resultSheet(res.lines);
     if (G.over) { render(); return; }

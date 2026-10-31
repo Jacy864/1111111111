@@ -182,6 +182,26 @@ function t(name, cond, extra) {
     t('U13c 摸头友+1', r13 === fa13 + 1, `${fa13}→${r13}`);
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
 
+    /* U14 婚姻批（#67）：求婚按钮可见性 + 配偶徽章 + 出轨先问一句 */
+    await ev(() => { G.spouse = null; G.engaged = null; G.wedShown = true; });
+    await ev(() => npcSheet('leo'));
+    await page.waitForSelector('#modal-mask.show', { timeout: 15000 });
+    t('U14 可婚者档案页有求婚按钮', !!(await page.$('[data-act="propose"][data-id="leo"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => npcSheet('knight'));
+    t('U14b 骑士无求婚按钮', !(await page.$('[data-act="propose"][data-id="knight"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    const dimLeo = await ev(() => { G.spouse = 'leo'; npcSheet('leo'); return document.querySelector('#modal-body .dim').textContent; });
+    t('U14c 配偶徽章显示', dimLeo.includes('你的伴侣'));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.spouse = 'leo'; G.npc.levi.l = 60; G.node = DAY_NODES; npcSheet('levi'); });
+    await page.locator('[data-act="ia"][data-id="levi"][data-ia="fun"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    t('U14d 出轨前先弹「今晚要小心点吗」', (await $txt('#modal-body')).includes('小心点'));
+    t('U14e 两种过法按钮就位', !!(await page.$('[data-act="fun-plain"]')) && !!(await page.$('[data-act="fun-cover"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.spouse = null; G.engaged = null; G.node = 0; save(); });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

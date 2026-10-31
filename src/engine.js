@@ -14,7 +14,7 @@ function npcName(id) { const d = npcDef(id); return d ? d.name : id; }
 
 /* ---------- 伤势（§11：完好→轻伤→重伤） ---------- */
 function hurtWord() { return G.hurt === 2 ? '重伤' : G.hurt === 1 ? '轻伤' : '完好'; }
-function maxE() { return MAX_ENERGY - (G.hurt === 2 ? 8 : G.hurt === 1 ? 3 : 0); }
+function maxE() { return MAX_ENERGY - (G.hurt === 2 ? 8 : G.hurt === 1 ? 3 : 0) - (G.energyDebt || 0); }
 
 /* NPC 当前节点位置（含动态：Jacob 夜宿钟楼、骑士夜在前线、Leo 闭馆三天在家） */
 function locOf(def, node) {
@@ -50,6 +50,15 @@ function newGame() {
     weather: 0,             // 今日天气：0晴 1雨（每天早晨掷，约四天一雨）
     nightOut: 0,            // 你夜里出门次数（在村里走动合法；Asher 事件2的引子）
     blueprints: {},         // 已学图纸（拍板 #42）：CRAFT key→true
+    spouse: null,           // 配偶（婚礼完成后；仅一人）
+    engaged: null,          // 已答应的求婚（婚礼待办）
+    wedday: 0,              // 婚期（当天首次关闭弹窗时出婚礼）
+    wedShown: true,         // 当天婚礼弹窗是否已出
+    marryReady: {},         // 求婚念头已冒出待触发（每人一戳）
+    marryCd: {},            // 求婚被拒冷却（到期日前不再开口）
+    suspect: false,         // 配偶已起疑（再被抓=摊牌）
+    energyDebt: 0,          // 处理痕迹精力债（次日精力上限减额，只压一天）
+    loverDay: 0,            // 恋人关系起算日（告白接受当天）
   };
   for (const n of NPCS) G.npc[n.id] = { f: n.initF, l: 0, p: 0, last: 1, coldPending: false };
   addFeed('major', '你把家安在了村口以北。第一天，从上午开始。');
@@ -84,12 +93,23 @@ function load() {
     G.noPropose = G.noPropose || {};
     G.weather = G.weather ? 1 : 0;
     G.nightOut = G.nightOut || 0;
+    /* 婚姻批字段迁移（2026-10-31，旧档自动补齐；旧档已有恋人的，60 天从迁移日起算） */
+    G.spouse = G.spouse || null;
+    G.engaged = G.engaged || null;
+    G.wedday = G.wedday || 0;
+    G.wedShown = G.wedShown !== false;
+    G.marryReady = G.marryReady || {};
+    G.marryCd = G.marryCd || {};
+    G.suspect = !!G.suspect;
+    G.energyDebt = G.energyDebt || 0;
+    G.loverDay = G.loverDay || (G.lover ? G.day : 0);
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
       G.npc[k].funDay = G.npc[k].funDay || 0;
       G.npc[k].teases = G.npc[k].teases || 0;
       G.npc[k].meetDay = G.npc[k].meetDay || 0;
+      G.npc[k].cheatN = G.npc[k].cheatN || 0;
     }
     /* 礼物手作批字段迁移（拍板 #42）：已学图纸 + 每人每日送礼戳 */
     G.blueprints = G.blueprints || {};
@@ -329,6 +349,8 @@ function settleDay() {
   if (G.hurt === 2) { G.hurt = 1; addFeed('morn', '睡了一夜，重伤将养成了轻伤。再养一晚就好利索。'); }
   else if (G.hurt === 1) { G.hurt = 0; addFeed('morn', '睡了一夜，你的伤好利索了。'); }
   G.day++; G.node = 0; G.energy = maxE();
+  G.energyDebt = 0;                     // 处理痕迹精力债只压当天（婚姻批 #67）
+  marryTick();                          // 求婚念头（婚姻批 #67）：条件齐了每日 10% 冒念头
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
   G.escortUsedDay = false; G.arrowsShotNight = 0;   // 拍板 #41：护送每天一次 / 夜射每晚三箭
   genMorning();
@@ -531,8 +553,12 @@ function poolArr(def, type, st) {
     const fp = funPools(def, st);
     if (fp && fp.real.length) arr = arr.concat(fp.real);
   }
-  /* 感情线（第一批）：恋人档日常——告白接受后，只对现任恋人混入（池已有存量，本批不新写） */
-  if (type === 'chat' && G.lover === def.id && Array.isArray(def.afterRealLover) && def.afterRealLover.length) {
+  /* 婚姻批（#67）：出轨对象有实后混入背德池（池空不触发，成句待生产线） */
+  if (type === 'chat' && G.spouse && G.spouse !== def.id && st && st.funOnce && Array.isArray(def.afterCheat) && def.afterCheat.length) {
+    arr = arr.concat(def.afterCheat);
+  }
+  /* 感情线→婚姻批（翻案 #35）：恋人档日常改为结婚当天起混入（婚前维持普通版） */
+  if (type === 'chat' && G.spouse === def.id && Array.isArray(def.afterRealLover) && def.afterRealLover.length) {
     arr = arr.concat(def.afterRealLover);
   }
   return arr;
@@ -540,7 +566,7 @@ function poolArr(def, type, st) {
 
 /* 寻欢（§8 双轨·偷尝轨）：夜间发起，掷接受率；接受=今晚在这过（直接结算到天亮）
    forced=true 跳过时段/当日/掷骰限制（Vivienne 交换夜晚：她开的价，保底接受） */
-function doFun(id, forced) {
+function doFun(id, forced, cover) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
   if (!forced && st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
@@ -566,10 +592,14 @@ function doFun(id, forced) {
   const lines = [
     `<b>${def.name}</b>：「${rnd(fp.inv.concat(fp.yes))}」`,
     `<b>${def.name}</b>：「${rnd(fp.night)}」`,
-    '天亮了。',
   ];
+  if (cover) lines.push('天亮前，你把能想到的痕迹都收拾干净了。');
+  lines.push('天亮了。');
   settleDay();
   if (fp.morn.length) addFeed('morn', rnd(fp.morn));
+  if (cover) G.energyDebt = 10;         // 处理痕迹的疲惫压到今天上限（婚姻批 #67）
+  const cr = cheatRoll(id, cover);      // 对象非配偶=出轨：记账+查岗掷骰（两段式）
+  if (cr) lines.push(...cr);
   return { lines, settled: true };
 }
 
@@ -1092,7 +1122,8 @@ settleDay = function () { coldCheck(); _settleDay(); };
 
 /* ---------- 家：休息/午休 ---------- */
 function restNow() {
-  const ev = restLoveEvent();          // 感情线：夜里在家的事件（Asher 一串）优先于入睡结算
+  const mev = marryHomeEv();            // 婚姻批（#67）：偏激型夜里回家堵门求婚，优先于一切
+  const ev = mev || restLoveEvent();    // 感情线：夜里在家的事件（Asher 一串）优先于入睡结算
   settleDay();                         // 缺陷A修复：夜话只推迟结算弹窗的展示，结算本身照常走（看完/选完再弹「一天结束」）
   if (ev) return { ev };
   return { settled: true };
@@ -1428,6 +1459,7 @@ function loveChoice(key, c) {
     loveDone('levi');
     if (c === 'y') {
       G.lover = 'levi';
+      G.loverDay = G.day;               // 婚姻批（#67）：恋人满 60 天从此起算
       const say = rnd([
         '你可别跟我开这种玩笑，我这人当真的。',
         '以后你说什么我都听你的，你让我干啥我就干啥，别赶我走，行不行。',
@@ -1442,6 +1474,7 @@ function loveChoice(key, c) {
     loveDone('leo');
     if (c === 'y') {
       G.lover = 'leo';
+      G.loverDay = G.day;               // 婚姻批（#67）：恋人满 60 天从此起算
       return { lines: ['你答应了。', '他把登记本翻开，把你那一行的墨又描深了一遍。'], settled: chatTail('leo') };
     }
     G.noPropose.leo = true;
@@ -1565,3 +1598,140 @@ const _genMorningLove = genMorning;
 genMorning = function () { morningLoveTick(); _genMorningLove(); };
 const _settleDayLove = settleDay;
 settleDay = function () { _settleDayLove(); loveNightFeed(); };
+
+/* ============ 婚姻系统（言拍板 #67 2026-10-31 实装） ============
+   可婚八人：神母/Levi/Leo/Isabel/Jacob/Jasper/Lee/Asher（三姐妹友情线锁爱 #38/#40、骑士不婚）。
+   念头：每晚结算掷 10%；冒出后分性格触发——偏激型（神母/Jacob/Asher）回家休息时堵门口，
+   温和型（Levi农田/Leo图书馆/Isabel炼药房/Jasper广场/Lee井边）白天进TA常驻地撞上。
+   拒绝：占+3（固定值）＋30~90 天冷却。主控可随时主动求婚（档案页按钮）。
+   婚前一切等婚后（翻案 #35）：恋人档台词改结婚当天起混入。
+   出轨：对象非配偶时寻欢结算后掷骰——发现率=地点(室内8%/户外18%)+次数×5%+配偶占有欲×0.15%−处理痕迹12%，
+   夹 5%~90%；两段式：先起疑（次日晨报），已起疑再被抓=摊牌（占直接100）。
+   台词池 marryAsk/marryWed/suspectText/confrontText/afterCheat 池空回退系统句，成句待感性模型生产线。 */
+const MARRYABLE = ['vivienne', 'levi', 'leo', 'isabel', 'jacob', 'jasper', 'lee', 'asher'];
+const MARRY_HOT = ['vivienne', 'jacob', 'asher'];                               // 偏激型：回家堵门
+const MARRY_PLACE = { levi: 'field', leo: 'library', isabel: 'alchemy', jasper: 'plaza', lee: 'well' };  // 温和型：白天常驻地
+const MARRY_PRON = { vivienne: '她', isabel: '她', levi: '他', leo: '他', jacob: '他', jasper: '他', lee: '他', asher: '他' };
+
+function marryCond(id) {
+  if (!MARRYABLE.includes(id)) return false;
+  if ((G.npc[id].l || 0) < 100) return false;
+  if (id === 'asher') return G.day >= 731;                                       // 18岁门：开档满730天，不看告白线别
+  if (id === 'vivienne') return !!(G.love.vivienne && G.love.vivienne.n >= 1);   // 她的夜谈（viv2）走完
+  return G.lover === id && G.loverDay > 0 && G.day - G.loverDay >= 60;           // 通用型：恋人满60天
+}
+function marryGate(id) {
+  if (G.spouse || G.engaged) return false;
+  if (G.marryReady[id]) return false;
+  if ((G.marryCd[id] || 0) > G.day) return false;
+  return marryCond(id);
+}
+function marryTick() {
+  if (G.spouse || G.engaged) return;
+  for (const id of MARRYABLE) if (marryGate(id) && Math.random() < 0.1) G.marryReady[id] = true;
+}
+function marryEv(id, home) {
+  const def = npcDef(id), pron = MARRY_PRON[id];
+  const say = (Array.isArray(def.marryAsk) && def.marryAsk.length) ? rnd(def.marryAsk) : null;
+  const lines = home
+    ? [`${def.name}等在你家门口，看你的眼神，是要一个说法。`]
+    : [`你一到，${def.name}就放下了手里的活，朝你走过来。`];
+  if (say) lines.push(`<b>${def.name}</b>：「${say}」`);
+  else lines.push(`${pron}开口说的，是婚事。`);
+  return { lines, ev: { key: (home ? 'mar' : 'marP') + id, choices: [{ k: 'y', t: '答应' }, { k: 'n', t: '再想想' }] } };
+}
+function marryHomeEv() {                    // 偏激型：回家休息时堵门（restNow 里优先调用）
+  if (G.spouse || G.engaged) return null;
+  for (const id of MARRY_HOT) {
+    if (!G.marryReady[id]) continue;
+    G.marryReady[id] = false;
+    if (!marryCond(id)) continue;           // 条件已失（如爱意褪了）：念头作废
+    return marryEv(id, true);
+  }
+  return null;
+}
+function marryPlaceEv(place) {              // 温和型：白天进TA常驻地
+  if (!place || G.node >= DAY_NODES || G.spouse || G.engaged) return null;
+  for (const id in MARRY_PLACE) {
+    if (MARRY_PLACE[id] !== place || !G.marryReady[id]) continue;
+    G.marryReady[id] = false;
+    if (!marryCond(id)) continue;
+    return marryEv(id, false);
+  }
+  return null;
+}
+function engage(id, dawn) {                 // dawn=true：夜里堵门当场答应（结算已过）→ 当天婚礼；否则次日
+  G.engaged = id;
+  G.wedday = dawn ? G.day : G.day + 1;
+  G.wedShown = false;
+  const nm = npcDef(id).name;
+  G.dayLog.push(`答应了${nm}的求婚`);
+  addFeed('major', dawn ? `夜里定下的事，天不亮就传遍了：教堂有婚礼。（${nm}）` : `村里传开了：明日教堂有婚礼。（${nm}）`);
+}
+function marryChoice(key, c) {
+  const home = !key.startsWith('marP');     // mar+id=堵门（夜，已结算）；marP+id=到地（白天）
+  const id = key.replace(/^marP?/, '');
+  const def = npcDef(id), pron = MARRY_PRON[id];
+  if (c === 'y') {
+    engage(id, home);
+    return { lines: ['你点了头。', `${def.name}的求婚，你答应了。`], settled: home };
+  }
+  G.marryCd[id] = G.day + 30 + Math.floor(Math.random() * 61);    // 30~90 天后再开口
+  G.marryReady[id] = false;                                        // 念头一并作废
+  G.npc[id].p = clamp((G.npc[id].p || 0) + 3, 0, 100);            // 拒一次占+3（固定值，不乘性格系数）
+  return { lines: [`${def.name}看了你很久，最后什么也没说，走了。`, `之后一段时间，${pron}不会再提这件事。`], settled: home };
+}
+function proposeTo(id) {                    // 主控主动求婚：条件齐→答应次日办；不齐→拖延，不扣数值可再点
+  const def = npcDef(id), pron = MARRY_PRON[id];
+  if (!MARRYABLE.includes(id)) return { lines: ['现在不是提这个的时候。'], blocked: true };
+  if (G.spouse || G.engaged) return { lines: ['你已经有婚约在身了。'], blocked: true };
+  if (id === 'asher' && G.day < 731) return { lines: ['他还不到年纪。这事急不来。'], blocked: true };
+  if (marryCond(id)) {
+    engage(id, false);
+    return { lines: ['你开了口。', `${def.name}看了你很久，然后点头了。`, '婚事就这么定了——明天教堂。'] };
+  }
+  return { lines: ['你开了口。', `${def.name}听完，隔了很久才开口——${pron}想再等一等。`, '没有生气，也没有变卦。这件事以后还可以再提。'] };
+}
+function doWedding() {                      // 婚礼：修女主持；高好感反应池空回退系统句
+  const def = npcDef(G.engaged);
+  G.wedShown = true;
+  G.spouse = G.engaged;
+  G.engaged = null;
+  G.marryReady = {}; G.marryCd = {};
+  G.suspect = false;
+  G.dayLog.push(`和${def.name}成了婚`);
+  const lines = ['第二天，教堂的修女为你们主持了婚礼。能来的村民都来了。'];
+  const said = [];
+  for (const x of MARRYABLE) {
+    if (x === def.id || !G.npc[x] || G.npc[x].l < 60) continue;
+    const pool = npcDef(x).marryWed;
+    if (Array.isArray(pool) && pool.length) said.push(`<b>${npcDef(x).name}</b>：「${rnd(pool)}」`);
+  }
+  if (said.length) lines.push(...said);
+  else lines.push('没有人说什么怪话——今天大家都在说祝福。');
+  lines.push(`从今往后，${def.name}是你的伴侣了。你们各住各的——想对方了，就走过去看看。`);
+  return { lines };
+}
+function cheatRoll(id, cover) {             // 出轨查岗：寻欢结算后掷（两段式）；返回 null=没被发现或起疑走晨报
+  const sp = G.spouse;
+  if (!sp || sp === id) return null;
+  const def = npcDef(id), st = G.npc[id];
+  st.cheatN = (st.cheatN || 0) + 1;
+  const home = def.loc[3] || def.loc[4] || 'home';
+  const base = (PLACES[home] || {}).outdoor ? 0.18 : 0.08;
+  const chance = clamp(base + st.cheatN * 0.05 + (G.npc[sp].p || 0) * 0.0015 - (cover ? 0.12 : 0), 0.05, 0.9);
+  if (Math.random() >= chance) return null;
+  const spd = npcDef(sp), pron = MARRY_PRON[sp] || 'TA';
+  if (!G.suspect) {
+    G.suspect = true;
+    addFeed('morn', `${spd.name}最近看你的眼神，有点不一样了。`);
+    return null;
+  }
+  G.suspect = false;
+  G.npc[sp].p = 100;
+  const lines = [`${spd.name}把你做的事，一件一件摊开了。${pron}什么都知道了。`];
+  const pool = spd.confrontText;
+  if (Array.isArray(pool) && pool.length) lines.push(`<b>${spd.name}</b>：「${rnd(pool)}」`);
+  lines.push('那晚之后，有些东西回不去了。');
+  return lines;
+}

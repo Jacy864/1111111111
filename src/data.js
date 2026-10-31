@@ -1104,6 +1104,19 @@ const NPCS = [
   },
 ];
 
+/* ---------- 婚姻批空台词池（拍板 #67 2026-10-31）：池空回退系统句，成句待感性模型生产线 ----------
+   marryAsk 求婚话术 / marryWed 婚礼上高好感NPC的反应 / suspectText 配偶起疑试探 /
+   confrontText 摊牌对峙 / afterCheat 背德（仅寻欢已实装三人：神母/Levi/骑士可当第三者） */
+for (const _n of NPCS) {
+  if (['vivienne', 'levi', 'leo', 'isabel', 'jacob', 'jasper', 'lee', 'asher'].includes(_n.id)) {
+    _n.marryAsk = [];
+    _n.marryWed = [];
+    _n.suspectText = [];
+    _n.confrontText = [];
+  }
+  if (['vivienne', 'levi', 'knight'].includes(_n.id)) _n.afterCheat = [];
+}
+
 /* NPC↔NPC 微事件池：pairs 里的人都到位才可能掷出（白天节点） */
 const MICRO_EVENTS = [
   { where: 'field', need: ['levi', 'alice'], ev: [

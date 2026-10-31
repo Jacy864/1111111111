@@ -251,6 +251,83 @@ t('T23b 偶遇夜句与例外夜限定：夜里只出 night 句、Jacob 钟楼�
   ok(m2 !== m && m2.t === 'meet' && m2.html.includes('jacob'), '例外夜钟楼顶句触发');
 });
 
+/* ============ 六b、婚姻系统（言拍板 #67 2026-10-31） ============ */
+t('T24 婚姻：念头门槛/分型触发/婚礼/恋人档切换翻案/拒绝冷却', () => {
+  fresh();
+  /* 通用型门槛：爱100 + 恋人满60天，10%念头 */
+  G.npc.leo.l = 100; G.lover = 'leo'; G.loverDay = G.day;
+  fix(0.01); marryTick(); ok(!G.marryReady.leo, '不满60天不出念头');
+  G.day += 60;                                            // 恋人第60天
+  fix(0.99); marryTick(); ok(!G.marryReady.leo, '掷骰未中不出');
+  fix(0.01); marryTick(); ok(!!G.marryReady.leo, '条件齐+掷中→念头');
+  /* 温和型：夜里到地不出；白天进图书馆触发 */
+  G.node = DAY_NODES; ok(marryPlaceEv('library') === null, '夜里到地不出');
+  G.node = 0;
+  const ev = marryPlaceEv('library');
+  ok(ev && ev.ev.key === 'marPleo', '白天进图书馆→到地求婚');
+  ok(!G.marryReady.leo, '念头一次性消耗');
+  /* 答应：次日婚礼；修女主持；反应池空回退系统句 */
+  const r = marryChoice('marPleo', 'y');
+  eq(G.engaged, 'leo', '已订婚'); eq(G.wedday, G.day + 1, '次日婚礼'); ok(!r.settled, '白天答应不当晚结算');
+  G.day++; const w = doWedding();
+  eq(G.spouse, 'leo', '已成婚'); eq(G.engaged, null, '订婚清空');
+  ok(w.lines.some(l => l.includes('修女')), '修女主持');
+  ok(w.lines.some(l => l.includes('祝福')), '反应池空→回退系统句');
+  /* 恋人档台词：结婚当天起混入，未婚不切（翻案 #35） */
+  const leoDef = npcDef('leo');
+  const hadPool = Array.isArray(leoDef.afterRealLover) && leoDef.afterRealLover.length > 0;
+  if (hadPool) {
+    ok(poolArr(leoDef, 'chat', G.npc.leo).includes(leoDef.afterRealLover[0]), '婚后恋人档混入');
+    G.spouse = null;
+    ok(!poolArr(leoDef, 'chat', G.npc.leo).includes(leoDef.afterRealLover[0]), '未婚不切恋人档');
+  }
+  /* 偏激型堵门：神母夜谈走完+爱100 → 回家堵门口，夜里答应当天成礼 */
+  G.spouse = null; G.engaged = null; G.wedShown = true;
+  G.npc.vivienne.l = 100; G.love.vivienne = { n: 1, day: 1 };
+  G.marryReady.vivienne = true;
+  const hv = marryHomeEv();
+  ok(hv && hv.ev.key === 'marvivienne', '偏激型堵门口');
+  const r2 = marryChoice('marvivienne', 'y');
+  eq(G.wedday, G.day, '夜里答应当天成礼'); ok(r2.settled, '堵门答复跟入睡结算');
+  /* 拒绝：占+3固定值 + 30~90天冷却 */
+  fresh(); G.npc.leo.l = 100; G.lover = 'leo'; G.loverDay = 1; G.day = 61;
+  G.marryReady.leo = true; const p0 = G.npc.leo.p || 0;
+  fix(0.5); marryChoice('marPleo', 'n');
+  eq(G.npc.leo.p, Math.min(100, p0 + 3), '拒婚占+3');
+  between(G.marryCd.leo - G.day, 30, 90, '冷却30~90天');
+  fix(0.01); marryTick(); ok(!G.marryReady.leo, '冷却内不再冒念头');
+});
+
+t('T24b 婚姻：Asher年龄门/主动求婚/出轨两段式+处理痕迹', () => {
+  fresh();
+  /* Asher：爱100但未满730天→年龄门拦死 */
+  G.npc.asher.l = 100; G.day = 100;
+  fix(0.01); marryTick(); ok(!G.marryReady.asher, '未满18岁门');
+  const pr = proposeTo('asher');
+  ok(pr.blocked && pr.lines[0].includes('年纪'), '主动求也被年龄门拦');
+  G.day = 731; fix(0.01); marryTick(); ok(!!G.marryReady.asher, '满730天+掷中→念头（不看告白线别）');
+  /* 主动求婚：条件不齐→拖延不扣数值；条件齐→答应次日办 */
+  fresh(); G.npc.levi.l = 80; G.lover = 'levi'; G.loverDay = G.day; G.day += 100;
+  const pd = proposeTo('levi');
+  ok(!pd.blocked && pd.lines.some(l => l.includes('等一等')), '条件不齐→拖延');
+  G.npc.levi.l = 100;
+  const pa = proposeTo('levi');
+  eq(G.engaged, 'levi', '条件齐→答应了'); eq(G.wedday, G.day + 1, '次日婚礼');
+  /* 出轨：对象非配偶才记账；两段式查岗；处理痕迹压上限 */
+  fresh(); G.spouse = 'leo'; G.npc.levi.l = 100;
+  fix(0.99); const f1 = doFun('levi', true, true);
+  ok(f1.lines.some(l => l.includes('收拾干净')), '处理痕迹过渡句');
+  eq(G.energyDebt, 10, '精力债挂上'); eq(G.npc.levi.cheatN, 1, '出轨记账');
+  eq(G.suspect, false, '第一夜没被抓');
+  fix(0.01); doFun('levi', true, false);
+  eq(G.suspect, true, '第二段前置：起疑（走晨报）');
+  fix(0.01); const f3 = doFun('levi', true, false);
+  ok(f3.lines.some(l => l.includes('摊开')), '已起疑再被抓→摊牌');
+  eq(G.npc.leo.p, 100, '摊牌后占有欲拉满');
+  eq(cheatRoll('leo', false), null, '配偶本人不算出轨');
+  eq(G.npc.leo.cheatN || 0, 0, '配偶不记账');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {
   const endings = {};

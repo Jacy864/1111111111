@@ -347,7 +347,7 @@ function vivienneChain() {
   const v = G.npc.vivienne;
   if (v.l < 30 || Math.random() >= 0.3) return;
   if (v.p >= 70 && VIV_CHAIN.claim.length) addFeed('sim', `[[vivienne]]当众揽住了你的肩：「${rnd(VIV_CHAIN.claim)}」`, ['vivienne']);
-  else if (v.p >= 50 && VIV_CHAIN.visit.length) addFeed('sim', `夜里有人敲你的门。[[vivienne]]：「${rnd(VIV_CHAIN.visit)}」`, ['vivienne']);
+  else if (v.p >= 50 && VIV_CHAIN.visit.length) addFeed('sim', `[[vivienne]]在路边拦住你，附耳说：「${rnd(VIV_CHAIN.visit)}」`, ['vivienne']);   /* 言拍板 #73：原「夜里有人敲你的门」翻案为白天拦路（夜间全村闭户，她夜里不出门） */
   else if (v.p >= 30 && VIV_CHAIN.sting.length) addFeed('morn', `[[vivienne]]：「${rnd(VIV_CHAIN.sting)}」`, ['vivienne']);
 }
 

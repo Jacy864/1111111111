@@ -989,20 +989,20 @@ const NPCS = [
       '我在井边坐了很久。你从我面前走过去，没有拿红豆面包给我。',
     ],
     jealous: [],  /* 铁律：恢复前无感情线无吃醋 */
-    care: [   /* 被照顾时——村民送饭/补衣场景，待接照顾事件 */
+    care: [   /* 被照顾时——村播报轮值照顾微事件引用（#70 接线；恢复后事件退役，池保留不删） */
       '面包很软。谢谢你帮我把上面的硬皮剥掉。',
       '衣服上的洞缝好了。针脚是红色的，真好看。',
       '我没有走远。我就在这棵树下面坐着，哪儿也没去。',
       '汤有点烫。你帮我吹吹，我等会儿再喝。',
     ],
-    near: [   /* 对你的亲近——待接地点相遇台词 */
-      '你身上有山上采来的花香味。我想坐在你旁边数石子。',
-      '你今天要去哪儿。我可以帮你在后面拿着小木桶。',
-      '给你看这个。这是我在河边捡到的最圆的石头，送给你。',
-      '别人说话我都听不太懂。你跟我说话的时候，我能听懂一点点。',
+    meet: [  /* 偶遇系统（#68，#70 接线）：恢复前孩子腔通用句（原 near 池迁入）；恢复后退出村内偶遇（after.meet 是野外句，留二期） */
+      { p: '', scene: '村里', t: '你身上有山上采来的花香味。我想坐在你旁边数石子。' },
+      { p: '', scene: '村里', t: '你今天要去哪儿。我可以帮你在后面拿着小木桶。' },
+      { p: '', scene: '村里', t: '给你看这个。这是我在河边捡到的最圆的石头，送给你。' },
+      { p: '', scene: '村里', t: '别人说话我都听不太懂。你跟我说话的时候，我能听懂一点点。' },
     ],
-    /* 恢复记忆后（批四记忆恢复线实装时：chat/flirt/tease/hit/cold/jealous 覆盖主池，
-       meet 接偶遇，fun* 接寻欢，lover* 接有实后日常；分档结构已按 poolArr 格式写好） */
+    /* near 池已迁入 meet（#70）；恢复记忆后（#70 已实装：任意一件遗物交到他手上即触发恢复，
+       chat/flirt/tease/hit/cold/jealous/deep 覆盖主池，fun* 接寻欢，bio/secretHint 换 LEE_AFTER） */
     after: {
       chat: { mid: [
         '哟，这不是我们村最勇敢的探险家吗。今天又准备去哪座山上祸害那些可怜的矿石。',
@@ -2215,11 +2215,44 @@ const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 0, f
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 1.5, lee: 0.6, jasper: 0.5, levi: 0.5 };  /* Jacob 0.6→1.5（言拍板 2026-10-31 #66：新人设占有欲极强，升最高档与神母同级） */
 
-/* Vivienne 活报纸台词池（待生产线生成；空=回退系统过渡句。{x}=当日事实占位） */
-const VIV_NEWS = { village: [], act: [], private: [] };
+/* Vivienne 活报纸台词池（2026-10-31 言稿 17 句入池，拍板 #71：村闻圣堂→教堂/前街→广场听人说、行踪删「去」字、私密告解室改「找我忏悔」、两处开头微调；{x}=当日事实占位，引擎填入前剥尾句号） */
+const VIV_NEWS = {
+  village: [
+    '早啊孩子，刚听教堂外的人聊起，{x}，这村子每天都有新热闹。',
+    '今晨听了几句闲话，说是{x}，主保佑大家总有忙不完的事。',
+    '刚替全村祈祷完就听说{x}，孩子，这事你怎么看。',
+    '早晨散步路过广场，听人说{x}，大家日子过得倒是踏实。',
+    '刚洗漱好就听闻{x}，倒是件稀罕事。',
+    '神清气爽的早晨，听说{x}，顺口拿来跟你解解闷。',
+  ],
+  act: [
+    '早啊孩子，听说你昨天{x}，倒是挺会给自己找事做。',
+    '听说你昨天{x}，手艺没落下，体力倒是挺充沛。',
+    '昨天有人瞧见你{x}，在我这儿怎么没见你这么勤快。',
+    '昨天你{x}那股劲头我都听说了，孩子，挺能干啊。',
+    '你昨天{x}的动静我可听说了，累坏了没有。',
+    '还有，听说你昨天{x}，忙完也不顺道来教堂讨杯热水喝。',
+  ],
+  private: [
+    '昨夜风那么大，听说你{x}，今早还没人来找我忏悔呢。',
+    '听说你昨晚{x}，折腾了大半夜，这会儿腿软不软啊。',
+    '胆子是越来越大了，昨夜竟敢{x}，要不要我替你打个掩护。',
+    '昨晚你{x}动静可不小，看你这犯困的样，今晚还敢不敢了。',
+    '听说你昨夜{x}，玩的什么花样，过来跟我仔细讲讲。',
+  ],
+};
 
 /* Vivienne 占有欲链台词池（带刺 p30+/上门 p50+/公开宣示 p70+；待生产线生成，空=不触发） */
 const VIV_CHAIN = { sting: [], visit: [], claim: [] };
+
+/* Lee 记忆恢复线（#70）：三池待生产线生成，空=回退系统过渡句（同 VIV_NEWS 模式，回流即活） */
+const LEE_RESTORE_EVT = [];   /* 恢复当晚他的话：3-4 段渐进节奏，第一段须泛指（三件遗物任一都可能触发） */
+const LEE_CLUE_EXTRA = {};    /* 恢复后再交多余遗物=补忆句：{ 铜哨: [], 旧地图: [], 烧掉一半的手札: [] } */
+const LEE_RESTORE_MORN = [];  /* 次日晨报全村反应（Asher、轮值照顾过他的人、村人） */
+const LEE_AFTER = {   /* 恢复后档案文案（Claude 占位实写，备案言可改） */
+  bio: '个子很高的年轻人。前不久记忆恢复，像换了个人：嘴上轻浮，自称「本预言家」。',
+  hint: '他说他能看到未来。看他那副笃定样子，倒不像玩笑。',
+};
 
 /* 你做的事也进播报（you 型：红条 + 「你」标）
    [[id]] 会替换成当前互动对象 → 可点人名 + 星标过滤 + 未来吃醋扫描的数据钩子 */
@@ -2401,6 +2434,10 @@ function load() {
     G.suspect = !!G.suspect;
     G.energyDebt = G.energyDebt || 0;
     G.loverDay = G.loverDay || (G.lover ? G.day : 0);
+    /* Lee 记忆线（#70）：掉落进度/已给遗物兜底；恢复档重放切池（NPCS 从 data.js 重载为原版，幂等安全） */
+    G.leeClue = G.leeClue || {};
+    if (G.npc.lee && G.npc.lee.restored) applyLeeAfter();
+    G.npc.lee.clueGiven = G.npc.lee.clueGiven || [];
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
@@ -2506,6 +2543,7 @@ function genSimEvents(node) {
     if (G.evF.leviField && Math.random() < 0.25) { addFeed('sim', LOVE_SIM.leviField); G._loveSimDay = G.day; }
     else if (G.evF.ashPact && !ashBlue && Math.random() < 0.2) { addFeed('sim', LOVE_SIM.ashPact); G._loveSimDay = G.day; }
   }
+  leeCareEvent();   // Lee 轮值照顾播报（#70）：恢复前低概率出一条，恢复后退役
 }
 
 function genMorning() {
@@ -2513,6 +2551,16 @@ function genMorning() {
   const kn = G.npc.knight;
   if (kn && kn.l >= 60 && G.stats.flowers > 0) {
     addFeed('sim', '[[knight]]胸甲的缝隙里别着一朵花。[[levi]]问起，它说：「她给的。」');
+  }
+  /* Lee 恢复次日晨报：全村反应 2-3 条（池空回退系统句；LEE_RESTORE_MORN 回流即活） */
+  if (G.evF.leeMornPending) {
+    G.evF.leeMornPending = false;
+    const pool = LEE_RESTORE_MORN.length ? LEE_RESTORE_MORN : [
+      '[[asher]]在井边站了很久。他说：「他跟我说话的样子变了。像一下子长大了。」',
+      '[[lee]]记忆恢复的事，一上午就传遍了全村。井边围了一圈打听的人。',
+    ];
+    for (const t of [...pool].sort(() => Math.random() - 0.5).slice(0, 3)) addFeed('morn', t);
+    save();
   }
 }
 
@@ -2550,6 +2598,7 @@ function doMeetCheck(place) {
   const cands = [];
   for (const n of NPCS) {
     if (ashBlue && n.id === 'asher') continue;
+    if (n.id === 'lee' && G.npc.lee.restored) continue;   // 恢复后 Lee 退出村内偶遇（#70：孩子腔句退役；after.meet 野外句留二期）
     if (!n.meet || !n.meet.length) continue;
     if (G.npc[n.id].meetDay === G.day) continue;
     for (const line of n.meet) {
@@ -2600,9 +2649,10 @@ function vivienneNews() {
   const y = G.chronicle[G.chronicle.length - 1];
   if (!y) return;
   const isPriv = t => /过了今晚|做了修补/.test(t);
-  const priv = y.log.filter(isPriv);
-  const acts = y.log.filter(t => !isPriv(t));
-  const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day);
+  const isSelf = t => /Vivienne|\[\[vivienne\]\]/.test(t);   /* 事实带她本人：不转述自己（言准 2026-10-31 #71，杜绝「听说你跟我过了今晚」式穿帮） */
+  const priv = y.log.filter(t => isPriv(t) && !isSelf(t));
+  const acts = y.log.filter(t => !isPriv(t) && !isSelf(t));
+  const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day && !isSelf(e.html));
   const send = (kind, fact, names) => {
     const pool = VIV_NEWS[kind];
     /* 台词池待生产线生成；空=回退系统过渡句（占位，2026-10-26）。
@@ -2783,6 +2833,7 @@ function visibleDayEvents() {
 /* ---------- 关系 ---------- */
 function rel(id, key, delta) {
   const s = G.npc[id];
+  if (id === 'lee' && key === 'l' && !s.restored) return;   // 恢复前 Lee 爱情封 0（#70：感情线整线锁，恢复解开）
   s[key] = clamp(s[key] + delta, 0, key === 'f' ? 100 : 100);
 }
 function loveWord(id) {
@@ -2855,6 +2906,10 @@ function poolArr(def, type, st) {
   if (type === 'chat' && G.spouse && G.spouse !== def.id && st && st.funOnce && Array.isArray(def.afterCheat) && def.afterCheat.length) {
     arr = arr.concat(def.afterCheat);
   }
+  /* 婚姻批（#67）：配偶起疑后的带刺试探，混入TA自己的闲聊池（池空不触发） */
+  if (type === 'chat' && G.suspect && G.spouse === def.id && Array.isArray(def.suspectText) && def.suspectText.length) {
+    arr = arr.concat(def.suspectText);
+  }
   /* 感情线→婚姻批（翻案 #35）：恋人档日常改为结婚当天起混入（婚前维持普通版） */
   if (type === 'chat' && G.spouse === def.id && Array.isArray(def.afterRealLover) && def.afterRealLover.length) {
     arr = arr.concat(def.afterRealLover);
@@ -2909,6 +2964,9 @@ function interact(id, type) {
 
   /* 攻击骑士本人 = 直接对峙（§6.3 骑士战） */
   if (type === 'hit' && id === 'knight') { startDuel('knightHit'); return { duel: true }; }
+
+  /* Lee 恢复前感情线封死（#70）：暧昧入口拦（与肢体全锁 #61 同句） */
+  if (type === 'flirt' && id === 'lee' && !st.restored) return { lines: ['他还分不清这些。'], blocked: true };
 
   /* 感情线（第一批）：闲聊顶替型事件优先于普通互动（精力检查已在上面 canDo 过了） */
   if (type === 'chat') {
@@ -3223,6 +3281,91 @@ function mineRoll(base) {
   G.mineDry = (G.mineDry || 0) + 1; return false;
 }
 
+/* ---------- Lee 记忆恢复线（言拍板 #70 2026-10-31）：纯探索掉落；任意一件遗物交到他手上即触发恢复，不要求集齐、不讲顺序 ----------
+   多余遗物恢复后再给 = 补忆句；台词池 LEE_* 待生产线回流，空 = 回退系统句（同 VIV_NEWS 模式） */
+const LEE_CLUES = {
+  gather:  { item: '铜哨',           rate: 0.04, pity: 25 },
+  dive:    { item: '旧地图',         rate: 0.06, pity: 16 },
+  minefar: { item: '烧掉一半的手札', rate: 0.05, pity: 20 },
+};
+/* 掉落检查：挂 doExplore 的 gather/dive/minefar 分支；三件独立计数，各只掉一次 */
+function clueDropCheck(act, lines) {
+  const c = LEE_CLUES[act];
+  if (!c) return;
+  G.leeClue = G.leeClue || {};
+  const st = G.leeClue[act] || { n: 0, got: false };
+  if (!st.got && !(G.bag[c.item] > 0)) {
+    st.n++;
+    if (Math.random() < c.rate || st.n >= c.pity) {
+      st.got = true;
+      G.bag[c.item] = (G.bag[c.item] || 0) + 1;
+      lines.push(`角落里翻出一件被埋了很久的东西——<b>${c.item}</b>。（Lee 也许认得。）`);   // 系统过渡句（备案言可改）
+    }
+  }
+  G.leeClue[act] = st;
+}
+/* 恢复后台词包切入主池（幂等；NPCS 每次会话从 data.js 重载，_afterApplied 自然重置）：
+   chat/flirt/tease/hit/cold/jealous/deep 全覆盖，bio/secretHint 换 LEE_AFTER——所有取池点零改动生效 */
+function applyLeeAfter() {
+  const def = npcDef('lee');
+  if (!def || !def.after || def._afterApplied) return;
+  const a = def.after;
+  for (const k of ['chat', 'flirt', 'tease', 'hit', 'cold', 'jealous', 'deep']) {
+    if (a[k]) def[k] = a[k];
+  }
+  def.bio = LEE_AFTER.bio;
+  def.secretHint = LEE_AFTER.hint;
+  def._afterApplied = true;
+}
+/* 给 Lee 看遗物：不耗精力不占时间格（言拍板）；夜里他不出门；同件不可重给 */
+function doGiveLeeClue(item) {
+  const st = G.npc.lee;
+  if (!Object.values(LEE_CLUES).some(c => c.item === item)) return { lines: ['……'], blocked: true };
+  if (G.node >= DAY_NODES) return { lines: ['夜里他不出门。等天亮。'], blocked: true };
+  if (!(G.bag[item] > 0)) return { lines: ['你没有这件东西。'], blocked: true };
+  st.clueGiven = st.clueGiven || [];
+  if (st.clueGiven.includes(item)) return { lines: ['这个他已经看过了。'], blocked: true };
+  G.bag[item]--; if (G.bag[item] <= 0) delete G.bag[item];
+  st.clueGiven.push(item);
+  st.last = G.day;
+  if (!st.restored) return leeRestore(item);
+  /* 恢复后：多余遗物 = 补忆句 */
+  const pool = LEE_CLUE_EXTRA[item] || [];
+  const line = pool.length ? rnd(pool) : '这段我想起来了。谢谢你替我捡回来。';   // 池空回退（备案）
+  rel('lee', 'f', 3);
+  return { lines: [`你把<b>${item}</b>放到他手里。`, `<b>Lee</b>：「${line}」`] };
+}
+/* 恢复事件（evSheet 弹窗，同 Leo 图书馆事件款）：restored 置真、友+15、整包切池、次日晨报挂起 */
+function leeRestore(item) {
+  const st = G.npc.lee;
+  st.restored = true;
+  rel('lee', 'f', 15);
+  applyLeeAfter();
+  G.evF.leeMornPending = true;
+  addFeed('major', '[[lee]]把那件东西攥在手里，站在井边很久没说话。然后他抬起头——眼神跟平时不一样了。');
+  const lines = [
+    `你把<b>${item}</b>放到他手里。`,
+    '他低头看了很久。手指在那上面一遍遍地摸。',
+  ];
+  if (LEE_RESTORE_EVT.length) lines.push(...LEE_RESTORE_EVT.slice(0, 4));   // 3-4 段渐进节奏（第一段泛指，任一遗物都能接上）
+  else lines.push('<b>Lee</b>：「……我想起来了。」', '<b>Lee</b>：「全部。都想起来了。」');   // 池空回退（备案）
+  lines.push('他的眼神定下来了。跟平时不一样了。');
+  save();
+  return { lines, ev: { k: 'leerestore' } };
+}
+/* 轮值照顾播报（#70）：恢复前每天最多一条、18% 出；随机照顾者＋care 池；恢复后退役 */
+function leeCareEvent() {
+  const st = G.npc.lee;
+  if (st.restored || G._leeCareDay === G.day) return;
+  if (Math.random() >= 0.18) return;
+  const def = npcDef('lee');
+  if (!def.care || !def.care.length) return;
+  const carers = NPCS.filter(n => !['lee', 'knight'].includes(n.id)).map(n => n.id);   // 骑士守前线不参与轮值
+  const cid = rnd(carers);
+  addFeed('sim', `今天轮到[[${cid}]]照看[[lee]]。[[lee]]说：「${rnd(def.care)}」`, [cid, 'lee']);
+  G._leeCareDay = G.day;
+}
+
 function doExplore(zone, act) {
   const z = EXPLORE[zone];
   if (G.node >= DAY_NODES) return { lines: ['夜里怪物横行，出不了门。等天亮。'], blocked: true };   // 夜间世界规则（言拍板 2026-10-27）
@@ -3275,6 +3418,7 @@ function doExplore(zone, act) {
       if (Math.random() < 0.12) { G.bag.木板 = (G.bag.木板 || 0) + 1; got.push('木板×1'); }   // 供货 Jacob 收购（拍板 #40）
       lines.push(rnd(EXP_TEXT.gather), '拾获：' + got.join('、'));
     }
+    clueDropCheck('gather', lines);   // Lee 记忆线线索：铜哨（#70）
     youFeed('gather');
   } else if (act === 'hunt') {
     if (Math.random() < winChance()) {
@@ -3300,6 +3444,7 @@ function doExplore(zone, act) {
     const coins = 3 + Math.floor(Math.random() * 4);
     G.coins += coins;
     lines.push(rnd(EXP_TEXT.dive), `河底的旧硬币：+${coins} 安娜币`);
+    clueDropCheck('dive', lines);     // Lee 记忆线线索：旧地图（#70）
     youFeed('dive');
   } else if (act === 'minenear') {
     const n = 1 + (Math.random() < 0.5 ? 1 : 0) + (escort ? 1 : 0);
@@ -3324,6 +3469,7 @@ function doExplore(zone, act) {
     if (Math.random() < 0.20) { G.bag.金粉 = (G.bag.金粉 || 0) + 1; got.push('金粉×1'); }   // 手绘本原料（拍板 #42）
     if (Math.random() < 0.12) { G.bag.宝石 = (G.bag.宝石 || 0) + 1; got.push('宝石×1'); }   // 项链原料（拍板 #42）
     lines.push(rnd(got.length > 1 ? EXP_TEXT.gy : EXP_TEXT.mineFar), '拾获：' + got.join('、'));
+    clueDropCheck('minefar', lines);  // Lee 记忆线线索：烧掉一半的手札（#70）
     youFeed('mine');
   } else if (act === 'train') {
     G.force++;
@@ -4278,13 +4424,22 @@ function npcSheet(id) {
     html += `<div class="sec-sub">互动</div>`;
     html += `<div class="actrow2">`;
     html += btn('chat', `闲聊（1）`);
-    if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
+    if (!SISTERS.includes(id) && !(id === 'lee' && !s.restored)) html += btn('flirt', `暧昧（2）`, s.f < 40);   // Lee 恢复前藏暧昧（#70 感情线封死）
     html += btn('tease', `打闹（2）`);
     if (!n.noAttack) html += btn('hit', '攻击（2）');
     html += `</div>`;
-    if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+    if (id === 'lee' && !s.restored) html += `<div class="dim" style="margin:2px">他看你的眼神很干净，什么都还分不清。</div>`;   // 备案文案（言可改）
+    else if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   }
   let extras = '';
+  /* Lee 记忆线（#70）：捡到的遗物交给他——恢复前任一件当场触发恢复；恢复后多余遗物=补忆句 */
+  if (id === 'lee') {
+    const given = G.npc.lee.clueGiven || [];
+    for (const c of Object.values(LEE_CLUES)) {
+      if ((G.bag[c.item] || 0) > 0 && !given.includes(c.item))
+        extras += `<button class="btn line ib" data-act="ia" data-id="lee" data-ia="clue" data-item="${c.item}">给他看〈${c.item}〉</button>`;
+    }
+  }
   if (id === 'knight' && !knNight) {
     const noFlower = (G.bag.花 || 0) < 1;
     extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
@@ -4641,6 +4796,13 @@ document.addEventListener('click', e => {
   }
   if (a === 'ia') {
     if (act.disabled) return;
+    if (act.dataset.ia === 'clue') {   // Lee 记忆线（#70）：给遗物（不耗精力不占时间格；恢复返回 ev 自动走 evSheet）
+      const r = doGiveLeeClue(act.dataset.item);
+      if (r.ev) { evSheet(r); return; }
+      resultSheet(r.lines);
+      render();
+      return;
+    }
     if (act.dataset.ia === 'fun' && G.spouse && id !== G.spouse) { coverSheet(id); return; }   // 婚姻批（#67）：出轨前先问一句
     const r = interact(id, act.dataset.ia);
     if (r.duel) { duelSheet(); return; }

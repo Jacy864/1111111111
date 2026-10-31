@@ -326,6 +326,15 @@ t('T24b 婚姻：Asher年龄门/主动求婚/出轨两段式+处理痕迹', () =
   eq(G.npc.leo.p, 100, '摊牌后占有欲拉满');
   eq(cheatRoll('leo', false), null, '配偶本人不算出轨');
   eq(G.npc.leo.cheatN || 0, 0, '配偶不记账');
+  /* 起疑后配偶闲聊混入 suspectText（池空不触发；补词即活）。注意：上面摊牌步已清起疑，这里重新置起疑再验 */
+  const leoSus = npcDef('leo');
+  leoSus.suspectText = ['【起疑试探】这句话不该出现在闲聊里。'];
+  G.suspect = true;
+  const mixArr = poolArr(leoSus, 'chat', G.npc.leo);
+  ok(mixArr.includes('【起疑试探】这句话不该出现在闲聊里。'), '起疑时配偶闲聊混入试探池');
+  G.suspect = false;
+  ok(!poolArr(leoSus, 'chat', G.npc.leo).includes('【起疑试探】这句话不该出现在闲聊里。'), '未起疑不混入');
+  leoSus.suspectText = [];
 });
 
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */

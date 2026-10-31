@@ -240,13 +240,22 @@ function npcSheet(id) {
     html += `<div class="sec-sub">互动</div>`;
     html += `<div class="actrow2">`;
     html += btn('chat', `闲聊（1）`);
-    if (!SISTERS.includes(id)) html += btn('flirt', `暧昧（2）`, s.f < 40);
+    if (!SISTERS.includes(id) && !(id === 'lee' && !s.restored)) html += btn('flirt', `暧昧（2）`, s.f < 40);   // Lee 恢复前藏暧昧（#70 感情线封死）
     html += btn('tease', `打闹（2）`);
     if (!n.noAttack) html += btn('hit', '攻击（2）');
     html += `</div>`;
-    if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
+    if (id === 'lee' && !s.restored) html += `<div class="dim" style="margin:2px">他看你的眼神很干净，什么都还分不清。</div>`;   // 备案文案（言可改）
+    else if (!SISTERS.includes(id) && s.f < 40) html += `<div class="dim" style="margin:2px">还不够熟，有些话说不出口。（友情 40 开放暧昧）</div>`;
   }
   let extras = '';
+  /* Lee 记忆线（#70）：捡到的遗物交给他——恢复前任一件当场触发恢复；恢复后多余遗物=补忆句 */
+  if (id === 'lee') {
+    const given = G.npc.lee.clueGiven || [];
+    for (const c of Object.values(LEE_CLUES)) {
+      if ((G.bag[c.item] || 0) > 0 && !given.includes(c.item))
+        extras += `<button class="btn line ib" data-act="ia" data-id="lee" data-ia="clue" data-item="${c.item}">给他看〈${c.item}〉</button>`;
+    }
+  }
   if (id === 'knight' && !knNight) {
     const noFlower = (G.bag.花 || 0) < 1;
     extras += `<button class="btn line ib ${noFlower ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="flower" ${noFlower ? 'disabled' : ''}>送花（1）${noFlower ? '·没花' : ''}</button>`;
@@ -603,6 +612,13 @@ document.addEventListener('click', e => {
   }
   if (a === 'ia') {
     if (act.disabled) return;
+    if (act.dataset.ia === 'clue') {   // Lee 记忆线（#70）：给遗物（不耗精力不占时间格；恢复返回 ev 自动走 evSheet）
+      const r = doGiveLeeClue(act.dataset.item);
+      if (r.ev) { evSheet(r); return; }
+      resultSheet(r.lines);
+      render();
+      return;
+    }
     if (act.dataset.ia === 'fun' && G.spouse && id !== G.spouse) { coverSheet(id); return; }   // 婚姻批（#67）：出轨前先问一句
     const r = interact(id, act.dataset.ia);
     if (r.duel) { duelSheet(); return; }

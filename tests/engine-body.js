@@ -437,6 +437,94 @@ t('T25f Lee线：load 重放切池（幂等）', () => {
 
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 
+t('T26 做饭：配方产出/缺料退/吃熟食上限', () => {
+  fresh(); G.node = 0; G.energy = 20;
+  G.bag.土豆 = 2;
+  const r1 = doPlaceAction('home', 'cook', 'baked');
+  eq(G.bag.熟食, 1, '烤土豆出熟食1');
+  eq(G.node, 1, '做饭占一格');
+  ok(r1.lines.some(l => l.includes('熟食×1')), '入手提示');
+  const r2 = doPlaceAction('home', 'cook', 'stew');
+  ok(r2.blocked && r2.lines[0].includes('材料不够'), '缺料退回');
+  ok(G.energy === 19 && G.node === 1, '缺料不扣精力不占格');
+  G.bag.熟食 = 2; G.energy = 10;
+  doPlaceAction('home', 'eat');
+  doPlaceAction('home', 'eat');
+  eq(G.energy, 18, '吃两个回8');
+  ok(doPlaceAction('home', 'eat').blocked, '第三个吃不下');
+  G.node = 3; G.bag.熟食 = 1;
+  ok(doPlaceAction('home', 'eat').blocked, '夜里不给吃');
+});
+t('T26b 帮工副产土豆/卷心菜＋炖菜奶酪饼配方', () => {
+  fresh(); fix(0.05); G.node = 0; G.energy = 20;   // 概率全中（羊毛/土豆/卷心菜都出）
+  ok(locOf(npcDef('levi'), 0) === 'field', '第1天上午Levi在田');
+  doPlaceAction('field', 'helpfarm');
+  eq(G.bag.土豆, 1, '三成捎土豆'); eq(G.bag.卷心菜, 1, '两成捎卷心菜');
+  G.node = 0; G.energy = 20;
+  G.bag.土豆 = 1; G.bag.卷心菜 = 1; G.bag.水 = 1;
+  doPlaceAction('home', 'cook', 'stew');
+  eq(G.bag.熟食, 2, '炖菜出熟食2');
+  G.node = 0; G.energy = 20;
+  G.bag.奶酪 = 1; G.bag.小麦 = 2;
+  doPlaceAction('home', 'cook', 'cheese');
+  eq(G.bag.熟食, 4, '奶酪饼出熟食2');
+  ok(!(G.bag.奶酪 > 0), '材料消耗干净');
+});
+t('T26c 邀约：确定模型/赴约同做友+2/一天一邀/骑士句用「它」', () => {
+  fresh(); G.energy = 20;
+  const r1 = doPlaceAction('home', 'cookinvite', 'bess');
+  eq(G.cookInvite.node, 1, '上午发起约今天下一格');
+  ok(r1.lines.some(l => l.includes('今天中午')), '报约期');
+  ok(doPlaceAction('home', 'cookinvite', 'leo').blocked, '有约在身不能再约');
+  G.node = 1; G.bag.土豆 = 2;
+  const f0 = G.npc.bess.f;
+  const r3 = doPlaceAction('home', 'cooktogether', 'baked');
+  eq(G.npc.bess.f, f0 + 2, '同做友+2');
+  ok(!G.cookInvite, '赴约后约清掉');
+  eq(G.bag.熟食, 1, '同做出熟食');
+  ok(r3.lines.some(l => l.includes('厨房里两个人')), '同做过程句');
+  ok(doPlaceAction('home', 'cookinvite', 'leo').blocked, '一天限一邀');
+  G.day++; G.cookLast = 0; G.node = 0;
+  const r4 = doPlaceAction('home', 'cookinvite', 'knight');
+  ok(r4.lines.some(l => l.includes('它应下了')), '骑士回退句用「它」');
+});
+t('T26d 邀约：错过顺延一次/再错过作废无惩罚', () => {
+  fresh(); G.energy = 20; G.node = 2;
+  doPlaceAction('home', 'cookinvite', 'levi');
+  eq(G.cookInvite.day, G.day + 1, '下午发起约明天早上');
+  G.day++; G.node = 0; advanceNode();              // 错过约定格
+  ok(G.cookInvite && G.cookInvite.deferred, '顺延标记');
+  eq(G.cookInvite.day, G.day + 1, '顺延到明天早上');
+  ok(G.feed.some(f => (f.html || '').includes('没做上')), '顺延播报');
+  const f0 = G.npc.levi.f, e0 = G.energy;
+  G.day++; G.node = 0; advanceNode();              // 再错过
+  ok(!G.cookInvite, '二次错过作废');
+  ok(G.feed.some(f => (f.html || '').includes('没做成')), '作废播报');
+  eq(G.npc.levi.f, f0, '作废无好感惩罚'); eq(G.energy, e0, '作废无精力损失');
+});
+t('T26e 借书：借/夜读/还＋Leo好感每日封顶合计+1', () => {
+  fresh(); G.energy = 20;
+  const n = [0, 1, 2, 3, 4].find(i => locOf(npcDef('leo'), i) === 'library');
+  G.node = n;
+  const r1 = doPlaceAction('library', 'borrow', 'knight');
+  eq(G.bag['骑士养护手册（抄本）'], 1, '书入包');
+  eq(G.borrowed, 'knight', '借书记录');
+  ok(doPlaceAction('library', 'borrow', 'gossip').blocked, '一次只能借一本');
+  const f0 = G.npc.leo.f;
+  doPlaceAction('library', 'returnbook');
+  eq(G.npc.leo.f, f0, '同日还书好感已封顶（借时加过了）');
+  ok(!(G.bag['骑士养护手册（抄本）'] > 0), '还书从包里清掉');
+  doPlaceAction('library', 'borrow', 'gossip');
+  G.node = 3;
+  const r4 = doPlaceAction('home', 'readbook');
+  ok(r4.lines.length >= 3, '夜读出短文');
+  ok(G.bookProg.gossip, '读书记录');
+  G.node = 1;
+  ok(doPlaceAction('home', 'readbook').blocked, '白天读不了');
+  G.day++;
+  doPlaceAction('library', 'returnbook');
+  eq(G.npc.leo.f, f0 + 1, '次日还书好感+1');
+});
 t('T16 浸泡不变量', () => {
   const endings = {};
   for (let seed = 1; seed <= 30; seed++) {

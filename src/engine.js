@@ -42,6 +42,13 @@ function newGame() {
     helpedKnight: false,   // （钟楼夜射已删 2026-10-27，字段留作旧档兼容，恒 false）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
+    /* 做饭系统＋借书互动（言拍板 2026-10-31 #75） */
+    cookInvite: null,      // 进行中的做饭邀约：{who, day, node, deferred}，同一时间只有一条
+    cookLast: 0,           // 最近一次发起邀约的日子（一天限一邀）
+    eatCooked: 0,          // 今天已吃熟食数（上限 2）
+    borrowed: null,        // 当前借的书 key（一次一本）
+    libraryF: { day: 0, got: false },   // Leo 借书好感每日封顶（借/还合计 +1）
+    bookProg: {},          // 读过的书 key→true,
     starTipShown: false,
     love: {},               // 感情线（第一批）：每人事件队列进度 {n:完成数, day:上次触发日}
     evF: {},                // 感情线事件 flag 池（记档走向、闭馆日、蓝日期等）
@@ -110,6 +117,14 @@ function load() {
     /* 死物品结案（#75，2026-10-31）：钟表/指南针/毒药删除清包；剑补发（开档自带，老档同步） */
     for (const k of ['钟表', '指南针', '毒药']) delete G.bag[k];
     G.bag.剑 = G.bag.剑 || 1;
+    /* 做饭系统＋借书互动（#75）老档补默认；通用「书」物品已废，清包 */
+    G.cookInvite = G.cookInvite || null;
+    G.cookLast = G.cookLast || 0;
+    G.eatCooked = G.eatCooked || 0;
+    G.borrowed = G.borrowed || null;
+    G.libraryF = G.libraryF || { day: 0, got: false };
+    G.bookProg = G.bookProg || {};
+    delete G.bag['书'];
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
@@ -237,9 +252,29 @@ function genMorning() {
 }
 
 /* ---------- 节点推进 ---------- */
+/* 做饭邀约过格检查（#75 确定模型）：错过约定格 → 顺延一次到明天早上；再错过 → 作废，无惩罚。
+   台词池 def.cook.defer（言生产线，池空用回退句）；作废句固定（备案） */
+function cookInviteTick() {
+  const c = G.cookInvite;
+  if (!c) return;
+  if (G.day < c.day || (G.day === c.day && G.node <= c.node)) return;   // 还没到点
+  const def = npcDef(c.who);
+  if (!c.deferred) {
+    c.deferred = true; c.day = G.day + 1; c.node = 0;
+    const t = (def.cook && def.cook.defer && def.cook.defer.length)
+      ? `[[${c.who}]]说：「${rnd(def.cook.defer)}」`
+      : `[[${c.who}]]捎话：那个点没等着你，明天早上再来吧。`;
+    addFeed('you', `约好的时间过去了，这顿没做上。${t}`, [c.who]);
+  } else {
+    G.cookInvite = null;
+    addFeed('you', '约好的时间过去了，这顿没做成。');
+  }
+  save();
+}
 function advanceNode() {
   genSimEvents(G.node);                    // 你行动的这个节点里，村里也动了
   G.node++;
+  cookInviteTick();                        // 做饭邀约（#75）：约定格过了没赴约 → 顺延/作废
   if (G.node >= 5) { settleDay(); return 'settled'; }
   if (G.node === DAY_NODES) nightfall();
   save();
@@ -372,6 +407,7 @@ function settleDay() {
   G.energyDebt = 0;                     // 处理痕迹精力债只压当天（婚姻批 #67）
   marryTick();                          // 求婚念头（婚姻批 #67）：条件齐了每日 10% 冒念头
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
+  G.eatCooked = 0;                          // 做饭系统（#75）：熟食每天最多吃两个
   G.escortUsedDay = false; G.arrowsShotNight = 0;   // 拍板 #41：护送每天一次 / 夜射每晚三箭
   genMorning();
   knightWear();
@@ -853,9 +889,117 @@ function doPlaceAction(place, act, sub) {
     G.bag.小麦 = (G.bag.小麦 || 0) + 1;
     let got = '小麦×1';
     if (Math.random() < 0.7) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got += '、羊毛×1'; }
+    if (Math.random() < 0.3) { G.bag.土豆 = (G.bag.土豆 || 0) + 1; got += '、土豆×1'; }          // 做饭系统（#75）：三成捎土豆
+    if (Math.random() < 0.2) { G.bag.卷心菜 = (G.bag.卷心菜 || 0) + 1; got += '、卷心菜×1'; }    // 两成捎卷心菜
     rel('levi', 'f', 2);
     G.energy -= COST.helpfarm; G.dayLog.push('在农田帮了半天工');
     return { lines: ['你帮 Levi 干了半天农活。他话不多，活交得清楚。', `拾获：${got}`], settled: advanceNode() === 'settled' };
+  }
+  /* ============ 做饭系统（言拍板 2026-10-31 #75）：做饭/吃熟食/邀人同做 ============ */
+  if (act === 'cook') {
+    /* 在家做饭：白天、精力1、占时间格；出熟食；常识不用学图纸 */
+    if (place !== 'home') return { lines: ['得回家做。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['天黑了，灶上没火。'], blocked: true };
+    const rec = COOK.find(r => r.key === sub);
+    if (!rec) return { lines: ['没有这道菜。'], blocked: true };
+    const err = canDo('cook'); if (err) return { lines: [err], blocked: true };
+    const lack = [];
+    for (const m in rec.mats) { const need = rec.mats[m] - (G.bag[m] || 0); if (need > 0) lack.push(`${m}×${need}`); }
+    if (lack.length) return { lines: [`材料不够：还差${lack.join('、')}。`], blocked: true };
+    for (const m in rec.mats) { G.bag[m] -= rec.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
+    G.bag.熟食 = (G.bag.熟食 || 0) + rec.out;
+    G.energy -= COST.cook; G.dayLog.push(`做了${rec.name}`);
+    return { lines: [`你做了〈${rec.name}〉。灶上热气腾腾。`, `入手：熟食×${rec.out}`], settled: advanceNode() === 'settled' };
+  }
+  if (act === 'eat') {
+    /* 吃熟食：白天在家，回精力4，一天两个；不占格不耗精力 */
+    if (place !== 'home') return { lines: ['得坐下来慢慢吃。回家。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['这么晚了，吃了睡不着。白天再吃。'], blocked: true };
+    if ((G.bag.熟食 || 0) < 1) return { lines: ['没有熟食了。'], blocked: true };
+    if (G.eatCooked >= 2) return { lines: ['今天吃得够多了，再吃就撑了。'], blocked: true };
+    G.bag.熟食--; if (G.bag.熟食 <= 0) delete G.bag.熟食;
+    G.eatCooked++; G.energy = Math.min(maxE(), G.energy + 4);
+    return { lines: [`你吃了一份熟食，力气回来了一点。精力 +4（现在 ${G.energy}）。`] };
+  }
+  if (act === 'cookinvite') {
+    /* 发起邀约：白天在家、不占格不耗精力、一天一次、同时只能有一个约
+       确定模型：上午/中午发起→约今天下一格；下午发起→约明天早上；骑士永远应约不改期 */
+    if (place !== 'home') return { lines: ['邀人得先回家说。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['天黑了，要约明天白天再说。'], blocked: true };
+    if (G.cookInvite) return { lines: ['手头已经有一个约了。做完或者过了时再说。'], blocked: true };
+    if (G.cookLast === G.day) return { lines: ['今天已经约过一回人了。'], blocked: true };
+    const def = npcDef(sub);
+    if (!def) return { lines: ['没有这个人。'], blocked: true };
+    let day = G.day, node = G.node + 1;
+    if (node >= DAY_NODES) { day = G.day + 1; node = 0; }
+    G.cookInvite = { who: sub, day, node, deferred: false };
+    G.cookLast = G.day;
+    const pron = def.id === 'knight' ? '它' : 'TA';
+    const yesLine = cookLine(def, 'yes', `${pron}应下了，说好了时间。`);
+    const when = day === G.day ? `今天${NODE_NAMES[node]}` : `明天${NODE_NAMES[node]}`;
+    return { lines: [`你请${def.name}来家里一起做顿饭。`, `${yesLine}`, `约在${when}，家里见。`] };
+  }
+  if (act === 'cooktogether') {
+    /* 赴约做饭：约好的那一格在家做才算同做；精力1、占格、友+2；骑士不用吃饭（文案特例） */
+    if (place !== 'home') return { lines: ['约的是在家里做。'], blocked: true };
+    const c = G.cookInvite;
+    if (!c) return { lines: ['现在没有约。'], blocked: true };
+    if (c.day !== G.day || c.node !== G.node) return { lines: ['不是约好的时辰。'], blocked: true };
+    const rec = COOK.find(r => r.key === sub);
+    if (!rec) return { lines: ['没有这道菜。'], blocked: true };
+    const err = canDo('cook'); if (err) return { lines: [err], blocked: true };
+    const lack = [];
+    for (const m in rec.mats) { const need = rec.mats[m] - (G.bag[m] || 0); if (need > 0) lack.push(`${m}×${need}`); }
+    if (lack.length) return { lines: [`家里缺料：还差${lack.join('、')}。`], blocked: true };
+    const def = npcDef(c.who);
+    const lines = [`${def.name}按时来了。`];
+    for (const m in rec.mats) { G.bag[m] -= rec.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
+    G.bag.熟食 = (G.bag.熟食 || 0) + rec.out;
+    G.energy -= COST.cook;
+    rel(c.who, 'f', 2);
+    G.dayLog.push(`和${def.name}做了${rec.name}`);
+    G.cookInvite = null;
+    addFeed('you', `你和[[${c.who}]]在家做了一顿饭。`, [c.who]);
+    lines.push(cookLine(def, 'do', def.id === 'knight' ? '它不用吃饭，还是站在灶边搭了把手。' : '厨房里两个人，一顿饭慢慢做成了。'));
+    lines.push(`入手：熟食×${rec.out}`);
+    lines.push(cookLine(def, 'after', def.id === 'knight' ? '它坐在对面看你吃完，把碗摞好了。' : 'TA吃得高兴，帮着把灶收拾干净了。'));
+    return { lines, settled: advanceNode() === 'settled' };
+  }
+  /* ============ 借书互动（言拍板 2026-10-31 #75）：借/还/夜读 ============ */
+  if (act === 'borrow') {
+    /* 借书：图书馆 Leo 在时（他守着灯，夜里也借）；一次一本；不占格不耗精力；Leo 友+1 每天封顶 */
+    if (place !== 'library') return { lines: ['书都在图书馆。'], blocked: true };
+    if (locOf(npcDef('leo'), G.node) !== 'library') return { lines: ['Leo 不在，门锁着。'], blocked: true };
+    const b = BOOKS.find(x => x.key === sub);
+    if (!b) return { lines: ['没有这本书。'], blocked: true };
+    if (G.borrowed) return { lines: ['你手里还借着一本，先还了再借。'], blocked: true };
+    G.borrowed = b.key;
+    G.bag[b.name] = (G.bag[b.name] || 0) + 1;
+    leoLibF();
+    G.dayLog.push(`借了〈${b.name}〉`);
+    return { lines: [`你把〈${b.name}〉借走了。Leo 在借阅卡上记了一笔。`] };
+  }
+  if (act === 'returnbook') {
+    if (place !== 'library') return { lines: ['书得还回图书馆。'], blocked: true };
+    if (locOf(npcDef('leo'), G.node) !== 'library') return { lines: ['Leo 不在，还不了。'], blocked: true };
+    if (!G.borrowed) return { lines: ['你没有借书。'], blocked: true };
+    const b = BOOKS.find(x => x.key === G.borrowed);
+    if (b && G.bag[b.name]) { G.bag[b.name]--; if (G.bag[b.name] <= 0) delete G.bag[b.name]; }
+    G.borrowed = null;
+    leoLibF();
+    G.dayLog.push(`还了〈${b.name}〉`);
+    return { lines: [`〈${b.name}〉放回了原架。Leo 看了一眼借阅卡，划掉一行。`] };
+  }
+  if (act === 'readbook') {
+    /* 夜读：夜里在家、免费、可重复读；每本书自带短文 */
+    if (place !== 'home') return { lines: ['得在家里安安静静读。'], blocked: true };
+    if (G.node < DAY_NODES) return { lines: ['白天静不下心。晚上再读。'], blocked: true };
+    if (!G.borrowed) return { lines: ['手头没有借来的书。'], blocked: true };
+    const b = BOOKS.find(x => x.key === G.borrowed);
+    if (!b) return { lines: ['这本书不见了。'], blocked: true };
+    G.bookProg[b.key] = true;
+    G.dayLog.push(`夜里读了〈${b.name}〉`);
+    return { lines: [`你点起灯，读〈${b.name}〉。`, ...b.night] };
   }
   if (act === 'pray') {
     const err = canDo('pray'); if (err) return { lines: [err], blocked: true };
@@ -1250,6 +1394,18 @@ function nap() {
   G.dayLog.push('午休了一会儿');
   youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
+}
+
+/* ---------- 家：做饭台词池取值（#75）：def.cook = {yes/defer/do/after}（言生产线，池空回退句） ---------- */
+function cookLine(def, k, fallback) {
+  const p = def.cook && def.cook[k];
+  if (p && p.length) return `<b>${def.name}</b>：${rnd(p)}`;
+  return fallback;
+}
+/* Leo 借书好感：借/还每天合计封顶 +1（#75） */
+function leoLibF() {
+  if (!G.libraryF || G.libraryF.day !== G.day) G.libraryF = { day: G.day, got: false };
+  if (!G.libraryF.got) { rel('leo', 'f', 1); G.libraryF.got = true; }
 }
 
 /* ---------- 家：和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） ---------- */

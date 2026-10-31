@@ -478,7 +478,7 @@ const NPCS = [
     bio: '英俊，说话慢，句句带商量的口气。田里的活谁求都帮。挨了骂挨了打，反而踏实来劲。',
     secretHint: '挨了打，他眼睛是亮的。',
     loc: ['field', 'field', 'farm', 'home', 'home'],
-    trade: { sell: [['羊毛', 3]] },   /* 羊毛渠道（言拍板 2026-10-30）：Levi 本人在摊上卖，只卖不收 */
+    trade: { sell: [['羊毛', 3], ['奶酪', 2]] },   /* 羊毛渠道（言拍板 2026-10-30）：Levi 本人在摊上卖，只卖不收；奶酪 2 币（#75 做饭系统食材渠道） */
 
     chat: { low: [
       '收成还凑合。要帮忙言语一声就行。',
@@ -1582,14 +1582,19 @@ const MORNING_POOL = [
 const ITEMS = {
   小麦: { d: 'Levi 田里的主粮。村里最不缺的就是它。', s: '农田帮工（Levi 在田时），一次一份。', u: '卖 Alice，1 币一份。' },
   /* 胡萝卜、蛋糕物品已删（言拍板 2026-10-30 第十二场）：胡萝卜全游戏无用途删除；蛋糕不做出物品、台词里的蛋糕是 Olivia 炉子的背景 */
-  土豆: { d: '顶饱的过冬粮。' },
+  土豆: { d: '顶饱的过冬粮。', s: '农田帮工，三成机会捎一个。', u: '做饭的料。' },
   蘑菇: { d: '森林里捡的。', s: '森林采集，一次两个。', u: '卖 Alice，3 币一个。' },
-  卷心菜: { d: '结结实实一颗。' },
+  卷心菜: { d: '结结实实一颗。', s: '农田帮工，两成机会捎一颗。', u: '做饭的料。' },
   羊毛: { d: '养殖场的稳定产出。', s: '打猎三五成机会捎带；Levi 的摊子卖 3 币一份；农田帮工也有七成机会得。', u: '做编制小猫、小帽子的料；卖 Jacob 2 币。' },
-  奶酪: { d: 'Levi 加工的。' },
+  奶酪: { d: 'Levi 加工的。', s: 'Levi 的摊子卖，2 币一份。', u: '做饭的料。' },
   生肉: { d: '打猎所得。Olivia 收。', s: '平原打猎，一次 2-4 块。', u: '卖 Olivia，3 币一块。' },
   纸张: { d: 'Leo 造的纸。', s: 'Leo 的摊子卖，2 币一张。', u: '做泥金手绘本的料。' },
-  书: { d: '图书馆的书。看完放回原架。' },
+  /* 图书馆藏书五本（言拍板 2026-10-31 #75 借书互动）：借来入包，夜里在家读，看完还 */
+  平原作物历: { d: '图书馆借的。下种收成的时令书。', s: '图书馆借。', u: '夜里在家读，看完去图书馆还。' },
+  北方航线图册: { d: '图书馆借的。画满航线与海岸。', s: '图书馆借。', u: '夜里在家读，看完去图书馆还。' },
+  '怪物图鉴·残卷': { d: '图书馆借的。缺了后半卷。', s: '图书馆借。', u: '夜里在家读，看完去图书馆还。' },
+  '骑士养护手册（抄本）': { d: '图书馆借的。偏方一页比一页离谱。', s: '图书馆借。', u: '夜里在家读，看完去图书馆还；也可以拿去给骑士看。' },
+  村里人的嘴: { d: '图书馆借的。不知谁记的野史。', s: '图书馆借。', u: '夜里在家读，看完去图书馆还。' },
   稀有花: { d: '森林最深处才有。Leo 出高价，骑士也喜欢。', s: '森林采集，一成的运气。', u: '送人（爱情信物）；Leo 收，15 币。' },
   铁矿: { d: '矿洞产出。Bess 收。', s: '矿洞，近矿薄、深矿厚。', u: '做箭矢的料；卖 Bess 5 币。' },
   药材: { d: '森林采集。Isabel 收。', s: '森林采集，15% 机会。', u: '卖 Isabel，4 币。' },
@@ -1598,7 +1603,7 @@ const ITEMS = {
   剑: { d: 'Bess 的手艺，比自造的好。', s: '开档自带。', u: '平原练剑的家伙。带着就行，不消耗。' },   /* 死物品复活（言拍板 2026-10-31 #75） */
   银钉: { d: 'Jacob 打的小零件，修表用。', s: 'Jacob 的摊子卖，3 币一枚。', u: '做宝石项链的料。' },
   木板: { d: '建筑材料。', s: '森林采集，12% 机会。', u: '卖 Jacob，2 币。' },
-  熟食: { d: '垫肚子用。' },
+  熟食: { d: '垫肚子用。', s: '家做：烤土豆/炖菜/奶酪饼。', u: '白天在家吃，回精力 4，一天最多两个。' },   /* 做饭系统（言拍板 2026-10-31 #75） */
   花: { d: '广场边摘的。有人会喜欢。', s: '广场边摘，一天两朵。', u: '送人的礼，骑士最吃这套。' },
   弓: { d: '你吃饭的家伙。弦是自己换的。', s: '开档自带。', u: '打猎的行头。带着就行，不消耗。' },
   水: { d: '井里打的，凉。', s: '村里的井，免费打。', u: '做小帽子、泥金手绘本的料。' },
@@ -1742,6 +1747,33 @@ const CRAFT = {
   sling:    { name: '弹弓',       mats: { 木材: 2, 兔皮: 1 } },
   arrows:   { name: '箭矢',       out: 3, mats: { 铁矿: 1, 木材: 2 } },
 };
+
+/* 做饭配方（言拍板 2026-10-31 #75）：家做，精力1、占时间格；常识不用学图纸；熟食=通用垫肚品 */
+const COOK = [
+  { key: 'baked',  name: '烤土豆', mats: { 土豆: 2 },                 out: 1 },
+  { key: 'stew',   name: '炖菜',   mats: { 土豆: 1, 卷心菜: 1, 水: 1 }, out: 2 },
+  { key: 'cheese', name: '奶酪饼', mats: { 奶酪: 1, 小麦: 2 },        out: 2 },
+];
+
+/* 图书馆藏书（言拍板 2026-10-31 #75 借书互动；书名/简介/夜读短文 Claude 实写，逐条备案言可改）
+   骑士养护手册=挑衅骑士专用（言拍板：台词她生成，触发用邀约系统——先入库后续建造）；村里人的嘴=埋 NPC 彩蛋 */
+const BOOKS = [
+  { key: 'crops', name: '平原作物历', d: '正经的。哪个月下种、哪个月收，写得一板一眼。',
+    night: ['开春化冻后下麦种，迟十天，收成薄三成。书页边上有前任读者的小字：Levi 家不照这个来，照样长得好。',
+            '最后一页夹着一片干掉的麦叶，不知是谁当书签用的。'] },
+  { key: 'atlas', name: '北方航线图册', d: '正经的。画满航线与海岸的图册。',
+    night: ['有几页折了角、拴着线绳记号——手法跟你手里那本如出一辙。',
+            '最远的一页画着结冰的海。边上有人用铅笔淡淡写了两个字：想去。'] },
+  { key: 'bestiary', name: '怪物图鉴·残卷', d: '正经的。缺了后半卷，剩下的画满夜里的怪物。',
+    night: ['插图旁标着出没的地界与时节，好几页的角上沾着洗不掉的暗色印子。',
+            '有一页的怪物被整页折起来，边角磨得发白——像被人反复翻看过。'] },
+  { key: 'knight', name: '骑士养护手册（抄本）', d: '不正经的。来路不明的抄本，偏方一页比一页离谱。',
+    night: ['「每周以软布蘸油擦拭关节，喂以晨露三滴。」——它要真喝这个就好了。',
+            '「养护得当，瓷面可历百年。」最后一页歪歪扭扭补了一句：它比这耐用得多。'] },
+  { key: 'gossip', name: '村里人的嘴', d: '不正经的。不知谁记的野史，全村那点事都在里面。',
+    night: ['「面包房改烘焙坊那年」一条被划掉了，旁边补写：改口真麻烦。——这字迹有点眼熟。',
+            '最新一页只写了一半：「村口新搬来的那位，据说……」后面被人撕掉了。'] },
+];
 
 /* ---------- 肢体互动（言拍板 2026-10-30 第十九场）：摸摸头/拥抱/亲脸颊/依偎 ---------- */
 /* 门槛：友 f / 爱 l 满足任一即解锁（未解锁按钮隐藏，言拍板）；姐妹线无爱情值→亲脸颊/依偎自然不出 */
@@ -2210,7 +2242,7 @@ const ENDINGS = {
 
 /* 互动精力消耗 */
 const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 0, flower: 1, pray: 1, study: 1, water: 0, pickflower: 1, repair: 2, shoot: 2,
-  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
+  gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1, cook: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）；cook=做饭（#75，赴约同做同价）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
 const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 1.5, lee: 0.6, jasper: 1.0, levi: 0.6 };  /* Jacob 0.6→1.5（#66）；Jasper 0.5→1.0 与骑士同档、Levi 0.5→0.6 与 Bess 同档（言拍板 2026-10-31 #74），其余照收结案 */
@@ -2423,6 +2455,13 @@ function newGame() {
     helpedKnight: false,   // （钟楼夜射已删 2026-10-27，字段留作旧档兼容，恒 false）
     knight: { cond: 100, streak: 0, best: 0, gyUsed: 0, repairedToday: false, core: false, doomEnd: 0, duelFlag: false },
     stats: { flowers: 0, chats: 0, teases: 0, hunts: 0, kills: 0, gy: 0 },
+    /* 做饭系统＋借书互动（言拍板 2026-10-31 #75） */
+    cookInvite: null,      // 进行中的做饭邀约：{who, day, node, deferred}，同一时间只有一条
+    cookLast: 0,           // 最近一次发起邀约的日子（一天限一邀）
+    eatCooked: 0,          // 今天已吃熟食数（上限 2）
+    borrowed: null,        // 当前借的书 key（一次一本）
+    libraryF: { day: 0, got: false },   // Leo 借书好感每日封顶（借/还合计 +1）
+    bookProg: {},          // 读过的书 key→true,
     starTipShown: false,
     love: {},               // 感情线（第一批）：每人事件队列进度 {n:完成数, day:上次触发日}
     evF: {},                // 感情线事件 flag 池（记档走向、闭馆日、蓝日期等）
@@ -2491,6 +2530,14 @@ function load() {
     /* 死物品结案（#75，2026-10-31）：钟表/指南针/毒药删除清包；剑补发（开档自带，老档同步） */
     for (const k of ['钟表', '指南针', '毒药']) delete G.bag[k];
     G.bag.剑 = G.bag.剑 || 1;
+    /* 做饭系统＋借书互动（#75）老档补默认；通用「书」物品已废，清包 */
+    G.cookInvite = G.cookInvite || null;
+    G.cookLast = G.cookLast || 0;
+    G.eatCooked = G.eatCooked || 0;
+    G.borrowed = G.borrowed || null;
+    G.libraryF = G.libraryF || { day: 0, got: false };
+    G.bookProg = G.bookProg || {};
+    delete G.bag['书'];
     /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
@@ -2618,9 +2665,29 @@ function genMorning() {
 }
 
 /* ---------- 节点推进 ---------- */
+/* 做饭邀约过格检查（#75 确定模型）：错过约定格 → 顺延一次到明天早上；再错过 → 作废，无惩罚。
+   台词池 def.cook.defer（言生产线，池空用回退句）；作废句固定（备案） */
+function cookInviteTick() {
+  const c = G.cookInvite;
+  if (!c) return;
+  if (G.day < c.day || (G.day === c.day && G.node <= c.node)) return;   // 还没到点
+  const def = npcDef(c.who);
+  if (!c.deferred) {
+    c.deferred = true; c.day = G.day + 1; c.node = 0;
+    const t = (def.cook && def.cook.defer && def.cook.defer.length)
+      ? `[[${c.who}]]说：「${rnd(def.cook.defer)}」`
+      : `[[${c.who}]]捎话：那个点没等着你，明天早上再来吧。`;
+    addFeed('you', `约好的时间过去了，这顿没做上。${t}`, [c.who]);
+  } else {
+    G.cookInvite = null;
+    addFeed('you', '约好的时间过去了，这顿没做成。');
+  }
+  save();
+}
 function advanceNode() {
   genSimEvents(G.node);                    // 你行动的这个节点里，村里也动了
   G.node++;
+  cookInviteTick();                        // 做饭邀约（#75）：约定格过了没赴约 → 顺延/作废
   if (G.node >= 5) { settleDay(); return 'settled'; }
   if (G.node === DAY_NODES) nightfall();
   save();
@@ -2753,6 +2820,7 @@ function settleDay() {
   G.energyDebt = 0;                     // 处理痕迹精力债只压当天（婚姻批 #67）
   marryTick();                          // 求婚念头（婚姻批 #67）：条件齐了每日 10% 冒念头
   G.dayLog = []; G.flowersPickedDay = 0; G.nightJacobAtTower = false;
+  G.eatCooked = 0;                          // 做饭系统（#75）：熟食每天最多吃两个
   G.escortUsedDay = false; G.arrowsShotNight = 0;   // 拍板 #41：护送每天一次 / 夜射每晚三箭
   genMorning();
   knightWear();
@@ -3234,9 +3302,117 @@ function doPlaceAction(place, act, sub) {
     G.bag.小麦 = (G.bag.小麦 || 0) + 1;
     let got = '小麦×1';
     if (Math.random() < 0.7) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got += '、羊毛×1'; }
+    if (Math.random() < 0.3) { G.bag.土豆 = (G.bag.土豆 || 0) + 1; got += '、土豆×1'; }          // 做饭系统（#75）：三成捎土豆
+    if (Math.random() < 0.2) { G.bag.卷心菜 = (G.bag.卷心菜 || 0) + 1; got += '、卷心菜×1'; }    // 两成捎卷心菜
     rel('levi', 'f', 2);
     G.energy -= COST.helpfarm; G.dayLog.push('在农田帮了半天工');
     return { lines: ['你帮 Levi 干了半天农活。他话不多，活交得清楚。', `拾获：${got}`], settled: advanceNode() === 'settled' };
+  }
+  /* ============ 做饭系统（言拍板 2026-10-31 #75）：做饭/吃熟食/邀人同做 ============ */
+  if (act === 'cook') {
+    /* 在家做饭：白天、精力1、占时间格；出熟食；常识不用学图纸 */
+    if (place !== 'home') return { lines: ['得回家做。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['天黑了，灶上没火。'], blocked: true };
+    const rec = COOK.find(r => r.key === sub);
+    if (!rec) return { lines: ['没有这道菜。'], blocked: true };
+    const err = canDo('cook'); if (err) return { lines: [err], blocked: true };
+    const lack = [];
+    for (const m in rec.mats) { const need = rec.mats[m] - (G.bag[m] || 0); if (need > 0) lack.push(`${m}×${need}`); }
+    if (lack.length) return { lines: [`材料不够：还差${lack.join('、')}。`], blocked: true };
+    for (const m in rec.mats) { G.bag[m] -= rec.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
+    G.bag.熟食 = (G.bag.熟食 || 0) + rec.out;
+    G.energy -= COST.cook; G.dayLog.push(`做了${rec.name}`);
+    return { lines: [`你做了〈${rec.name}〉。灶上热气腾腾。`, `入手：熟食×${rec.out}`], settled: advanceNode() === 'settled' };
+  }
+  if (act === 'eat') {
+    /* 吃熟食：白天在家，回精力4，一天两个；不占格不耗精力 */
+    if (place !== 'home') return { lines: ['得坐下来慢慢吃。回家。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['这么晚了，吃了睡不着。白天再吃。'], blocked: true };
+    if ((G.bag.熟食 || 0) < 1) return { lines: ['没有熟食了。'], blocked: true };
+    if (G.eatCooked >= 2) return { lines: ['今天吃得够多了，再吃就撑了。'], blocked: true };
+    G.bag.熟食--; if (G.bag.熟食 <= 0) delete G.bag.熟食;
+    G.eatCooked++; G.energy = Math.min(maxE(), G.energy + 4);
+    return { lines: [`你吃了一份熟食，力气回来了一点。精力 +4（现在 ${G.energy}）。`] };
+  }
+  if (act === 'cookinvite') {
+    /* 发起邀约：白天在家、不占格不耗精力、一天一次、同时只能有一个约
+       确定模型：上午/中午发起→约今天下一格；下午发起→约明天早上；骑士永远应约不改期 */
+    if (place !== 'home') return { lines: ['邀人得先回家说。'], blocked: true };
+    if (G.node >= DAY_NODES) return { lines: ['天黑了，要约明天白天再说。'], blocked: true };
+    if (G.cookInvite) return { lines: ['手头已经有一个约了。做完或者过了时再说。'], blocked: true };
+    if (G.cookLast === G.day) return { lines: ['今天已经约过一回人了。'], blocked: true };
+    const def = npcDef(sub);
+    if (!def) return { lines: ['没有这个人。'], blocked: true };
+    let day = G.day, node = G.node + 1;
+    if (node >= DAY_NODES) { day = G.day + 1; node = 0; }
+    G.cookInvite = { who: sub, day, node, deferred: false };
+    G.cookLast = G.day;
+    const pron = def.id === 'knight' ? '它' : 'TA';
+    const yesLine = cookLine(def, 'yes', `${pron}应下了，说好了时间。`);
+    const when = day === G.day ? `今天${NODE_NAMES[node]}` : `明天${NODE_NAMES[node]}`;
+    return { lines: [`你请${def.name}来家里一起做顿饭。`, `${yesLine}`, `约在${when}，家里见。`] };
+  }
+  if (act === 'cooktogether') {
+    /* 赴约做饭：约好的那一格在家做才算同做；精力1、占格、友+2；骑士不用吃饭（文案特例） */
+    if (place !== 'home') return { lines: ['约的是在家里做。'], blocked: true };
+    const c = G.cookInvite;
+    if (!c) return { lines: ['现在没有约。'], blocked: true };
+    if (c.day !== G.day || c.node !== G.node) return { lines: ['不是约好的时辰。'], blocked: true };
+    const rec = COOK.find(r => r.key === sub);
+    if (!rec) return { lines: ['没有这道菜。'], blocked: true };
+    const err = canDo('cook'); if (err) return { lines: [err], blocked: true };
+    const lack = [];
+    for (const m in rec.mats) { const need = rec.mats[m] - (G.bag[m] || 0); if (need > 0) lack.push(`${m}×${need}`); }
+    if (lack.length) return { lines: [`家里缺料：还差${lack.join('、')}。`], blocked: true };
+    const def = npcDef(c.who);
+    const lines = [`${def.name}按时来了。`];
+    for (const m in rec.mats) { G.bag[m] -= rec.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
+    G.bag.熟食 = (G.bag.熟食 || 0) + rec.out;
+    G.energy -= COST.cook;
+    rel(c.who, 'f', 2);
+    G.dayLog.push(`和${def.name}做了${rec.name}`);
+    G.cookInvite = null;
+    addFeed('you', `你和[[${c.who}]]在家做了一顿饭。`, [c.who]);
+    lines.push(cookLine(def, 'do', def.id === 'knight' ? '它不用吃饭，还是站在灶边搭了把手。' : '厨房里两个人，一顿饭慢慢做成了。'));
+    lines.push(`入手：熟食×${rec.out}`);
+    lines.push(cookLine(def, 'after', def.id === 'knight' ? '它坐在对面看你吃完，把碗摞好了。' : 'TA吃得高兴，帮着把灶收拾干净了。'));
+    return { lines, settled: advanceNode() === 'settled' };
+  }
+  /* ============ 借书互动（言拍板 2026-10-31 #75）：借/还/夜读 ============ */
+  if (act === 'borrow') {
+    /* 借书：图书馆 Leo 在时（他守着灯，夜里也借）；一次一本；不占格不耗精力；Leo 友+1 每天封顶 */
+    if (place !== 'library') return { lines: ['书都在图书馆。'], blocked: true };
+    if (locOf(npcDef('leo'), G.node) !== 'library') return { lines: ['Leo 不在，门锁着。'], blocked: true };
+    const b = BOOKS.find(x => x.key === sub);
+    if (!b) return { lines: ['没有这本书。'], blocked: true };
+    if (G.borrowed) return { lines: ['你手里还借着一本，先还了再借。'], blocked: true };
+    G.borrowed = b.key;
+    G.bag[b.name] = (G.bag[b.name] || 0) + 1;
+    leoLibF();
+    G.dayLog.push(`借了〈${b.name}〉`);
+    return { lines: [`你把〈${b.name}〉借走了。Leo 在借阅卡上记了一笔。`] };
+  }
+  if (act === 'returnbook') {
+    if (place !== 'library') return { lines: ['书得还回图书馆。'], blocked: true };
+    if (locOf(npcDef('leo'), G.node) !== 'library') return { lines: ['Leo 不在，还不了。'], blocked: true };
+    if (!G.borrowed) return { lines: ['你没有借书。'], blocked: true };
+    const b = BOOKS.find(x => x.key === G.borrowed);
+    if (b && G.bag[b.name]) { G.bag[b.name]--; if (G.bag[b.name] <= 0) delete G.bag[b.name]; }
+    G.borrowed = null;
+    leoLibF();
+    G.dayLog.push(`还了〈${b.name}〉`);
+    return { lines: [`〈${b.name}〉放回了原架。Leo 看了一眼借阅卡，划掉一行。`] };
+  }
+  if (act === 'readbook') {
+    /* 夜读：夜里在家、免费、可重复读；每本书自带短文 */
+    if (place !== 'home') return { lines: ['得在家里安安静静读。'], blocked: true };
+    if (G.node < DAY_NODES) return { lines: ['白天静不下心。晚上再读。'], blocked: true };
+    if (!G.borrowed) return { lines: ['手头没有借来的书。'], blocked: true };
+    const b = BOOKS.find(x => x.key === G.borrowed);
+    if (!b) return { lines: ['这本书不见了。'], blocked: true };
+    G.bookProg[b.key] = true;
+    G.dayLog.push(`夜里读了〈${b.name}〉`);
+    return { lines: [`你点起灯，读〈${b.name}〉。`, ...b.night] };
   }
   if (act === 'pray') {
     const err = canDo('pray'); if (err) return { lines: [err], blocked: true };
@@ -3631,6 +3807,18 @@ function nap() {
   G.dayLog.push('午休了一会儿');
   youFeed('nap');
   return { lines: [`你睡了半个中午。精力 +5（现在 ${G.energy}）。`], settled: advanceNode() === 'settled' };
+}
+
+/* ---------- 家：做饭台词池取值（#75）：def.cook = {yes/defer/do/after}（言生产线，池空回退句） ---------- */
+function cookLine(def, k, fallback) {
+  const p = def.cook && def.cook[k];
+  if (p && p.length) return `<b>${def.name}</b>：${rnd(p)}`;
+  return fallback;
+}
+/* Leo 借书好感：借/还每天合计封顶 +1（#75） */
+function leoLibF() {
+  if (!G.libraryF || G.libraryF.day !== G.day) G.libraryF = { day: G.day, got: false };
+  if (!G.libraryF.got) { rel('leo', 'f', 1); G.libraryF.got = true; }
 }
 
 /* ---------- 家：和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） ---------- */
@@ -4321,6 +4509,7 @@ function placeHtml(pid) {
   if (pid === 'church' && who.some(n => n.id === 'vivienne')) acts += `<button class="btn" data-act="pray">祈祷（精力1）</button>`;
   if (pid === 'library' && who.some(n => n.id === 'leo')) {
     acts += `<button class="btn" data-act="study">看半天书（精力1·武力+）</button>`;
+    acts += `<button class="btn" data-act="bookq">借书${G.borrowed ? '·还书' : ''}（Leo友+1/天封顶）</button>`;   /* 借书互动（#75）：夜里 Leo 守着灯也能借 */
     /* 学图纸（拍板 #42）：未学的逐张列出，一张精力1、占时间格 */
     for (const [k, c] of Object.entries(CRAFT)) {
       if (!G.blueprints[k]) acts += `<button class="btn" data-act="blueprint" data-k="${k}">学图纸·〈${c.name}〉（精力1）</button>`;
@@ -4357,6 +4546,13 @@ function homeHtml() {
     <div class="dim">精力 ${G.energy}/${maxE()} · 武力 ${G.force} · 安娜币 ${G.coins}${G.hurt ? ` · ${hurtWord()}` : ''}</div>
     <div class="actrow2">
       ${G.node === 1 && G.energy < maxE() ? `<button class="btn" data-act="nap">午休（+5精力）</button>` : ''}
+      ${(G.bag.熟食 || 0) > 0 || G.eatCooked > 0 ? (G.node < DAY_NODES
+        ? (G.eatCooked >= 2 ? `<button class="btn dis" disabled>吃熟食·今天吃饱了</button>`
+          : `<button class="btn" data-act="eat">吃熟食（回精力4·还能吃${2 - G.eatCooked}份）</button>`)
+        : `<button class="btn dis" disabled>吃熟食·白天吃</button>`) : ''}
+      ${G.borrowed ? (G.node >= DAY_NODES
+        ? `<button class="btn" data-act="readbook">读〈${(BOOKS.find(x => x.key === G.borrowed) || {}).name || '书'}〉</button>`
+        : `<button class="btn dis" disabled>读〈${(BOOKS.find(x => x.key === G.borrowed) || {}).name || '书'}〉·晚上读</button>`) : ''}
       ${G.hurt ? `<button class="btn" data-act="heal">治疗药水</button>` : ''}
       <button class="btn" data-act="rest">休息（结束今天）</button>
     </div>
@@ -4373,6 +4569,18 @@ function homeHtml() {
   }</div>`;
   /* 制作区（拍板 #42）：学会的图纸才能在家做，精力2、占时间格 */
   const learned = Object.keys(CRAFT).filter(k => G.blueprints[k]);
+  /* 做饭系统（言拍板 2026-10-31 #75）：做饭不学图纸；邀人同做=确定模型（错过顺延一次，再错过作废） */
+  html += `<div class="sec-title">做饭</div><div class="actrow2">`;
+  for (const r of COOK) html += `<button class="btn" data-act="cookq" data-k="${r.key}">${r.name}</button>`;
+  const ci = G.cookInvite;
+  if (ci && ci.day === G.day && ci.node === G.node && G.node < DAY_NODES)
+    html += `<button class="btn" data-act="dueq">赴约做饭·${npcDef(ci.who).name}（友+2）</button>`;
+  if (!ci && G.node < DAY_NODES)
+    html += G.cookLast === G.day ? `<button class="btn dis" disabled>邀人做饭·今天约过了</button>`
+      : `<button class="btn" data-act="invq">邀人做饭</button>`;
+  html += `</div>`;
+  if (ci) html += `<div class="dim" style="margin:4px 2px">和 ${npcDef(ci.who).name} 约了${ci.day === G.day ? '今天' : '明天'}${NODE_NAMES[ci.node]}在家做饭。到点在家做才算数${ci.deferred ? '；这已经是改过的期，再错过就作废' : '；错过了会顺延一次'}。</div>`;
+  if (G.node >= DAY_NODES) html += `<div class="dim" style="margin:4px 2px">灶上没火，做饭是白天的事。</div>`;
   html += `<div class="sec-title">制作</div>`;
   if (learned.length || G.node < DAY_NODES) {
     html += `<div class="actrow2">`;
@@ -4467,7 +4675,7 @@ function npcSheet(id) {
   html += `<div class="bio">${n.bio}</div>`;
   if (n.secretHint && s.f >= 50) html += `<div class="secret">${n.secretHint}</div>`;   /* 空秘密不显示（#64：Bess 撤案后置空） */
   html += `<div class="relbar"><span>友情 ${friendWord(id)}</span><div class="bar"><div style="width:${s.f}%"></div></div></div>`;
-  if (s.l >= 15) html += `<div class="relbar dim">TA好像${loveWord(id)}。</div>`;
+  html += `<div class="relbar"><span>爱情 ${loveWord(id)}</span><div class="bar"><div style="width:${s.l}%"></div></div></div>`;   /* 爱情横条（言拍板 2026-10-31 第四十二场）：原先只有爱15+的暗示句，玩家看不出亲脸颊/依偎还差多少 */
   if (id === 'knight') { const cw = knightCondWord(); html += `<div class="relbar dim">状态：${cw[1]}。${cw[2]}</div>`; }
   /* 互动：基础四人组 2×2；送花/交易等进「更多」 */
   const btn = (t, label, dis) => `<button class="btn ib ${dis ? 'dis' : ''}" data-act="ia" data-id="${id}" data-ia="${t}" ${dis ? 'disabled' : ''}>${label}</button>`;
@@ -4508,8 +4716,9 @@ function npcSheet(id) {
     if (nk === 'lev4' && EV_GATES.lev4() && loveReady('levi'))
       extras += `<button class="btn line ib" data-act="levbtn" data-k="lev4">命令他歇一天（1·时段）</button>`;
   }
-  /* 婚姻批（#67）：主动求婚——未婚未订婚且对方可婚就显示，成不成交给引擎判断 */
-  if (!G.spouse && !G.engaged && MARRYABLE.includes(id))
+  /* 婚姻批（#67）：主动求婚——未婚未订婚且对方可婚就显示，成不成交给引擎判断；
+     Asher 730 天年龄门前不显示按钮（言拍板 2026-10-31 第四十二场：按钮不该提前呆在那里，隐藏口径与引擎拦截一致 G.day < 731） */
+  if (!G.spouse && !G.engaged && MARRYABLE.includes(id) && !(id === 'asher' && G.day < 731))
     extras += `<button class="btn line ib" data-act="propose" data-id="${id}">求婚</button>`;
   /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
   const fp = funPools(n, s);
@@ -4630,6 +4839,55 @@ function cakeSheet() {
   openModal('和 Asher 做蛋糕', `<div class="dim">夜里在家才能做 · 精力1 · Asher 友+3 · 每天一次 · 当场分掉</div>${mats}<div class="actrow2"><button class="btn dis" disabled>${
     lack.length ? `还差${lack.join('、')}，天黑也做不了` : '材料齐了，天黑回家做'
   }</button></div>`);
+}
+
+/* ---------- 做饭弹窗（#75）：点开看材料与产出，确认再动手；赴约同做共用 ---------- */
+function cookSheet(k, together) {
+  const r = COOK.find(x => x.key === k); if (!r) return;
+  const { html: mats, lack } = matsHtml(r.mats);
+  const ci = G.cookInvite;
+  const tn = together && ci ? npcDef(ci.who).name : null;
+  openModal(`${tn ? `和 ${tn} 一起做饭` : '做饭'} · ${r.name}`,
+    `<div class="dim">精力1 · 占一个时间格 · 得熟食×${r.out}${tn ? ` · ${tn} 友+2` : ''}</div>${mats}<div class="actrow2">${
+      lack.length ? `<button class="btn dis" disabled>材料不够·还差${lack.join('、')}</button>`
+        : `<button class="btn" data-act="${tn ? 'cooktogether' : 'cook'}" data-k="${k}">${tn ? '一起开火（精力1）' : '做饭（精力1）'}</button>`
+    }</div>`);
+}
+
+/* ---------- 赴约选菜（#75）：约好的时辰到了，在家挑一道一起做 ---------- */
+function dueSheet() {
+  const ci = G.cookInvite;
+  if (!ci) { toast('现在没有约。'); return; }
+  const name = npcDef(ci.who).name;
+  let html = `<div class="dim">${name} 按时来了。挑一道一起做。</div><div class="trade">`;
+  html += COOK.map(r => `<button class="btn tb" data-act="cookq2" data-k="${r.key}">${r.name}</button>`).join('');
+  html += `</div>`;
+  openModal(`赴约做饭 · ${name}`, html);
+}
+
+/* ---------- 邀人做饭选人（#75，言设计：NPC 不拒，改期顺延制） ---------- */
+function inviteSheet() {
+  const cands = NPCS.filter(n => !(n.id === 'lee' && !G.npc.lee.restored));   // 恢复前 Lee 不参与（他分不清这些）
+  let html = `<div class="dim">请一位来家里一起做顿饭。约的是今天下一格（下午发起约明天早上）；错过约期顺延一次，再错过作废。同做友+2，一天只能约一回。</div><div class="trade">`;
+  html += cands.map(n => `<button class="btn tb" data-act="cookinvite" data-k="${n.id}">${n.name}<span class="dim">·${n.job}</span></button>`).join('');
+  html += `</div>`;
+  openModal('邀人做饭', html);
+}
+
+/* ---------- 图书馆借还书（#75）：一次一本；夜里在家读，看完还 ---------- */
+function bookSheet() {
+  let html = '';
+  if (G.borrowed) {
+    const b = BOOKS.find(x => x.key === G.borrowed);
+    const nm = b ? b.name : '书';
+    html += `<div class="dim">你借着〈${nm}〉。夜里在家点「读」看内容，看完拿回来还了才能借下一本。</div>
+      <div class="actrow2"><button class="btn" data-act="returnbook">还〈${nm}〉</button></div>`;
+  } else {
+    html += `<div class="dim">一次借一本。借/还 Leo 友+1（每天合计封顶）。</div><div class="trade">`;
+    html += BOOKS.map(b => `<button class="btn tb" data-act="borrow" data-k="${b.key}">〈${b.name}〉<span class="dim">·${b.d}</span></button>`).join('');
+    html += `</div>`;
+  }
+  openModal('图书馆 · 借书', html);
 }
 
 /* ---------- 送礼弹窗（拍板 #42）：列出手里能送的东西，每人每天一份 ---------- */
@@ -4931,13 +5189,25 @@ document.addEventListener('click', e => {
     return;
   }
   if (a === 'craftq') { craftSheet(act.dataset.k); return; }
+  if (a === 'cookq') { cookSheet(act.dataset.k); return; }        /* 做饭（#75） */
+  if (a === 'cookq2') { cookSheet(act.dataset.k, true); return; } /* 赴约同做选菜后 */
+  if (a === 'dueq') { dueSheet(); return; }
+  if (a === 'invq') { inviteSheet(); return; }
+  if (a === 'bookq') { bookSheet(); return; }
   if (a === 'itemq') { itemSheet(act.dataset.k); return; }   // 制作弹窗里点材料名 → 看哪里能弄到
   if (a === 'pickflower' || a === 'water' || a === 'pray' || a === 'study' || a === 'shoot'
-    || a === 'blueprint' || a === 'craft' || a === 'helpfarm') {
-    const r = doPlaceAction(a === 'craft' ? 'home' : V.place, a, act.dataset.k);
+    || a === 'blueprint' || a === 'craft' || a === 'helpfarm'
+    || a === 'cook' || a === 'eat' || a === 'cookinvite' || a === 'cooktogether' || a === 'readbook') {
+    const r = doPlaceAction(a === 'craft' || ['cook', 'eat', 'cookinvite', 'cooktogether', 'readbook'].includes(a) ? 'home' : V.place, a, act.dataset.k);
     resultSheet(r.lines);
     if (r.settled) setTimeout(settlementSheet, 10);
     else render();
+    return;
+  }
+  if (a === 'borrow' || a === 'returnbook') {   /* 借还书（#75）：留在弹窗原地刷新，同摊位买卖模式 */
+    const r = doPlaceAction('library', a, act.dataset.k);
+    toast(r.lines[0]);
+    bookSheet(); render();
     return;
   }
   if (a === 'duel') {

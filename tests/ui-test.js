@@ -220,6 +220,76 @@ function t(name, cond, extra) {
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
     await ev(() => { G.npc.lee.restored = false; G.npc.lee.f = 12; save(); });
 
+    /* U16 做饭系统＋借书互动（言拍板 2026-10-31 #75） */
+    await ev(() => { G.day = 5; G.node = 0; G.energy = 20; G.bag.土豆 = 2; G.bag.熟食 = 2; G.eatCooked = 0; G.cookInvite = null; G.cookLast = 0; save(); render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cookq"][data-k="baked"]', { timeout: 15000 });
+    t('U16 做饭三菜按钮就位', !!(await page.$('[data-act="cookq"][data-k="stew"]')) && !!(await page.$('[data-act="cookq"][data-k="cheese"]')));
+    await page.locator('[data-act="cookq"][data-k="baked"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U16b 做饭弹窗看材料', (await $txt('#modal-body')).includes('土豆'));
+    await page.locator('[data-act="cook"][data-k="baked"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r16 = await ev(() => ({ food: G.bag.熟食, node: G.node }));
+    t('U16c 做出熟食并占格', r16.food === 3 && r16.node === 1, JSON.stringify(r16));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.node = 0; G.energy = 10; save(); render(); });
+    await page.waitForSelector('[data-act="eat"]', { timeout: 15000 });
+    await page.locator('[data-act="eat"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U16d 吃熟食回精力4', await ev(() => G.energy) === 14);
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* 邀人做饭（确定模型）：骑士应约句用「它」 */
+    await ev(() => { G.node = 0; G.cookInvite = null; G.cookLast = 0; save(); render(); });
+    await page.waitForSelector('[data-act="invq"]', { timeout: 15000 });
+    await page.locator('[data-act="invq"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cookinvite"][data-k="bess"]', { timeout: 15000 });
+    t('U16e 选人弹窗列NPC', !!(await page.$('[data-act="cookinvite"][data-k="knight"]')));
+    await page.locator('[data-act="cookinvite"][data-k="knight"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U16f 骑士应约句用「它」', (await $txt('#modal-body')).includes('它应下了'));
+    const r16g = await ev(() => G.cookInvite);
+    t('U16g 约定今天下一格', r16g && r16g.who === 'knight' && r16g.node === 1, JSON.stringify(r16g));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* 到点赴约同做 */
+    await ev(() => { G.node = 1; G.energy = 20; G.bag.土豆 = 2; save(); render(); });
+    await page.waitForSelector('[data-act="dueq"]', { timeout: 15000 });
+    await page.locator('[data-act="dueq"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cookq2"][data-k="baked"]', { timeout: 15000 });
+    await page.locator('[data-act="cookq2"][data-k="baked"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cooktogether"][data-k="baked"]', { timeout: 15000 });
+    const f16 = await ev(() => G.npc.knight.f);
+    await page.locator('[data-act="cooktogether"][data-k="baked"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r16h = await ev(() => ({ f: G.npc.knight.f, inv: G.cookInvite }));
+    t('U16h 赴约同做骑士友+2清约', r16h.f === f16 + 2 && !r16h.inv, JSON.stringify(r16h));
+    t('U16i 骑士特例句（不用吃饭）', (await $txt('#modal-body')).includes('它不用吃饭'));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* 借书：Leo 在图书馆的时段 */
+    await ev(() => { G.borrowed = null; delete G.bag['骑士养护手册（抄本）']; const n = [0, 1, 2, 3, 4].find(i => locOf(npcDef('leo'), i) === 'library'); G.node = n; save(); });
+    await page.locator('[data-t="village"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-place="library"]', { timeout: 15000 });
+    await page.locator('[data-place="library"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="bookq"]', { timeout: 15000 });
+    await page.locator('[data-act="bookq"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="borrow"][data-k="knight"]', { timeout: 15000 });
+    t('U16j 借书弹窗列五本', (await page.$$('[data-act="borrow"]')).length === 5);
+    await page.locator('[data-act="borrow"][data-k="knight"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    const r16k = await ev(() => ({ b: G.borrowed, bag: G.bag['骑士养护手册（抄本）'] }));
+    t('U16k 借到骑士手册入包', r16k.b === 'knight' && r16k.bag === 1, JSON.stringify(r16k));
+    t('U16l 还书按钮就位', !!(await page.$('[data-act="returnbook"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* 夜读 */
+    await ev(() => { G.node = 3; save(); render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="readbook"]', { timeout: 15000 });
+    await page.locator('[data-act="readbook"]').click({ timeout: 15000 });
+    await page.waitForTimeout(200);
+    t('U16m 夜读短文出现', (await $txt('#modal-body')).includes('晨露'));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.borrowed = null; G.cookInvite = null; save(); });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

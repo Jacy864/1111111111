@@ -25,7 +25,7 @@ function feedHtml() {
   const hint = starred ? '' : `<div class="feed-hint">在人物界面星标后，这里只显示与TA有关的事。现在显示全部。</div>`;
   if (!all.length) return `<div class="feed-hint">${starred ? '星标的人这段时间没有动静。' : '村里还没有动静。'}</div>`;
   const item = e => {
-    const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : '';
+    const tag = e.t === 'you' ? '<span class="ftag you">你</span>' : e.t === 'major' ? '<span class="ftag major">大事</span>' : e.t === 'meet' ? '<span class="ftag meet">偶遇</span>' : '';
     return `<div class="feed ${e.t}"><div class="fmeta">第${e.d}天 ${NODE_NAMES[e.n]}${tag}</div><div class="ftext">${e.html}</div></div>`;
   };
   const shown = V.feedAll ? all : all.slice(0, 6);
@@ -521,6 +521,7 @@ document.addEventListener('click', e => {
   if (pl) {
     V.place = pl.dataset.place || null;
     if (pl.dataset.place && G.node >= DAY_NODES) markNightOut();
+    if (pl.dataset.place) doMeetCheck(pl.dataset.place);   /* 偶遇系统（#68）：进地点掷骰 */
     render();
     /* 感情线：白天进图书馆撞见（Leo 事件2/3）；夜里去井边撞见（Asher 事件2） */
     if (V.place === 'library') { const ev = enterEvPending(); if (ev) evSheet(ev); }

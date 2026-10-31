@@ -211,6 +211,46 @@ t('T22 恢复前 Lee 肢体互动全锁、恢复后解开（言拍板 2026-10-30
   TOUCH_OPEN.pop();
 });
 
+/* ============ 六c、偶遇系统（言拍板 #68 2026-10-31 实装） ============ */
+t('T23 偶遇：掷骰与地点过滤、每时间格一次、一人一天一次、纯氛围', () => {
+  fresh(); G.node = 0; MEET_NODE = -1;
+  for (const k in G.npc) G.npc[k].meetDay = G.day;      // 封全场，只留 Jacob（他无通用句，地点过滤可测）
+  G.npc.jacob.meetDay = 0;
+  const f0 = G.npc.jacob.f, l0 = G.npc.jacob.last;
+  fix(0.9); doMeetCheck('well');                        // 白天 0.9 ≥ 0.4 不中
+  ok(G.feed.every(e => e.t !== 'meet'), '掷骰未中不该偶遇');
+  fix(0.1); doMeetCheck('library');                     // Jacob 无图书馆句；矿洞口句 p:'zone' 不触发 → 无候选
+  ok(G.feed.every(e => e.t !== 'meet'), '地点不匹配与 zone 句不该触发');
+  fix(0.1); doMeetCheck('well');                        // 唯一候选：Jacob 井边句
+  const m1 = G.feed[G.feed.length - 1];
+  eq(m1.t, 'meet', '触发偶遇');
+  ok(m1.html.includes('Jacob') && m1.html.includes('桶这么重'), '命中井边句（含场景前缀拼接）');
+  eq(G.npc.jacob.meetDay, G.day, '当日偶遇戳');
+  eq(G.npc.jacob.f, f0, '不涨友（纯氛围）');
+  eq(G.npc.jacob.last, l0, '不算见过（冷落判定不动，言拍板）');
+  fix(0.1); doMeetCheck('home');
+  ok(G.feed[G.feed.length - 1] === m1, '每时间格最多一次');
+  G.npc.olivia.meetDay = 0; MEET_NODE = -1; fix(0.1); doMeetCheck('bakery');   // 放行 Olivia：烘焙坊店门口句
+  const m2 = G.feed[G.feed.length - 1];
+  ok(m2 !== m1 && m2.t === 'meet', '第二位村民触发');
+  ok(m2.html.includes('Olivia') && !m2.html.includes('Jacob'), '一人一天不重复');
+});
+t('T23b 偶遇夜句与例外夜限定：夜里只出 night 句、Jacob 钟楼顶需夜宿', () => {
+  fresh(); G.node = DAY_NODES; MEET_NODE = -1; G.nightJacobAtTower = false;
+  for (const k in G.npc) G.npc[k].meetDay = 0;
+  fix(0.1); doMeetCheck('well');                        // 夜里 0.1 < 0.25：候选=Bess 窗下＋Isabel 窗外（夜·通用）
+  const m = G.feed[G.feed.length - 1];
+  eq(m.t, 'meet', '夜句触发');
+  ok(m.html.includes('bess') || m.html.includes('isabel'), '夜通用句（井边白天的句子不该出）');
+  for (const k in G.npc) G.npc[k].meetDay = G.day;      // 封别人的池，只留 Jacob
+  G.npc.jacob.meetDay = 0;
+  MEET_NODE = -1; fix(0.1); doMeetCheck('belltower');
+  ok(G.feed[G.feed.length - 1] === m, '未夜宿钟楼，钟楼顶句不出');
+  G.nightJacobAtTower = true; MEET_NODE = -1; fix(0.1); doMeetCheck('belltower');
+  const m2 = G.feed[G.feed.length - 1];
+  ok(m2 !== m && m2.t === 'meet' && m2.html.includes('jacob'), '例外夜钟楼顶句触发');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
 t('T16 浸泡不变量', () => {
   const endings = {};

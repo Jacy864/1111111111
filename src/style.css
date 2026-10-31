@@ -154,6 +154,7 @@ button { font-family: inherit; }
 }
 .feed.you { border-left-color: var(--red); }
 .feed.major { border-left-color: var(--ink); }
+.feed.meet { border-left-color: var(--accent); }
 .fmeta {
   font-size: 11px; color: var(--ink-3); margin-bottom: 5px;
   letter-spacing: .05em; font-variant-numeric: tabular-nums;
@@ -165,6 +166,7 @@ button { font-family: inherit; }
 }
 .ftag.you { color: var(--red); }
 .ftag.major { color: var(--ink-2); }
+.ftag.meet { color: var(--accent); }
 .feed-hint {
   font-size: 13px; color: var(--ink-2);
   background: var(--wash); border: 1px solid var(--hair); padding: 12px 14px;

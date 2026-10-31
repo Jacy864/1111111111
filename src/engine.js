@@ -84,11 +84,12 @@ function load() {
     G.noPropose = G.noPropose || {};
     G.weather = G.weather ? 1 : 0;
     G.nightOut = G.nightOut || 0;
-    /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数 */
+    /* 批四字段迁移：寻欢记忆 flag + 每日一次尝试锁；感情线：每人打闹计数；偶遇：每人每日偶遇戳（#68） */
     for (const k in G.npc) {
       G.npc[k].funOnce = !!G.npc[k].funOnce;
       G.npc[k].funDay = G.npc[k].funDay || 0;
       G.npc[k].teases = G.npc[k].teases || 0;
+      G.npc[k].meetDay = G.npc[k].meetDay || 0;
     }
     /* 礼物手作批字段迁移（拍板 #42）：已学图纸 + 每人每日送礼戳 */
     G.blueprints = G.blueprints || {};
@@ -118,7 +119,7 @@ function addFeed(type, text, names) {
 function visibleFeed() {
   const starred = Object.keys(G.stars).filter(k => G.stars[k]);
   return G.feed.filter(e =>
-    e.t === 'major' || e.t === 'you' || e.t === 'morn' ||
+    e.t === 'major' || e.t === 'you' || e.t === 'morn' || e.t === 'meet' ||
     starred.length === 0 || e.names.some(n => starred.includes(n)));
 }
 
@@ -212,6 +213,42 @@ function nightfall() {
   if (G.nightJacobAtTower) {
     addFeed('sim', '[[jacob]]修表修过了头，索性睡在钟楼。他说：「齿轮比怪物好懂。」');
   }
+}
+
+/* ---------- 偶遇系统（言拍板 #68 2026-10-31）：进地点掷骰，路过的村民跟你说一句 ----------
+   纯氛围事件：不耗精力、不占时间格、不涨好感、不算「今天见过」（冷落判定不动，言拍板）。
+   白天 40% / 夜里 25%；每时间格最多 1 次；一人一天最多 1 次；夜句（night 标）只在夜里触发。
+   meet 池格式：{ p:地点键|''通用, scene:展示场景, t:台词, night?, tower? }；
+   老池 {p,t} 无 scene 的按地点键查 MEET_SCENE。p:'zone'=野外句，v1 不触发（二期野外偶遇）。
+   骑士与 Lee 的偶遇句在 after 备用包里（根层无 meet），v1 天然不参与。 */
+const MEET_SCENE = { '': '路上', well: '井边', bakery: '烘焙坊门口', forge: '锻造室', church: '教堂门口',
+  plaza: '广场', library: '图书馆', field: '农田', farm: '养殖场', alchemy: '炼药房', belltower: '钟楼', home: '你家门口' };
+let MEET_NODE = -1;      /* 本时间格已偶遇标记（session 级，不进存档） */
+function doMeetCheck(place) {
+  if (!place || MEET_NODE === G.node) return;
+  const night = G.node >= DAY_NODES;
+  if (Math.random() >= (night ? 0.25 : 0.4)) return;
+  const ashBlue = !!(G.evF && G.evF.ashBlueUntil && G.day < G.evF.ashBlueUntil);   /* 家人档头三天 Asher 躲避 */
+  const cands = [];
+  for (const n of NPCS) {
+    if (ashBlue && n.id === 'asher') continue;
+    if (!n.meet || !n.meet.length) continue;
+    if (G.npc[n.id].meetDay === G.day) continue;
+    for (const line of n.meet) {
+      if (line.p === 'zone') continue;
+      if (!!line.night !== night) continue;
+      if (line.p && line.p !== place) continue;
+      if (line.tower && !G.nightJacobAtTower) continue;        /* Jacob 夜宿钟楼例外夜限定 */
+      cands.push({ n, line });
+    }
+  }
+  if (!cands.length) return;
+  const pick = rnd(cands);
+  const scene = pick.line.scene || MEET_SCENE[pick.line.p || ''];
+  addFeed('meet', `${scene}，[[${pick.n.id}]]说：「${pick.line.t}」`, [pick.n.id]);
+  G.npc[pick.n.id].meetDay = G.day;
+  MEET_NODE = G.node;
+  save();
 }
 
 /* ---------- 占有欲通用引擎 + Vivienne 活报纸（拍板 2026-10-15#5 / 2026-10-16#15·修订 2026-10-26） ---------- */

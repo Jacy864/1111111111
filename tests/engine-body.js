@@ -148,10 +148,16 @@ t('T17 和 Asher 做蛋糕（言拍板 2026-10-30 第十二场）', () => {
   const r = bakeCake();
   ok(!r.blocked, '做成');
   eq(G.npc.asher.f - f0, 3, '友+3');
+  eq(G.npc.asher.l, 1, '爱+1（新档友35<40，按暧昧低档，#78）');
+  ok(r.lines.some(l => l.includes('爱 +1')), '结算行显示爱 +1');
   eq(e0 - G.energy, 1, '精力1');
   eq(G.day, d0, '夜里互动不翻页');
   eq(G.bag['小麦'], undefined, '小麦耗尽删键');
   eq(G.bag['水果'], undefined, '水果耗尽删键');
+  G.day++; G.node = 3; G.npc.asher.f = 40;
+  G.bag['小麦'] = 1; G.bag['水果'] = 1;
+  ok(!bakeCake().blocked, '第二天又能做');
+  eq(G.npc.asher.l, 5, '友≥40 爱+4（1+4，同暧昧高档）');
   G.bag['小麦'] = 1; G.bag['水果'] = 1;
   ok(bakeCake().blocked, '每天一次');
 });
@@ -480,6 +486,8 @@ t('T26c 邀约：确定模型/赴约同做友+2/一天一邀/骑士句用「它�
   const f0 = G.npc.bess.f;
   const r3 = doPlaceAction('home', 'cooktogether', 'baked');
   eq(G.npc.bess.f, f0 + 2, '同做友+2');
+  eq(G.npc.bess.l, 0, '姐妹同做爱情恒0不加（#78）');
+  ok(!r3.lines.some(l => l.includes('爱 +')), '姐妹不显示爱加成行');
   ok(!G.cookInvite, '赴约后约清掉');
   eq(G.bag.熟食, 1, '同做出熟食');
   ok(r3.lines.some(l => l.includes('厨房里两个人')), '同做过程句');
@@ -487,6 +495,22 @@ t('T26c 邀约：确定模型/赴约同做友+2/一天一邀/骑士句用「它�
   G.day++; G.cookLast = 0; G.node = 0;
   const r4 = doPlaceAction('home', 'cookinvite', 'knight');
   ok(r4.lines.some(l => l.includes('它应下了')), '骑士回退句用「它」');
+});
+t('T26f 同做加爱情（#78）：数量同暧昧（友≥40 +4 / 友<40 +1）＋结算行显示', () => {
+  fresh(); G.energy = 20; G.node = 0;
+  G.npc.asher.f = 39;
+  doPlaceAction('home', 'cookinvite', 'asher');
+  G.node = 1; G.bag.土豆 = 2;
+  const r1 = doPlaceAction('home', 'cooktogether', 'baked');
+  eq(G.npc.asher.l, 1, '友<40 爱+1');
+  ok(r1.lines.some(l => l.includes('爱 +1')), '结算行显示爱 +1');
+  G.day++; G.cookLast = 0; G.node = 0; G.bag.土豆 = 2;
+  G.npc.asher.f = 40; G.npc.asher.l = 0;
+  doPlaceAction('home', 'cookinvite', 'asher');
+  G.node = 1;
+  const r2 = doPlaceAction('home', 'cooktogether', 'baked');
+  eq(G.npc.asher.l, 4, '友≥40 爱+4');
+  ok(r2.lines.some(l => l.includes('爱 +4')), '结算行显示爱 +4');
 });
 t('T26d 邀约：错过顺延一次/再错过作废无惩罚', () => {
   fresh(); G.energy = 20; G.node = 2;

@@ -956,12 +956,15 @@ function doPlaceAction(place, act, sub) {
     for (const m in rec.mats) { G.bag[m] -= rec.mats[m]; if (G.bag[m] <= 0) delete G.bag[m]; }
     G.bag.熟食 = (G.bag.熟食 || 0) + rec.out;
     G.energy -= COST.cook;
+    const clv = G.npc[c.who].f >= 40 ? 4 : 1;   /* 同做加爱情，数量同暧昧：友≥40 +4 / 友<40 +1（言拍板 2026-10-31 第四十三场 #78） */
     rel(c.who, 'f', 2);
+    if (!SISTERS.includes(c.who)) rel(c.who, 'l', clv);   /* 三姐妹爱情恒 0 不加，照打闹先例拦（#78） */
     G.dayLog.push(`和${def.name}做了${rec.name}`);
     G.cookInvite = null;
     addFeed('you', `你和[[${c.who}]]在家做了一顿饭。`, [c.who]);
     lines.push(cookLine(def, 'do', def.id === 'knight' ? '它不用吃饭，还是站在灶边搭了把手。' : '厨房里两个人，一顿饭慢慢做成了。'));
     lines.push(`入手：熟食×${rec.out}`);
+    if (!SISTERS.includes(c.who)) lines.push(`爱 +${clv}`);
     lines.push(cookLine(def, 'after', def.id === 'knight' ? '它坐在对面看你吃完，把碗摞好了。' : 'TA吃得高兴，帮着把灶收拾干净了。'));
     return { lines, settled: advanceNode() === 'settled' };
   }
@@ -1409,7 +1412,7 @@ function leoLibF() {
 }
 
 /* ---------- 家：和 Asher 做蛋糕（言拍板 2026-10-30 第十二场） ---------- */
-/* 夜里在家才做得了（他白天不在家）；小麦1+水果1+精力1；Asher 友+3；每天一次；当场分掉不出物品 */
+/* 夜里在家才做得了（他白天不在家）；小麦1+水果1+精力1；Asher 友+3＋爱（同暧昧档：友≥40 +4 / 友<40 +1，#78）；每天一次；当场分掉不出物品 */
 const CAKE_OPEN = [
   '灶上坐了水。Asher 负责看火，你负责和面。',
   '面粉沾了他一手。他看了看，接着揉。',
@@ -1426,10 +1429,12 @@ function bakeCake() {
   G.bag['水果']--; if (G.bag['水果'] <= 0) delete G.bag['水果'];
   G.cakeDay = G.day;
   G.energy -= COST.bake;
+  const clv = G.npc.asher.f >= 40 ? 4 : 1;   /* 做蛋糕加爱情，数量同暧昧：友≥40 +4 / 友<40 +1（言拍板 2026-10-31 第四十三场 #78） */
   rel('asher', 'f', 3);
+  rel('asher', 'l', clv);
   G.dayLog.push('和 Asher 做了蛋糕');
   addFeed('you', '你和[[asher]]做了蛋糕，站在灶边分着吃了。', ['asher']);
-  return { lines: [rnd(CAKE_OPEN), '蛋糕不大，你们站在灶边一人一半吃完了。', '<b>Asher</b>：「比 Olivia 的甜。」'] };
+  return { lines: [rnd(CAKE_OPEN), '蛋糕不大，你们站在灶边一人一半吃完了。', `爱 +${clv}`, '<b>Asher</b>：「比 Olivia 的甜。」'] };
 }
 
 /* ============ 感情线事件引擎（第一批·言拍板 2026-10-28） ============ */

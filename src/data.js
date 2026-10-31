@@ -435,7 +435,7 @@ const NPCS = [
   },
   { id: 'bess', name: 'Bess', job: '锻造师傅', initF: 8,
     bio: '冷脸，话少，说话像下单。兵器打得极好，自己也知道。护短。',
-    secretHint: '',   /* 2026-10-31 #64 撤案：原「骑士每月来一趟她修甲」违核心设定——村民不离村、黄金玉只在矿洞、骑士的伤唯一修理人是 Gloria（玩家），村民不可能修它。新秘密待言定，置空＝档案页不显示＋村播报自动跳过 */
+    secretHint: '',   /* 言拍板 2026-10-31 #66：不设秘密，她就是个普通的冷脸帅姐（原「修甲」方案 #65 已撤）。置空＝档案页不显示＋村播报自动跳过 */
     loc: ['forge', 'forge', 'forge', 'home', 'home'],
     trade: { sell: [['箭矢', 5]], buy: [['铁矿', 5], ['怪躯壳', 8], ['骨头', 1]], hard: true },
     chat: [  /* 平铺旧占位 3 条，闲聊三档（7/9/6）等帅姐版台词包回流时整包替换 */
@@ -1794,7 +1794,7 @@ const COST = { chat: 1, deep: 2, flirt: 2, tease: 2, hit: 2, fun: 2, trade: 0, f
   gather: 2, hunt: 3, fish: 2, dive: 3, minenear: 4, minefar: 4, train: 2, blueprint: 1, craft: 2, helpfarm: 3, gift: 1, bake: 1 };   // bake=和Asher做蛋糕（言拍板 2026-10-30 第十二场）
 
 /* 占有欲性格系数（2026-10-26 提案表，言可改）：每晚涨速倍率 */
-const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 0.6, lee: 0.6, jasper: 0.5, levi: 0.5 };
+const P_RATE = { vivienne: 1.5, asher: 1.2, knight: 1.0, isabel: 0.8, alice: 0.7, olivia: 0.7, leo: 0.6, bess: 0.6, jacob: 1.5, lee: 0.6, jasper: 0.5, levi: 0.5 };  /* Jacob 0.6→1.5（言拍板 2026-10-31 #66：新人设占有欲极强，升最高档与神母同级） */
 
 /* Vivienne 活报纸台词池（待生产线生成；空=回退系统过渡句。{x}=当日事实占位） */
 const VIV_NEWS = { village: [], act: [], private: [] };

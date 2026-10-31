@@ -337,7 +337,106 @@ t('T24b 婚姻：Asher年龄门/主动求婚/出轨两段式+处理痕迹', () =
   leoSus.suspectText = [];
 });
 
+/* ============ 六·五、Lee 记忆恢复线（言拍板 #70 2026-10-31） ============ */
+t('T25 Lee线：三线索掉落+保底+只掉一次', () => {
+  fresh(); const L = [];
+  fix(0.9);                                        // 概率路径永不中，走保底
+  for (let i = 0; i < 24; i++) clueDropCheck('gather', L);
+  ok(!(G.bag.铜哨 > 0), '24 次未到保底不掉');
+  clueDropCheck('gather', L);
+  eq(G.bag.铜哨, 1, '第 25 次保底掉铜哨');
+  clueDropCheck('gather', L);
+  eq(G.bag.铜哨, 1, '掉过不再掉（got 标记）');
+  G.leeClue.dive = { n: 0, got: false }; G.bag.旧地图 = 1;
+  for (let i = 0; i < 30; i++) clueDropCheck('dive', L);
+  eq(G.bag.旧地图, 1, '手上已有不再掉（防重复）');
+  eq(G.leeClue.dive.n, 0, '已有物品时不计数');
+  fix(0.001);                                      // 概率路径命中
+  clueDropCheck('minefar', L);
+  eq(G.bag['烧掉一半的手札'], 1, '概率掉手札');
+  ok(L.some(x => x.includes('烧掉一半的手札')), '入手过渡句进 lines');
+  clueDropCheck('hunt', L);
+  ok(!(G.leeClue.hunt), '非线索活动不计数');
+});
+t('T25b Lee线：任意一件遗物当场触发恢复+切池+晨报', () => {
+  fresh();
+  G.bag.旧地图 = 1;                                // 不从第一件开始，验证「任一件」
+  const r = doGiveLeeClue('旧地图');
+  ok(r.ev && r.ev.k === 'leerestore', '返回恢复事件（evSheet 用）');
+  ok(G.npc.lee.restored, 'restored 置真');
+  ok(!(G.bag.旧地图 > 0), '遗物消耗');
+  eq(G.npc.lee.clueGiven.length, 1, '已给记录');
+  const def = npcDef('lee');
+  eq(def.chat, def.after.chat, '主池切 after.chat');
+  eq(def.flirt, def.after.flirt, '暧昧池切 after');
+  eq(def.deep, def.after.deep, 'deep 换自白（谶语退役）');
+  eq(def.bio, LEE_AFTER.bio, '档案 bio 已换');
+  eq(G.npc.lee.f, 27, '友 +15（12+15）');
+  ok(G.evF.leeMornPending, '次日晨报挂起');
+  genMorning();
+  ok(G.feed.some(e => e.t === 'morn'), '晨报出了全村反应（池空回退句）');
+  ok(!G.evF.leeMornPending, '挂起清除');
+});
+t('T25c Lee线：恢复后补忆句+寻欢池开通+肢体解锁', () => {
+  fresh(); G.bag.铜哨 = 1; doGiveLeeClue('铜哨');
+  G.bag['烧掉一半的手札'] = 1;
+  const r2 = doGiveLeeClue('烧掉一半的手札');
+  ok(!r2.ev, '补忆不再触发事件');
+  ok(r2.lines.join('').includes('烧掉一半的手札'), '补忆句含遗物名');
+  eq(G.npc.lee.f, 30, '补忆友 +3');
+  ok(funPools(npcDef('lee'), G.npc.lee), '恢复后寻欢池开通');
+  G.npc.lee.f = 100; G.npc.lee.l = 100;            // 拉满过门槛，验锁已解
+  const tr = doTouch('lee', 'pat');
+  ok(!tr.blocked, '恢复后摸头解锁');
+  eq(TOUCH_TEXT.lee.pat.length, 0, '池空走中性句（台词待生产线）');
+  G.bag.铜哨 = 1;
+  const r3 = doGiveLeeClue('铜哨');
+  ok(r3.blocked, '同件不可重给');
+});
+t('T25d Lee线：恢复前感情线封死', () => {
+  fresh();
+  G.npc.lee.f = 80;
+  const fr = interact('lee', 'flirt');
+  ok(fr.blocked && fr.lines[0] === '他还分不清这些。', '暧昧入口拦');
+  rel('lee', 'l', 10);
+  eq(G.npc.lee.l, 0, '爱情值封 0');
+  G.npc.lee.f = 100;
+  const tr = doTouch('lee', 'pat');
+  ok(tr.blocked && tr.lines[0] === '他还分不清这些。', '恢复前肢体拦（#61）');
+  const fn = funPools(npcDef('lee'), G.npc.lee);
+  ok(!fn, '恢复前无寻欢池');
+});
+t('T25e Lee线：轮值照顾播报进出', () => {
+  fresh();
+  fix(0.1);                                        // < 0.18 出
+  leeCareEvent();
+  ok(JSON.stringify(G.feed).includes('照看'), '出轮值播报');
+  eq(G._leeCareDay, G.day, '当天已出');
+  G.feed.length = 0;
+  leeCareEvent();
+  eq(G.feed.length, 0, '同天不重复');
+  G.day++; G._leeCareDay = 0; G.npc.lee.restored = true;
+  leeCareEvent();
+  eq(G.feed.length, 0, '恢复后退役');
+  G.npc.lee.restored = false; G.day++; G._leeCareDay = 0;
+  const care = npcDef('lee').care; npcDef('lee').care = [];
+  leeCareEvent();
+  eq(G.feed.length, 0, 'care 池空不触发');
+  npcDef('lee').care = care;
+});
+t('T25f Lee线：load 重放切池（幂等）', () => {
+  fresh(); G.bag.铜哨 = 1; doGiveLeeClue('铜哨');
+  save();
+  const def = npcDef('lee');
+  def._afterApplied = false; def.chat = ['【污染池】'];   // 模拟新会话：NPCS 从 data.js 重载为原版
+  ok(load(), '读档');
+  eq(def.chat, def.after.chat, 'load 重放切池');
+  ok(Array.isArray(G.npc.lee.clueGiven), 'clueGiven 兜底为数组');
+  ok(G.leeClue, '掉落进度兜底');
+});
+
 /* ============ 七、浸泡：30 种子 × 45 天随机乱玩 ============ */
+
 t('T16 浸泡不变量', () => {
   const endings = {};
   for (let seed = 1; seed <= 30; seed++) {

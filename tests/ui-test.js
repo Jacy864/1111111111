@@ -202,6 +202,24 @@ function t(name, cond, extra) {
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
     await ev(() => { G.spouse = null; G.engaged = null; G.node = 0; save(); });
 
+    /* U15 Lee 记忆线（#70）：恢复前藏暧昧+给遗物按钮+恢复弹窗+池切换 */
+    await ev(() => { G.npc.lee.restored = false; G.npc.lee.f = 80; G.bag.铜哨 = 0; npcSheet('lee'); });
+    await page.waitForSelector('#modal-mask.show', { timeout: 15000 });
+    t('U15 恢复前藏暧昧按钮', !(await page.$('[data-act="ia"][data-id="lee"][data-ia="flirt"]')));
+    t('U15b 恢复前暗提示', (await $txt('#modal-body')).includes('分不清'));
+    t('U15c 没捡到遗物时无按钮', !(await page.$('[data-act="ia"][data-id="lee"][data-ia="clue"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.bag.铜哨 = 1; npcSheet('lee'); });
+    await page.waitForSelector('[data-act="ia"][data-id="lee"][data-ia="clue"][data-item="铜哨"]', { timeout: 15000 });
+    await page.locator('[data-act="ia"][data-id="lee"][data-ia="clue"][data-item="铜哨"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    t('U15d 恢复事件弹窗', (await $txt('#modal-body')).includes('想起来了'));
+    t('U15e 恢复后暧昧按钮出现', await ev(() => { npcSheet('lee'); return !!document.querySelector('[data-act="ia"][data-id="lee"][data-ia="flirt"]'); }));
+    t('U15f 恢复后摸头按钮出现（#70 解锁）', await ev(() => { npcSheet('lee'); return !!document.querySelector('[data-act="touch"][data-id="lee"][data-k="pat"]'); }));
+    t('U15g 恢复后档案换 bio', await ev(() => { npcSheet('lee'); return document.querySelector('#modal-body .bio').textContent.includes('预言家'); }));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.npc.lee.restored = false; G.npc.lee.f = 12; save(); });
+
     /* U9 全程零报错 */
     t('U9 零页面报错', errors.length === 0, errors.slice(0, 3).join(' | '));
   } finally {

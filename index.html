@@ -1756,7 +1756,7 @@ const TOUCH = {
   cuddle: { name: '依偎',   l: 90, night: true, dL: 1, afterRestore: true },   // 限夜里（夜里大家都在家）
 };
 /* 第一批开放（言拍板：先样本后铺满）：Asher＋骑士＋Alice；其余 9 人等台词铺满再开 */
-const TOUCH_OPEN = ['asher', 'knight', 'alice', 'levi', 'leo', 'jasper', 'jacob', 'isabel', 'bess', 'olivia', 'vivienne'];
+const TOUCH_OPEN = ['asher', 'knight', 'alice', 'levi', 'leo', 'jasper', 'jacob', 'isabel', 'bess', 'olivia', 'vivienne', 'lee'];   /* lee 第 12 人（#70）：入列即恢复前锁（afterRestore 全拦）+恢复后自动解锁 */
 /* 台词池（每动作 5 句，感性模型生成回流后填；空池期显示系统中性句） */
 const TOUCH_TEXT = {
   /* Asher 20 句（感性模型回流，言 2026-10-30 审核通过；依偎4 撞 §8.6 比喻禁令，言拍板破例保留原句） */
@@ -2055,6 +2055,9 @@ const TOUCH_TEXT = {
       '靠在我怀里。外面的那些风言风语，我帮你全部挡回去。',
       '别动。今晚你哪儿也不准去，就在这儿陪我缠绵。',
     ],
+  },
+  lee: {   /* Lee 记忆线（#70）：恢复后四件套（「本预言家」腔，被摸会贫嘴）；待生产线生成，空池期用系统中性句 */
+    pat: [], hug: [], kiss: [], cuddle: [],
   },
 };
 

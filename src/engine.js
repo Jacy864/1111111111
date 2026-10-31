@@ -287,9 +287,10 @@ function vivienneNews() {
   const sims = G.feed.filter(e => e.t === 'sim' && e.d === y.day);
   const send = (kind, fact, names) => {
     const pool = VIV_NEWS[kind];
-    /* 台词池待生产线生成；空=回退系统过渡句（占位，2026-10-26） */
+    /* 台词池待生产线生成；空=回退系统过渡句（占位，2026-10-26）。
+       池句自带句末标点，{x} 填入前剥掉事实尾部句号（2026-10-31 言准开工清单，防「。，」撞标点）；回退支保留原样 */
     const frame = pool.length
-      ? `[[vivienne]]：「${rnd(pool).split('{x}').join(fact)}」`
+      ? `[[vivienne]]：「${rnd(pool).split('{x}').join(String(fact).replace(/[。．.]+$/, ''))}」`
       : { village: '晨祷后，[[vivienne]]把村里的事说给你听：', act: '[[vivienne]]提起你昨天做的事：', private: '[[vivienne]]凑近了些，说破你昨晚的事：' }[kind] + fact;
     addFeed('morn', frame, names);
   };

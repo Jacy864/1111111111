@@ -1469,7 +1469,7 @@ function restLoveEvent() {
   if (key === 'ash3' && EV_GATES.ash3()) {
     loveDone('asher');
     return {
-      lines: ['<b>Asher</b>：「那个瓷的，知不知道你晚上去哪。」'],
+      lines: ['<b>Asher</b>：「骑士知不知道你晚上去哪。」'],
       ev: { key: 'ash3', choices: [{ k: 'a', t: '如实说' }, { k: 'b', t: '敷衍' }, { k: 'c', t: '反问他在想什么' }] },
       settle: true,
     };

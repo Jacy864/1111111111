@@ -1016,7 +1016,7 @@ function leeRestore(item) {
     `你把<b>${item}</b>放到他手里。`,
     '他低头看了很久。手指在那上面一遍遍地摸。',
   ];
-  if (LEE_RESTORE_EVT.length) lines.push(...LEE_RESTORE_EVT.slice(0, 4));   // 3-4 段渐进节奏（第一段泛指，任一遗物都能接上）
+  if (LEE_RESTORE_EVT.length) LEE_RESTORE_EVT.slice(0, 4).forEach(seg => lines.push(`<b>Lee</b>：「${seg}」`));   // 3-4 段渐进节奏（第一段泛指，任一遗物都能接上；2026-10-31 言稿回流）
   else lines.push('<b>Lee</b>：「……我想起来了。」', '<b>Lee</b>：「全部。都想起来了。」');   // 池空回退（备案）
   lines.push('他的眼神定下来了。跟平时不一样了。');
   save();

@@ -213,7 +213,7 @@ function t(name, cond, extra) {
     await page.waitForSelector('[data-act="ia"][data-id="lee"][data-ia="clue"][data-item="铜哨"]', { timeout: 15000 });
     await page.locator('[data-act="ia"][data-id="lee"][data-ia="clue"][data-item="铜哨"]').click({ timeout: 15000 });
     await page.waitForTimeout(300);
-    t('U15d 恢复事件弹窗', (await $txt('#modal-body')).includes('想起来了'));
+    t('U15d 恢复事件弹窗', (await $txt('#modal-body')).includes('预言家'));
     t('U15e 恢复后暧昧按钮出现', await ev(() => { npcSheet('lee'); return !!document.querySelector('[data-act="ia"][data-id="lee"][data-ia="flirt"]'); }));
     t('U15f 恢复后摸头按钮出现（#70 解锁）', await ev(() => { npcSheet('lee'); return !!document.querySelector('[data-act="touch"][data-id="lee"][data-k="pat"]'); }));
     t('U15g 恢复后档案换 bio', await ev(() => { npcSheet('lee'); return document.querySelector('#modal-body .bio').textContent.includes('预言家'); }));

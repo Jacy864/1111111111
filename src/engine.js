@@ -1011,13 +1011,12 @@ function leeRestore(item) {
   rel('lee', 'f', 15);
   applyLeeAfter();
   G.evF.leeMornPending = true;
-  addFeed('major', '[[lee]]把那件东西攥在手里，站在井边很久没说话。然后他抬起头——眼神跟平时不一样了。');
+  addFeed('major', '[[lee]]把那件东西攥在手里，很久没有说话。然后他抬起头——眼神跟平时不一样了。');
   const lines = [
     `你把<b>${item}</b>放到他手里。`,
-    '他低头看了很久。手指在那上面一遍遍地摸。',
   ];
-  if (LEE_RESTORE_EVT.length) LEE_RESTORE_EVT.slice(0, 4).forEach(seg => lines.push(`<b>Lee</b>：「${seg}」`));   // 3-4 段渐进节奏（第一段泛指，任一遗物都能接上；2026-10-31 言稿回流）
-  else lines.push('<b>Lee</b>：「……我想起来了。」', '<b>Lee</b>：「全部。都想起来了。」');   // 池空回退（备案）
+  if (LEE_RESTORE_EVT.length) LEE_RESTORE_EVT.slice(0, 4).forEach(seg => lines.push(`<b>Lee</b>：「${seg}」`));   // 言稿第 1 段自带「接过→发现印记」的开场节奏，铺垫叙述不抢戏
+  else lines.push('他低头看了很久。手指在那上面一遍遍地摸。', '<b>Lee</b>：「……我想起来了。」', '<b>Lee</b>：「全部。都想起来了。」');   // 池空回退（备案）
   lines.push('他的眼神定下来了。跟平时不一样了。');
   save();
   return { lines, ev: { k: 'leerestore' } };

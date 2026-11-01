@@ -202,6 +202,21 @@ function t(name, cond, extra) {
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
     await ev(() => { G.spouse = null; G.engaged = null; G.node = 0; save(); });
 
+    /* U27 Asher 寻欢批（#80）：730 天年龄门前寻欢按钮整块隐藏（连灰态都没有），731 天起按爱情解锁 */
+    await ev(() => { G.day = 100; G.npc.asher.l = 60; G.node = DAY_NODES; npcSheet('asher'); });
+    await page.waitForSelector('#modal-mask.show', { timeout: 15000 });
+    const noFun = await ev(() => ![...document.querySelectorAll('#modal-body button')].some(b => b.textContent.includes('寻欢')));
+    t('U27 年龄门前 Asher 档案整块无寻欢按钮', noFun);
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.day = 731; npcSheet('asher'); });
+    await page.waitForSelector('[data-act="ia"][data-id="asher"][data-ia="fun"]', { timeout: 15000 });
+    t('U27b 731 天夜里爱情≥50 出寻欢按钮', !!(await page.$('[data-act="ia"][data-id="asher"][data-ia="fun"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    const grayTxt = await ev(() => { G.node = 0; npcSheet('asher'); return ([...document.querySelectorAll('#modal-body button')].find(b => b.textContent.includes('寻欢')) || {}).textContent || ''; });
+    t('U27c 731 天白天为灰态「夜里来」', grayTxt.includes('夜里来'));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.day = 5; G.node = 0; G.npc.asher.l = 0; save(); });
+
     /* U15 Lee 记忆线（#70）：恢复前藏暧昧+给遗物按钮+恢复弹窗+池切换 */
     await ev(() => { G.npc.lee.restored = false; G.npc.lee.f = 80; G.bag.铜哨 = 0; npcSheet('lee'); });
     await page.waitForSelector('#modal-mask.show', { timeout: 15000 });

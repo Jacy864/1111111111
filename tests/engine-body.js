@@ -581,6 +581,68 @@ t('T26e 借书：借/夜读/还＋Leo好感每日封顶合计+1', () => {
   doPlaceAction('library', 'returnbook');
   eq(G.npc.leo.f, f0 + 1, '次日还书好感+1');
 });
+/* ============ T27 Asher 寻欢批（#80，2026-11-01 台词回流＋实装） ============ */
+t('T27a 寻欢年龄门：730 天前拦（forced 也拦）/ 731 起放行 / 他人不受影响', () => {
+  fresh(); G.evF.ashPact = true; G.npc.asher.l = 60; G.node = 3; G.energy = 20;
+  ok(funPools(npcDef('asher'), G.npc.asher), '池已挂（拦的是年龄不是缺池）');
+  const r1 = doFun('asher', true);
+  ok(r1.blocked && r1.lines[0].includes('年纪'), '年龄门前 forced 也拦');
+  G.day = 730;
+  ok(doFun('asher', true).blocked, '第 730 天仍拦（731 才满）');
+  G.day = 731; fix(0.01);
+  const r2 = doFun('asher', true);
+  ok(!r2.blocked && r2.settled, '第 731 天放行过夜');
+  fix(0.01);
+  ok(!doFun('levi', true).blocked, 'Levi 无年龄门');
+});
+t('T27b 专属一夜（#80 约定兑现）：固定两句＋专属播报＋次日永久普通池', () => {
+  fresh(); G.evF.ashPact = true; G.npc.asher.l = 60; G.node = 3; G.energy = 20; G.day = 731;
+  fix(0.01); const r = doFun('asher');
+  const i1 = r.lines.findIndex(l => l.includes('今天我十八了'));
+  const i2 = r.lines.findIndex(l => l.includes('不再是那个靠你收留的小孩'));
+  ok(i1 >= 0 && i2 === i1 + 1, '专属两句按固定顺序出');
+  eq(G.npc.asher.funOnce, true, 'funOnce 置上');
+  const pe = G.feed.find(f => (f.html || '').includes('房顶修好了'));
+  ok(pe, '专属晨报入流');
+  ok(!pe.html.includes('被发现') && !pe.html.includes('过夜'), '口径：不写被发现过夜');
+  eq(G.day, 732, '结算过夜到次日');
+  ok(G.chronicle[G.chronicle.length - 1].log.some(s => s.includes('跟Asher过了今晚')), '编年史记今晚');
+  /* 次日起永久普通池 */
+  G.node = 3; G.energy = 20; fix(0.01);
+  const r2 = doFun('asher');
+  ok(r2.lines.some(l => l.includes('那张床空着也是空着')), '次日走普通邀约句');
+  ok(r2.lines.some(l => l.includes('外面怪物还没死')), '普通夜里句');
+  ok(!r2.lines.some(l => l.includes('十八了')), '专属句不再出');
+  ok(G.feed.some(f => (f.html || '').includes('磨箭')), '普通晨报走 joyFeed');
+});
+t('T27c 非约定档：家人线照样通、台词走通用池', () => {
+  fresh(); G.evF.ashFamily = true; G.npc.asher.l = 60; G.node = 3; G.energy = 20; G.day = 731;
+  fix(0.01); const r = doFun('asher');
+  ok(r.settled && !r.lines.some(l => l.includes('十八了')), '无 ashPact 标记→不走专属');
+  eq(G.npc.asher.funOnce, true, 'funOnce 照置');
+});
+t('T27d 拒绝不算开始：拒→funOnce 不置→次日再点仍专属', () => {
+  fresh(); G.evF.ashPact = true; G.npc.asher.l = 60; G.node = 3; G.energy = 20; G.day = 731;
+  fix(0.99); const rj = doFun('asher');   // l=60→接受率0.8，0.99>0.8 拒
+  ok(!rj.settled && rj.lines.some(l => l.includes('你开口了')), '被拒');
+  ok(rj.lines.some(l => l.includes('盖好被子')), '拒绝句来自 joyRefuse');
+  ok(!G.npc.asher.funOnce, '拒绝不置 funOnce');
+  G.energy = 20;
+  ok(doFun('asher').blocked, '同日再开口被 funDay 拦');
+  G.day = 732; G.node = 3; G.energy = 20; fix(0.01);
+  const r2 = doFun('asher');
+  ok(r2.lines.some(l => l.includes('今天我十八了')), '次日成功仍是专属一夜');
+  eq(G.npc.asher.funOnce, true, '这次才置 funOnce');
+});
+t('T27e 有实后日常：afterReal 混入闲聊池（通用机制）', () => {
+  fresh();
+  const before = poolArr(npcDef('asher'), 'chat', G.npc.asher);
+  ok(!before.some(s => typeof s === 'string' && s.includes('两张床合在一起')), 'funOnce 前 afterReal 不在闲聊池');
+  G.npc.asher.funOnce = true;
+  const after = poolArr(npcDef('asher'), 'chat', G.npc.asher);
+  ok(after.some(s => typeof s === 'string' && s.includes('两张床合在一起')), 'funOnce 后混入');
+  ok(after.some(s => typeof s === 'string' && s.includes('今晚哪儿也别去')), '「哪儿也别去」口径句入池');
+});
 t('T16 浸泡不变量', () => {
   const endings = {};
   for (let seed = 1; seed <= 30; seed++) {

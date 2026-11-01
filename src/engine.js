@@ -630,6 +630,7 @@ function poolArr(def, type, st) {
 function doFun(id, forced, cover) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
+  if (id === 'asher' && G.day < 731) return { lines: ['他还不到年纪。这事急不来。'], blocked: true };   // 寻欢年龄门（#74④/#80）：与求婚同句同款双保险（ui 侧按钮同条件隐藏）
   if (!forced && st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
   if (!forced && G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
   if (!forced && st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
@@ -642,6 +643,11 @@ function doFun(id, forced, cover) {
     st.last = G.day;
     return { lines: ['你开口了。', `<b>${def.name}</b>：「${rnd(fp.no)}」`] };
   }
+  /* 专属一夜（#80 约定兑现）：告白「等你长大」档＋跟他本人的首次成功寻欢＝固定顺序出专属两句＋专属播报，此后永久普通池
+     （先判后置 funOnce；被拒不算开始，下次仍是专属） */
+  const pact = id === 'asher' && G.evF && G.evF.ashPact && !st.funOnce
+            && Array.isArray(def.joyPact) && def.joyPact.length >= 2
+            && Array.isArray(def.joyPactFeed) && def.joyPactFeed.length;
   st.funOnce = true;
   rel(id, 'l', 3 + Math.floor(Math.random() * 3));
   rel(id, 'p', 5 + Math.floor(Math.random() * 4));
@@ -650,14 +656,18 @@ function doFun(id, forced, cover) {
   G.stats.fun = (G.stats.fun || 0) + 1;
   G.dayLog.push(`跟${def.name}过了今晚`);
   st.last = G.day;
-  const lines = [
+  const lines = pact ? [
+    `<b>${def.name}</b>：「${def.joyPact[0]}」`,
+    `<b>${def.name}</b>：「${def.joyPact[1]}」`,
+  ] : [
     `<b>${def.name}</b>：「${rnd(fp.inv.concat(fp.yes))}」`,
     `<b>${def.name}</b>：「${rnd(fp.night)}」`,
   ];
   if (cover) lines.push('天亮前，你把能想到的痕迹都收拾干净了。');
   lines.push('天亮了。');
   settleDay();
-  if (fp.morn.length) addFeed('morn', rnd(fp.morn));
+  if (pact) addFeed('morn', def.joyPactFeed[0]);
+  else if (fp.morn.length) addFeed('morn', rnd(fp.morn));
   if (cover) G.energyDebt = 10;         // 处理痕迹的疲惫压到今天上限（婚姻批 #67）
   const cr = cheatRoll(id, cover);      // 对象非配偶=出轨：记账+查岗掷骰（两段式）
   if (cr) lines.push(...cr);

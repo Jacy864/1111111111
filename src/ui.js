@@ -300,9 +300,10 @@ function npcSheet(id) {
      Asher 730 天年龄门前不显示按钮（言拍板 2026-10-31 第四十二场：按钮不该提前呆在那里，隐藏口径与引擎拦截一致 G.day < 731） */
   if (!G.spouse && !G.engaged && MARRYABLE.includes(id) && !(id === 'asher' && G.day < 731))
     extras += `<button class="btn line ib" data-act="propose" data-id="${id}">求婚</button>`;
-  /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
+  /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补）；
+     Asher 730 天年龄门前整块不显示（#74④/#80，与求婚按钮同款隐藏，引擎同句双保险） */
   const fp = funPools(n, s);
-  if (fp) {
+  if (fp && !(n.id === 'asher' && G.day < 731)) {
     if (s.l >= 50 && G.node >= DAY_NODES)
       extras += `<button class="btn line ib" data-act="ia" data-id="${id}" data-ia="fun">寻欢（${COST.fun}·度过今晚）</button>`;
     else if (s.l >= 50)

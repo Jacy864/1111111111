@@ -630,6 +630,43 @@ const NPCS = [
       { p: 'field', t: '田埂滑，Gloria走里边。小Asher替你踩湿的那排。' },
       { p: 'field', t: '帮Levi割完这行就回家。Gloria坐在田埂上等等Asher，就一会儿。' },
     ],
+    joyInvite: [  /* 寻欢（言拍板 #74④/#80，2026-11-01 回流入池）：成年后解锁（731 天年龄门见 engine/ui），自称一律「我」 */
+      'Gloria，今晚那张床空着也是空着。Asher……我已经很久不是小孩子了，你今晚留在我这边好不好。',
+      '柴火够用，水我也挑满了，后半夜我也守得住。Gloria，今晚别走去你自己那边了。',
+      '以前是我睡你旁边，今晚换你睡在我这儿。Gloria，别吹灯，让我看着你。',
+    ],
+    joyAccept: [
+      '我等这句话好久了。Gloria，你脱了斗篷，过来坐着。',
+      '你别反悔。Gloria，今晚这扇门关上，到天亮前你哪儿都不许去。',
+      '我去把炉火通大一点。Gloria，过来，我给你捂手。',
+    ],
+    joyRefuse: [
+      '好，那Gloria早点睡。我今晚守窗户，有什么动静我叫你。',
+      '没事，是我急了。Gloria盖好被子，不要受凉，我就在旁边床上。',
+    ],
+    joyNight: [
+      'Gloria，不要回你那边去。再抱一会儿，外面怪物还没死呢。',
+      '刚才我是不是抓得太紧了。Gloria，疼不疼，我帮你揉揉。',
+      '原来你的手这么热。Gloria，明天太阳升起来之前，就这么放我怀里。',
+      '以前小Asher总是怕被你赶出去。现在我不怕了，Gloria，我知道这里也是我的家。',
+    ],
+    joyFeed: [  /* 次日播报：曝光口径=不写「被发现过夜」（他天天睡她家），只写端倪 */
+      '清早去溪边洗衣服的村民路过村口，看见 [[asher]] 坐在门槛上磨箭，出衣袖的胳膊比两年前壮实了一大圈。有人问他怎么不睡懒觉，他只说天亮了该劈柴，眼睛里一点困意都没有，笑得比哪天都踏实。',
+      '农田那边的 [[levi]] 歇脚时提起，说 [[asher]] 今天干活格外卖力，搬运麦垛手脚利落得很。邻居只当年轻人体格长开了精力好，谁也没觉得他从那个屋子里出来有什么稀奇。',
+      '烘焙坊 [[olivia]] 拿刚烤好的野莓饼分给路过的村民，[[asher]] 跑过来要了两份。他说一份给 Gloria 留着，转身回屋时脚底下轻快得很，门推开又合上，村里的清晨和往常没有任何不同。',
+    ],
+    afterReal: [  /* 有实后日常：funOnce 后混入闲聊池（通用机制） */
+      '骑士又踩坏了村口的石阶。笨手笨脚的，Gloria 以后晚归别看它了，走快点回家里来。',
+      '今晚哪儿也别去。要放兽夹等明天白天，今晚 Gloria 只能呆在家里，呆在我旁边。',
+      '我把两张床合在一起了。Gloria 觉得窄吗，我觉得正合适。',
+    ],
+    joyPact: [  /* 专属一夜（#80 约定兑现）：告白选「等你长大」＋成年后首次成功寻欢，固定顺序出两条，之后永久普通池 */
+      'Gloria 当初说等我长大。今天我十八了，你答应过我的话，今晚该算数了。',
+      '我等了两年，每天晚上看着你睡在旁边。Gloria，今晚我不再是那个靠你收留的小孩了。',
+    ],
+    joyPactFeed: [
+      '清晨的阳光照在村口北边的木屋上，[[asher]] 很早就起来把前庭打扫得干干净净。过路的人打招呼问他怎么笑了一早晨，他只说房顶修好了再也不漏风，眼睛直勾勾望着屋门，等着里面的人醒过来。',
+    ],
   },
   { id: 'leo', name: 'Leo', job: '图书管理员', initF: 10, nightStay: 'library',
     bio: '村里的图书管理员，常年待在图书馆里。阴湿，社恐，体弱，怕吵，说话轻还磕绊，但不绕弯子。',
@@ -3047,6 +3084,7 @@ function poolArr(def, type, st) {
 function doFun(id, forced, cover) {
   const def = npcDef(id), st = G.npc[id], fp = funPools(def, st);
   if (!fp) return { lines: ['现在不适合。'], blocked: true };
+  if (id === 'asher' && G.day < 731) return { lines: ['他还不到年纪。这事急不来。'], blocked: true };   // 寻欢年龄门（#74④/#80）：与求婚同句同款双保险（ui 侧按钮同条件隐藏）
   if (!forced && st.l < 50) return { lines: ['还不到那一步。'], blocked: true };
   if (!forced && G.node < DAY_NODES) return { lines: ['白天各忙各的。这种事，夜里再说。'], blocked: true };
   if (!forced && st.funDay === G.day) return { lines: ['今天不用再开口了。'], blocked: true };
@@ -3059,6 +3097,11 @@ function doFun(id, forced, cover) {
     st.last = G.day;
     return { lines: ['你开口了。', `<b>${def.name}</b>：「${rnd(fp.no)}」`] };
   }
+  /* 专属一夜（#80 约定兑现）：告白「等你长大」档＋跟他本人的首次成功寻欢＝固定顺序出专属两句＋专属播报，此后永久普通池
+     （先判后置 funOnce；被拒不算开始，下次仍是专属） */
+  const pact = id === 'asher' && G.evF && G.evF.ashPact && !st.funOnce
+            && Array.isArray(def.joyPact) && def.joyPact.length >= 2
+            && Array.isArray(def.joyPactFeed) && def.joyPactFeed.length;
   st.funOnce = true;
   rel(id, 'l', 3 + Math.floor(Math.random() * 3));
   rel(id, 'p', 5 + Math.floor(Math.random() * 4));
@@ -3067,14 +3110,18 @@ function doFun(id, forced, cover) {
   G.stats.fun = (G.stats.fun || 0) + 1;
   G.dayLog.push(`跟${def.name}过了今晚`);
   st.last = G.day;
-  const lines = [
+  const lines = pact ? [
+    `<b>${def.name}</b>：「${def.joyPact[0]}」`,
+    `<b>${def.name}</b>：「${def.joyPact[1]}」`,
+  ] : [
     `<b>${def.name}</b>：「${rnd(fp.inv.concat(fp.yes))}」`,
     `<b>${def.name}</b>：「${rnd(fp.night)}」`,
   ];
   if (cover) lines.push('天亮前，你把能想到的痕迹都收拾干净了。');
   lines.push('天亮了。');
   settleDay();
-  if (fp.morn.length) addFeed('morn', rnd(fp.morn));
+  if (pact) addFeed('morn', def.joyPactFeed[0]);
+  else if (fp.morn.length) addFeed('morn', rnd(fp.morn));
   if (cover) G.energyDebt = 10;         // 处理痕迹的疲惫压到今天上限（婚姻批 #67）
   const cr = cheatRoll(id, cover);      // 对象非配偶=出轨：记账+查岗掷骰（两段式）
   if (cr) lines.push(...cr);
@@ -4736,9 +4783,10 @@ function npcSheet(id) {
      Asher 730 天年龄门前不显示按钮（言拍板 2026-10-31 第四十二场：按钮不该提前呆在那里，隐藏口径与引擎拦截一致 G.day < 731） */
   if (!G.spouse && !G.engaged && MARRYABLE.includes(id) && !(id === 'asher' && G.day < 731))
     extras += `<button class="btn line ib" data-act="propose" data-id="${id}">求婚</button>`;
-  /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补） */
+  /* 寻欢：有台词池就常驻显示，按爱情解锁（偷尝轨·感情线条件待告白系统实装后补）；
+     Asher 730 天年龄门前整块不显示（#74④/#80，与求婚按钮同款隐藏，引擎同句双保险） */
   const fp = funPools(n, s);
-  if (fp) {
+  if (fp && !(n.id === 'asher' && G.day < 731)) {
     if (s.l >= 50 && G.node >= DAY_NODES)
       extras += `<button class="btn line ib" data-act="ia" data-id="${id}" data-ia="fun">寻欢（${COST.fun}·度过今晚）</button>`;
     else if (s.l >= 50)

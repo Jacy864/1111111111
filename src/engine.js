@@ -881,19 +881,22 @@ function doPlaceAction(place, act, sub) {
     return { lines: [`照着图纸，你做完了〈${c.name}〉。`, `入手：${c.name}×${n}`], settled: advanceNode() === 'settled' };
   }
   if (act === 'helpfarm') {
-    /* 农田帮工换粮（拍板 #42）：白天 Levi 在田时，精力3 → 小麦×1 + 70% 羊毛×1 + Levi 友+2 */
+    /* 农田帮工换粮（拍板 #42；#79 食材补给包全天化+提率）：白天在田帮工，精力3 → 小麦×1 + 对应友+2
+       帮 Levi（上午/中午他在田）：羊毛70% 土豆50% 卷心菜40%；帮 Alice（全天在田）：土豆50% 卷心菜40%，无羊毛 */
     if (place !== 'field') return { lines: ['这里没有要帮的农活。'], blocked: true };
     if (G.node >= DAY_NODES) return { lines: ['天黑了，田里没活。'], blocked: true };
-    if (locOf(npcDef('levi'), G.node) !== 'field') return { lines: ['Levi 不在田里，没人派活。'], blocked: true };
+    const who = sub === 'alice' ? 'alice' : 'levi';
+    if (locOf(npcDef(who), G.node) !== 'field') return { lines: [who === 'levi' ? 'Levi 不在田里，没人派活。' : 'Alice 不在田里。'], blocked: true };
     const err = canDo('helpfarm'); if (err) return { lines: [err], blocked: true };
     G.bag.小麦 = (G.bag.小麦 || 0) + 1;
     let got = '小麦×1';
-    if (Math.random() < 0.7) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got += '、羊毛×1'; }
-    if (Math.random() < 0.3) { G.bag.土豆 = (G.bag.土豆 || 0) + 1; got += '、土豆×1'; }          // 做饭系统（#75）：三成捎土豆
-    if (Math.random() < 0.2) { G.bag.卷心菜 = (G.bag.卷心菜 || 0) + 1; got += '、卷心菜×1'; }    // 两成捎卷心菜
-    rel('levi', 'f', 2);
-    G.energy -= COST.helpfarm; G.dayLog.push('在农田帮了半天工');
-    return { lines: ['你帮 Levi 干了半天农活。他话不多，活交得清楚。', `拾获：${got}`], settled: advanceNode() === 'settled' };
+    if (who === 'levi' && Math.random() < 0.7) { G.bag.羊毛 = (G.bag.羊毛 || 0) + 1; got += '、羊毛×1'; }
+    if (Math.random() < 0.5) { G.bag.土豆 = (G.bag.土豆 || 0) + 1; got += '、土豆×1'; }          // #79：三成→五成
+    if (Math.random() < 0.4) { G.bag.卷心菜 = (G.bag.卷心菜 || 0) + 1; got += '、卷心菜×1'; }    // #79：两成→四成
+    rel(who, 'f', 2);
+    G.energy -= COST.helpfarm; G.dayLog.push(who === 'levi' ? '在农田帮了半天工' : '帮 Alice 干了半天农活');
+    const doneLine = who === 'levi' ? '你帮 Levi 干了半天农活。他话不多，活交得清楚。' : '你帮 Alice 干了半天农活。她嗓门大，活派得明白。';
+    return { lines: [doneLine, `拾获：${got}`], settled: advanceNode() === 'settled' };
   }
   /* ============ 做饭系统（言拍板 2026-10-31 #75）：做饭/吃熟食/邀人同做 ============ */
   if (act === 'cook') {

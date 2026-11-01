@@ -512,6 +512,38 @@ t('T26f 同做加爱情（#78）：数量同暧昧（友≥40 +4 / 友<40 +1）�
   eq(G.npc.asher.l, 4, '友≥40 爱+4');
   ok(r2.lines.some(l => l.includes('爱 +4')), '结算行显示爱 +4');
 });
+t('T26g 帮工全天（#79）：帮 Alice 友+2 无羊毛＋新食谱烤肉/蘑菇汤/烤鱼＋Levi 摊卖菜', () => {
+  fresh(); fix(0.05); G.node = 2; G.energy = 20;   // 下午：Levi 去养殖场、Alice 在田，概率全中
+  ok(locOf(npcDef('levi'), 2) !== 'field' && locOf(npcDef('alice'), 2) === 'field', '下午 Levi 不在田、Alice 在');
+  ok(doPlaceAction('field', 'helpfarm', 'levi').blocked, '下午帮 Levi 被拦');
+  const r1 = doPlaceAction('field', 'helpfarm', 'alice');
+  ok(!r1.blocked && r1.lines[0].includes('帮 Alice'), '下午能帮 Alice');
+  eq(G.bag.小麦, 1, '帮 Alice 也得小麦'); eq(G.bag.土豆, 1, '五成土豆'); eq(G.bag.卷心菜, 1, '四成卷心菜');
+  ok(!(G.bag.羊毛 > 0), '帮 Alice 无羊毛');
+  eq(G.npc.alice.f, 15 + 2, 'Alice 友+2');
+  G.node = 0; G.energy = 20;
+  const r2 = doPlaceAction('field', 'helpfarm');   // 不带 sub 走默认 Levi（老档/旧调用兼容）
+  ok(!r2.blocked && r2.lines[0].includes('Levi'), '默认帮 Levi 兼容');
+  eq(G.bag.羊毛, 1, '帮 Levi 七成羊毛');
+  // 新食谱三道（#79）
+  G.node = 0; G.energy = 20; G.bag.生肉 = 1; G.bag.蘑菇 = 2; G.bag.鱼 = 1; G.bag.水 = 1;
+  doPlaceAction('home', 'cook', 'meat');
+  eq(G.bag.熟食, 2, '烤肉出熟食2');
+  G.node = 0; G.energy = 20;
+  doPlaceAction('home', 'cook', 'msoup');
+  eq(G.bag.熟食, 4, '蘑菇汤出熟食2');
+  G.node = 0; G.energy = 20;
+  doPlaceAction('home', 'cook', 'grill');
+  eq(G.bag.熟食, 5, '烤鱼出熟食1');
+  ok(!(G.bag.生肉 > 0) && !(G.bag.蘑菇 > 0) && !(G.bag.鱼 > 0), '材料消耗干净');
+  // Levi 摊卖菜（#79）
+  const coins0 = G.coins; G.coins = 10;
+  tradeBuy('levi', '土豆', 1, 1);
+  eq(G.bag.土豆, 3, 'Levi 摊买土豆'); eq(G.coins, 9, '扣 1 币');
+  tradeBuy('levi', '卷心菜', 2, 1);
+  eq(G.bag.卷心菜, 3, 'Levi 摊买卷心菜'); eq(G.coins, 7, '扣 2 币');
+  G.coins = coins0;
+});
 t('T26d 邀约：错过顺延一次/再错过作废无惩罚', () => {
   fresh(); G.energy = 20; G.node = 2;
   doPlaceAction('home', 'cookinvite', 'levi');

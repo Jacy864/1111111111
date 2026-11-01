@@ -91,8 +91,12 @@ function placeHtml(pid) {
       if (!G.blueprints[k]) acts += `<button class="btn" data-act="blueprint" data-k="${k}">学图纸·〈${c.name}〉（精力1）</button>`;
     }
   }
-  if (pid === 'field' && G.node < DAY_NODES && locOf(npcDef('levi'), G.node) === 'field')
-    acts += `<button class="btn" data-act="helpfarm">帮工换粮（精力3·小麦+）</button>`;   // 帮工（拍板 #42）：羊毛70%随行
+  if (pid === 'field' && G.node < DAY_NODES) {   // 帮工全天（#79）：帮 Levi（上午/中午）/ 帮 Alice（全天在田）
+    if (locOf(npcDef('levi'), G.node) === 'field')
+      acts += `<button class="btn" data-act="helpfarm" data-k="levi">帮工换粮（精力3·小麦+）</button>`;   // 帮工（拍板 #42）：羊毛70%随行
+    if (locOf(npcDef('alice'), G.node) === 'field')
+      acts += `<button class="btn" data-act="helpfarm" data-k="alice">帮 Alice 干农活（精力3·小麦+）</button>`;   // #79：下午 Levi 去养殖场后仍是可帮的田
+  }
   if (pid === 'belltower' && G.node >= DAY_NODES) {   // 钟楼夜射（拍板 #41）
     const sn = G.arrowsShotNight || 0;
     const tag = sn >= 3 ? '·今晚没得射了' : ((G.bag.箭矢 || 0) < 1 ? '·箭袋空了' : `·${sn}/3`);

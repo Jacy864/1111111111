@@ -265,6 +265,43 @@ function t(name, cond, extra) {
     t('U16h 赴约同做骑士友+2清约', r16h.f === f16 + 2 && !r16h.inv, JSON.stringify(r16h));
     t('U16i 骑士特例句（不用吃饭）', (await $txt('#modal-body')).includes('它不用吃饭'));
     await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* U17 帮工全天＋新食谱＋Levi摊卖菜（#79 食材补给包） */
+    await ev(() => { G.node = 0; G.energy = 20; G.cookInvite = null; save(); render(); });
+    await page.locator('[data-t="village"]').click({ timeout: 15000 });   // 从家标签切回村庄地图
+    await page.waitForSelector('[data-place="field"]', { timeout: 15000 });
+    await page.locator('[data-place="field"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="helpfarm"][data-k="levi"]', { timeout: 15000 });
+    t('U17 上午双帮工按钮（Levi＋Alice）', !!(await page.$('[data-act="helpfarm"][data-k="alice"]')));
+    await page.locator('[data-npc="levi"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="trade"][data-id="levi"]', { timeout: 15000 });
+    await page.locator('[data-act="trade"][data-id="levi"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="qbuy"][data-item="土豆"]', { timeout: 15000 });
+    t('U17b Levi摊卖土豆卷心菜', !!(await page.$('[data-act="qbuy"][data-item="卷心菜"]')));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    await ev(() => { G.node = 2; save(); render(); });
+    await page.waitForSelector('[data-act="helpfarm"][data-k="alice"]', { timeout: 15000 });
+    t('U17c 下午只剩帮Alice按钮', !(await page.$('[data-act="helpfarm"][data-k="levi"]')));
+    await ev(() => { G.node = 1; save(); render(); });   // 挪到中午点按钮，避免 node2→3 触发过夜结算弹窗
+    await page.waitForSelector('[data-act="helpfarm"][data-k="alice"]', { timeout: 15000 });
+    const f16m0 = await ev(() => G.npc.alice.f);
+    await page.locator('[data-act="helpfarm"][data-k="alice"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r16n = await ev(() => ({ f: G.npc.alice.f, w: G.dayLog.slice(-1)[0], farm: G.bag.小麦 }));
+    t('U17d 帮Alice入日志＋友+2＋小麦', r16n.f === f16m0 + 2 && r16n.w.includes('Alice') && r16n.farm >= 1, JSON.stringify(r16n));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
+    /* 新食谱三道进选菜列表 */
+    await ev(() => { G.node = 0; G.energy = 20; G.day++; G.cookInvite = null; G.cookLast = 0; G.bag.生肉 = 1; save(); render(); });
+    await page.locator('[data-t="home"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cookq"][data-k="meat"]', { timeout: 15000 });
+    t('U17e 新食谱三道就位', !!(await page.$('[data-act="cookq"][data-k="msoup"]')) && !!(await page.$('[data-act="cookq"][data-k="grill"]')));
+    await page.locator('[data-act="cookq"][data-k="meat"]').click({ timeout: 15000 });
+    await page.waitForSelector('[data-act="cook"][data-k="meat"]', { timeout: 15000 });
+    const f16q0 = await ev(() => ({ food: G.bag.熟食, meat: G.bag.生肉 }));
+    await page.locator('[data-act="cook"][data-k="meat"]').click({ timeout: 15000 });
+    await page.waitForTimeout(300);
+    const r16q = await ev(() => ({ food: G.bag.熟食, meat: G.bag.生肉 }));
+    t('U17f 烤肉做出熟食2', r16q.food === f16q0.food + 2 && (r16q.meat ?? 0) === f16q0.meat - 1, JSON.stringify({ f16q0, r16q }));
+    await page.locator('#modal-close-btn').click({ timeout: 15000 });
     /* 借书：Leo 在图书馆的时段 */
     await ev(() => { G.borrowed = null; delete G.bag['骑士养护手册（抄本）']; const n = [0, 1, 2, 3, 4].find(i => locOf(npcDef('leo'), i) === 'library'); G.node = n; save(); });
     await page.locator('[data-t="village"]').click({ timeout: 15000 });
